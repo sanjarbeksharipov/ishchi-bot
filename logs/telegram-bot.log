@@ -1,0 +1,61 @@
+{"level":"INFO","time":"2026-01-20T21:36:46.699+0500","logger":"telegram-bot","caller":"bot/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-20T21:36:46.700+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot"}
+{"level":"ERROR","time":"2026-01-20T21:36:46.708+0500","logger":"telegram-bot","caller":"postgres/postgres.go:63","msg":"🔴 Failed to ping database: failed to connect to `user=postgres database=telegram_bot`:\n\t[::1]:5432 (localhost): dial error: dial tcp [::1]:5432: connect: connection refused\n\t127.0.0.1:5432 (localhost): dial error: dial tcp 127.0.0.1:5432: connect: connection refused"}
+{"level":"FATAL","time":"2026-01-20T21:36:46.709+0500","logger":"telegram-bot","caller":"bot/main.go:44","msg":"☠️ Failed to initialize storage: failed to connect to `user=postgres database=telegram_bot`:\n\t[::1]:5432 (localhost): dial error: dial tcp [::1]:5432: connect: connection refused\n\t127.0.0.1:5432 (localhost): dial error: dial tcp 127.0.0.1:5432: connect: connection refused"}
+{"level":"INFO","time":"2026-01-21T17:12:54.078+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:12:54.079+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot"}
+{"level":"INFO","time":"2026-01-21T17:12:54.118+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T17:12:54.152+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-21T17:12:54.152+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T17:12:54.608+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T17:14:13.763+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): /start"}
+{"level":"ERROR","time":"2026-01-21T17:14:13.773+0500","logger":"telegram-bot","caller":"postgres/user.go:82","msg":"🔴 Failed to get user: ERROR: column \"first_name\" does not exist (SQLSTATE 42703)"}
+{"level":"ERROR","time":"2026-01-21T17:14:13.773+0500","logger":"telegram-bot","caller":"handlers/commands.go:21","msg":"🔴 Failed to get/create user","error":"failed to get user: ERROR: column \"first_name\" does not exist (SQLSTATE 42703)"}
+{"level":"INFO","time":"2026-01-21T17:15:43.025+0500","logger":"telegram-bot","caller":"cmd/main.go:77","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-21T17:15:48.026+0500","logger":"telegram-bot","caller":"cmd/main.go:88","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-21T17:15:52.080+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:15:52.081+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot"}
+{"level":"INFO","time":"2026-01-21T17:15:52.100+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T17:15:52.112+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-21T17:15:52.112+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T17:15:52.515+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T17:16:45.474+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:16:45.477+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot_template"}
+{"level":"ERROR","time":"2026-01-21T17:16:45.498+0500","logger":"telegram-bot","caller":"postgres/postgres.go:63","msg":"🔴 Failed to ping database: failed to connect to `user=postgres database=telegram_bot_template`: [::1]:5432 (localhost): server error: FATAL: database \"telegram_bot_template\" does not exist (SQLSTATE 3D000)"}
+{"level":"FATAL","time":"2026-01-21T17:16:45.498+0500","logger":"telegram-bot","caller":"cmd/main.go:43","msg":"☠️ Failed to initialize storage: failed to connect to `user=postgres database=telegram_bot_template`: [::1]:5432 (localhost): server error: FATAL: database \"telegram_bot_template\" does not exist (SQLSTATE 3D000)"}
+{"level":"INFO","time":"2026-01-21T17:17:09.416+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:17:09.418+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot_template"}
+{"level":"INFO","time":"2026-01-21T17:17:09.443+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T17:17:09.474+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-21T17:17:09.474+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T17:17:09.861+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T17:17:17.342+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): /start"}
+{"level":"INFO","time":"2026-01-21T17:18:18.525+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): 👋 Welcome to the Bot!\n\nI'm here to help you. Use /help to see available commands."}
+{"level":"INFO","time":"2026-01-21T17:18:20.791+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): 👋 Welcome to the Bot!\n\nI'm here to help you. Use /help to see available commands."}
+{"level":"INFO","time":"2026-01-21T17:18:22.500+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): 👋 Welcome to the Bot!\n\nI'm here to help you. Use /help to see available commands."}
+{"level":"INFO","time":"2026-01-21T17:19:00.210+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): 👋 Welcome to the Bot!\n\nI'm here to help you. Use /help to see available commands."}
+{"level":"INFO","time":"2026-01-21T17:19:10.280+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): 👋 Welcome to the Bot!\n\nI'm here to help you. Use /help to see available commands."}
+{"level":"INFO","time":"2026-01-21T17:20:14.623+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:20:14.624+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot_template"}
+{"level":"INFO","time":"2026-01-21T17:20:14.647+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T17:20:14.661+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-21T17:20:14.661+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T17:20:15.148+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T17:20:19.167+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): 👋 Welcome to the Bot!\n\nI'm here to help you. Use /help to see available commands."}
+{"level":"INFO","time":"2026-01-21T17:20:29.877+0500","logger":"telegram-bot","caller":"middleware/logging.go:26","msg":"✅ Message from @AbdulahadAbduqahhorov (ID: 1026046430): 👋 Welcome to the Bot!\n\nI'm here to help you. Use /help to see available commands."}
+{"level":"INFO","time":"2026-01-21T17:21:37.009+0500","logger":"telegram-bot","caller":"cmd/main.go:77","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-21T17:21:42.012+0500","logger":"telegram-bot","caller":"cmd/main.go:88","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-21T17:21:48.038+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:21:48.038+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot_template"}
+{"level":"INFO","time":"2026-01-21T17:21:48.058+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T17:21:48.078+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-21T17:21:48.078+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T17:21:48.447+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T17:27:18.023+0500","logger":"telegram-bot","caller":"cmd/main.go:77","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-21T17:27:23.026+0500","logger":"telegram-bot","caller":"cmd/main.go:88","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-21T17:27:28.109+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:27:28.109+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot_template"}
+{"level":"INFO","time":"2026-01-21T17:27:28.130+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T17:27:28.142+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-21T17:27:28.142+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T17:27:28.517+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
