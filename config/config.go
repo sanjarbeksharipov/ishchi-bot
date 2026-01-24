@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,9 +17,12 @@ type Config struct {
 
 // BotConfig contains Telegram bot specific configuration
 type BotConfig struct {
-	Token   string
-	Verbose bool
-	Poller  time.Duration
+	Token     string
+	Verbose   bool
+	Poller    time.Duration
+	ChannelID int64
+	AdminIDs  []int64
+	Username  string
 }
 
 // DatabaseConfig contains database configuration
@@ -41,9 +45,12 @@ type AppConfig struct {
 func Load() (*Config, error) {
 	cfg := &Config{
 		Bot: BotConfig{
-			Token:   getEnv("BOT_TOKEN", ""),
-			Verbose: getEnvAsBool("BOT_VERBOSE", false),
-			Poller:  getEnvAsDuration("BOT_POLLER", 10*time.Second),
+			Token:     getEnv("BOT_TOKEN", ""),
+			Verbose:   getEnvAsBool("BOT_VERBOSE", false),
+			Poller:    getEnvAsDuration("BOT_POLLER", 10*time.Second),
+			ChannelID: getEnvAsInt64("BOT_CHANNEL_ID", 0),
+			AdminIDs:  getEnvAsInt64Slice("BOT_ADMIN_IDS", nil),
+			Username:  getEnv("BOT_USERNAME", ""),
 		},
 		Database: DatabaseConfig{
 			Host:           getEnv("DB_HOST", "localhost"),
@@ -96,6 +103,31 @@ func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
 		return value
 	}
 	return defaultValue
+}
+
+func getEnvAsInt64(key string, defaultValue int64) int64 {
+	valueStr := os.Getenv(key)
+	if value, err := strconv.ParseInt(valueStr, 10, 64); err == nil {
+		return value
+	}
+	return defaultValue
+}
+
+func getEnvAsInt64Slice(key string, defaultValue []int64) []int64 {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return defaultValue
+	}
+
+	parts := strings.Split(valueStr, ",")
+	result := make([]int64, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if value, err := strconv.ParseInt(part, 10, 64); err == nil {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 // DSN returns the PostgreSQL connection string

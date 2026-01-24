@@ -59,3 +59,171 @@
 {"level":"INFO","time":"2026-01-21T17:27:28.142+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
 {"level":"INFO","time":"2026-01-21T17:27:28.142+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
 {"level":"INFO","time":"2026-01-21T17:27:28.517+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T17:58:39.497+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T17:58:39.499+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/telegram_bot"}
+{"level":"ERROR","time":"2026-01-21T17:58:39.517+0500","logger":"telegram-bot","caller":"postgres/postgres.go:63","msg":"🔴 Failed to ping database: failed to connect to `user=postgres database=telegram_bot`: [::1]:5432 (localhost): failed SASL auth: FATAL: password authentication failed for user \"postgres\" (SQLSTATE 28P01)"}
+{"level":"FATAL","time":"2026-01-21T17:58:39.517+0500","logger":"telegram-bot","caller":"cmd/main.go:43","msg":"☠️ Failed to initialize storage: failed to connect to `user=postgres database=telegram_bot`: [::1]:5432 (localhost): failed SASL auth: FATAL: password authentication failed for user \"postgres\" (SQLSTATE 28P01)"}
+{"level":"INFO","time":"2026-01-21T18:00:03.168+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T18:00:03.169+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ischi_bot"}
+{"level":"ERROR","time":"2026-01-21T18:00:03.183+0500","logger":"telegram-bot","caller":"postgres/postgres.go:63","msg":"🔴 Failed to ping database: failed to connect to `user=postgres database=ischi_bot`: [::1]:5432 (localhost): failed SASL auth: FATAL: password authentication failed for user \"postgres\" (SQLSTATE 28P01)"}
+{"level":"FATAL","time":"2026-01-21T18:00:03.184+0500","logger":"telegram-bot","caller":"cmd/main.go:43","msg":"☠️ Failed to initialize storage: failed to connect to `user=postgres database=ischi_bot`: [::1]:5432 (localhost): failed SASL auth: FATAL: password authentication failed for user \"postgres\" (SQLSTATE 28P01)"}
+{"level":"INFO","time":"2026-01-21T18:01:15.147+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T18:01:15.149+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ischi_bot"}
+{"level":"ERROR","time":"2026-01-21T18:01:15.168+0500","logger":"telegram-bot","caller":"postgres/postgres.go:63","msg":"🔴 Failed to ping database: failed to connect to `user=postgres database=ischi_bot`: [::1]:5432 (localhost): server error: FATAL: database \"ischi_bot\" does not exist (SQLSTATE 3D000)"}
+{"level":"FATAL","time":"2026-01-21T18:01:15.168+0500","logger":"telegram-bot","caller":"cmd/main.go:43","msg":"☠️ Failed to initialize storage: failed to connect to `user=postgres database=ischi_bot`: [::1]:5432 (localhost): server error: FATAL: database \"ischi_bot\" does not exist (SQLSTATE 3D000)"}
+{"level":"INFO","time":"2026-01-21T18:02:42.188+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T18:02:42.191+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ischi_bot"}
+{"level":"ERROR","time":"2026-01-21T18:02:42.207+0500","logger":"telegram-bot","caller":"postgres/postgres.go:63","msg":"🔴 Failed to ping database: failed to connect to `user=postgres database=ischi_bot`: [::1]:5432 (localhost): server error: FATAL: database \"ischi_bot\" does not exist (SQLSTATE 3D000)"}
+{"level":"FATAL","time":"2026-01-21T18:02:42.208+0500","logger":"telegram-bot","caller":"cmd/main.go:43","msg":"☠️ Failed to initialize storage: failed to connect to `user=postgres database=ischi_bot`: [::1]:5432 (localhost): server error: FATAL: database \"ischi_bot\" does not exist (SQLSTATE 3D000)"}
+{"level":"INFO","time":"2026-01-21T18:03:23.807+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T18:03:23.810+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-21T18:03:23.832+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T18:03:23.859+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-21T18:03:23.859+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T18:03:28.063+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T18:06:46.637+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-21T18:06:46.637+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-21T18:06:46.648+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-21T18:06:46.656+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-21T18:06:46.656+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-21T18:06:47.466+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-21T18:07:14.352+0500","logger":"telegram-bot","caller":"telebot.v4@v4.0.0-beta.7/bot.go:136","msg":"476002175 telegram: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message (400)"}
+{"level":"INFO","time":"2026-01-22T21:11:31.154+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-22T21:11:31.155+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-22T21:11:31.194+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-22T21:11:31.250+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-22T21:11:31.250+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-22T21:11:31.623+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-22T21:25:24.740+0500","logger":"telegram-bot","caller":"cmd/main.go:77","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-22T21:25:29.743+0500","logger":"telegram-bot","caller":"cmd/main.go:88","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-22T21:29:15.854+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-22T21:29:15.855+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-22T21:29:15.891+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-22T21:29:15.943+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-22T21:29:15.943+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-22T21:29:16.297+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-22T21:33:39.758+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-22T21:33:39.759+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-22T21:33:39.780+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-22T21:33:39.796+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-22T21:33:39.796+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-22T21:33:40.126+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-22T21:38:24.626+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-22T21:38:24.627+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-22T21:38:24.663+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-22T21:38:24.705+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-22T21:38:24.705+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-22T21:38:25.227+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-22T21:55:16.479+0500","logger":"telegram-bot","caller":"cmd/main.go:37","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-22T21:55:16.480+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-22T21:55:16.506+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-22T21:55:16.550+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-22T21:55:16.550+0500","logger":"telegram-bot","caller":"cmd/main.go:46","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-22T21:55:17.217+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-22T21:56:18.502+0500","logger":"telegram-bot","caller":"telebot.v4@v4.0.0-beta.7/bot.go:136","msg":"476002244 telebot: context does not contain message"}
+{"level":"INFO","time":"2026-01-24T13:57:26.354+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T13:57:26.356+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T13:57:26.404+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T13:57:26.458+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-24T13:57:26.458+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T13:57:27.006+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T13:58:13.819+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T13:58:13.823+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T13:58:13.824+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T13:58:13.828+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:04:03.602+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T14:04:08.605+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T14:04:13.198+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T14:04:13.199+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T14:04:13.224+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T14:04:13.246+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T14:04:13.247+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T14:04:13.652+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T14:04:16.954+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:04:16.958+0500","logger":"telegram-bot","caller":"service/registration.go:72","msg":"✅ Found existing registration draft","user_id":8129817409,"draft_state":"reg_age"}
+{"level":"INFO","time":"2026-01-24T14:04:22.045+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:04:22.050+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:11:04.597+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T14:11:09.599+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T14:11:17.305+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T14:11:17.306+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T14:11:17.330+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T14:11:17.396+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-24T14:11:17.396+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T14:11:17.791+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"ERROR","time":"2026-01-24T14:11:30.877+0500","logger":"telegram-bot","caller":"handlers/registration.go:316","msg":"🔴 Failed to cancel registration","error":"not found"}
+{"level":"INFO","time":"2026-01-24T14:11:31.093+0500","logger":"telegram-bot","caller":"telebot.v4@v4.0.0-beta.7/bot.go:136","msg":"476002259 telebot: context does not contain message"}
+{"level":"INFO","time":"2026-01-24T14:11:35.935+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:11:35.944+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:11:35.944+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:11:35.947+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:14:23.703+0500","logger":"telegram-bot","caller":"service/registration.go:491","msg":"✅ !!!Confirm Registration","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:14:23.720+0500","logger":"telegram-bot","caller":"service/registration.go:517","msg":"✅ Registration completed successfully","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T14:15:18.379+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:15:18.383+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:15:18.383+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:15:18.386+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:15:27.990+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:15:27.992+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:15:27.992+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:15:27.994+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:18:11.789+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T14:18:16.791+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T14:18:21.536+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T14:18:21.536+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T14:18:21.568+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T14:18:21.590+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T14:18:21.590+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T14:18:21.983+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T14:18:28.911+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:18:28.915+0500","logger":"telegram-bot","caller":"service/registration.go:72","msg":"✅ Found existing registration draft","user_id":442678308,"draft_state":"reg_phone"}
+{"level":"INFO","time":"2026-01-24T14:18:31.141+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:18:31.145+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:21:22.369+0500","logger":"telegram-bot","caller":"service/registration.go:490","msg":"✅ !!!Confirm Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:21:22.387+0500","logger":"telegram-bot","caller":"service/registration.go:516","msg":"✅ Registration completed successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:26:08.416+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T14:26:13.417+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T14:26:26.515+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T14:26:26.516+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T14:26:26.550+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T14:26:26.594+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-24T14:26:26.594+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T14:26:27.640+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T14:26:40.944+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:26:40.948+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:26:40.948+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:26:40.951+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:29:46.894+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T14:29:51.897+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T14:29:56.616+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T14:29:56.617+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T14:29:56.630+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T14:29:56.642+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T14:29:56.642+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T14:29:57.058+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T14:30:03.854+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:30:03.858+0500","logger":"telegram-bot","caller":"service/registration.go:72","msg":"✅ Found existing registration draft","user_id":442678308,"draft_state":"reg_age"}
+{"level":"INFO","time":"2026-01-24T14:30:06.773+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:30:06.778+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:33:02.658+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:33:02.661+0500","logger":"telegram-bot","caller":"service/registration.go:72","msg":"✅ Found existing registration draft","user_id":442678308,"draft_state":"reg_age"}
+{"level":"INFO","time":"2026-01-24T14:33:08.641+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:33:08.643+0500","logger":"telegram-bot","caller":"service/registration.go:72","msg":"✅ Found existing registration draft","user_id":442678308,"draft_state":"reg_age"}
+{"level":"INFO","time":"2026-01-24T14:33:10.487+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:33:10.492+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:33:29.108+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T14:33:34.109+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T14:33:55.601+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T14:33:55.602+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T14:33:55.626+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T14:33:55.643+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T14:33:55.643+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T14:33:56.066+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T14:33:59.546+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:33:59.549+0500","logger":"telegram-bot","caller":"service/registration.go:72","msg":"✅ Found existing registration draft","user_id":442678308,"draft_state":"reg_age"}
+{"level":"INFO","time":"2026-01-24T14:34:02.519+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:34:02.524+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:34:35.263+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:34:35.268+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:34:35.268+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T14:34:35.271+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}

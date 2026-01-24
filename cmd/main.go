@@ -11,6 +11,7 @@ import (
 	"telegram-bot-starter/bot/handlers"
 	"telegram-bot-starter/config"
 	"telegram-bot-starter/pkg/logger"
+	"telegram-bot-starter/service"
 	"telegram-bot-starter/storage/postgres"
 
 	"github.com/joho/godotenv"
@@ -55,9 +56,18 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to create bot: " + err.Error())
 	}
+	// Initialize bot services and handlers
+	services := service.NewServiceManager(*cfg, log, store, telegramBot)
 
 	// Initialize handler
-	handler := handlers.NewHandler(log, store, telegramBot)
+	params := handlers.NewHandlerParams{
+		Logger:   log,
+		Storage:  store,
+		Bot:      telegramBot,
+		Cfg:      cfg,
+		Services: services,
+	}
+	handler := handlers.NewHandler(params)
 
 	// Set up routes
 	bot.SetUpRoutes(telegramBot, handler, log)

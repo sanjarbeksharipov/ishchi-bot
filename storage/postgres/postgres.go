@@ -113,3 +113,13 @@ func (s *Store) CloseDB() {
 func (s *Store) User() storage.UserRepoI {
 	return NewUserRepo(s.db, s.logger)
 }
+
+// Job returns the job repository
+func (s *Store) Job() storage.JobRepoI {
+	return NewJobRepo(s)
+}
+
+// Registration returns the registration repository
+func (s *Store) Registration() storage.RegistrationRepoI {
+	return NewRegistrationRepo(s.db, s.logger)
+}

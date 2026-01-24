@@ -1,6 +1,10 @@
 package keyboards
 
 import (
+	"fmt"
+
+	"telegram-bot-starter/bot/models"
+
 	tele "gopkg.in/telebot.v4"
 )
 
@@ -39,5 +43,233 @@ func BackKeyboard() *tele.ReplyMarkup {
 	menu := &tele.ReplyMarkup{}
 	btnBack := menu.Data("⬅️ Back", "back")
 	menu.Inline(menu.Row(btnBack))
+	return menu
+}
+
+// AdminMenuKeyboard returns the admin panel main menu
+func AdminMenuKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnCreateJob := menu.Data("➕ Ish yaratish", "admin_create_job")
+	btnJobList := menu.Data("📋 Ishlar ro'yxati", "admin_job_list")
+
+	menu.Inline(
+		menu.Row(btnCreateJob),
+		menu.Row(btnJobList),
+	)
+
+	return menu
+}
+
+// JobListKeyboard returns keyboard with list of jobs
+func JobListKeyboard(jobs []*models.Job) *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	var rows []tele.Row
+	for _, job := range jobs {
+		statusIcon := "🟢"
+		if job.Status == models.JobStatusToldi {
+			statusIcon = "🔴"
+		} else if job.Status == models.JobStatusClosed {
+			statusIcon = "⚫"
+		}
+
+		btnText := fmt.Sprintf("%s № %d - %s", statusIcon, job.OrderNumber, job.IshKuni)
+		btn := menu.Data(btnText, fmt.Sprintf("job_detail_%d", job.ID))
+		rows = append(rows, menu.Row(btn))
+	}
+
+	// Add back button
+	rows = append(rows, menu.Row(menu.Data("⬅️ Orqaga", "admin_menu")))
+
+	menu.Inline(rows...)
+	return menu
+}
+
+// JobDetailKeyboard returns keyboard for job detail view with edit options
+func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	// Edit field buttons
+	btnEditIshHaqqi := menu.Data("💰 Ish haqqi", fmt.Sprintf("edit_job_%d_ish_haqqi", job.ID))
+	btnEditOvqat := menu.Data("🍛 Ovqat", fmt.Sprintf("edit_job_%d_ovqat", job.ID))
+	btnEditVaqt := menu.Data("⏰ Vaqt", fmt.Sprintf("edit_job_%d_vaqt", job.ID))
+	btnEditManzil := menu.Data("📍 Manzil", fmt.Sprintf("edit_job_%d_manzil", job.ID))
+	btnEditXizmatHaqqi := menu.Data("🌟 Xizmat haqqi", fmt.Sprintf("edit_job_%d_xizmat_haqqi", job.ID))
+	btnEditAvtobuslar := menu.Data("🚌 Avtobuslar", fmt.Sprintf("edit_job_%d_avtobuslar", job.ID))
+	btnEditQoshimcha := menu.Data("📝 Qo'shimcha", fmt.Sprintf("edit_job_%d_qoshimcha", job.ID))
+	btnEditIshKuni := menu.Data("📅 Ish kuni", fmt.Sprintf("edit_job_%d_ish_kuni", job.ID))
+	btnEditKerakli := menu.Data("👥 Kerakli ishchilar", fmt.Sprintf("edit_job_%d_kerakli", job.ID))
+
+	// Status buttons
+	btnStatusOpen := menu.Data("🟢 Ochiq", fmt.Sprintf("job_status_%d_open", job.ID))
+	btnStatusToldi := menu.Data("🔴 To'ldi", fmt.Sprintf("job_status_%d_toldi", job.ID))
+	btnStatusClosed := menu.Data("⚫ Yopilgan", fmt.Sprintf("job_status_%d_closed", job.ID))
+
+	// Action buttons
+	var btnPublish tele.Btn
+	if job.ChannelMessageID == 0 {
+		btnPublish = menu.Data("📢 Kanalga yuborish", fmt.Sprintf("publish_job_%d", job.ID))
+	} else {
+		btnPublish = menu.Data("🔄 Kanaldagi xabarni yangilash", fmt.Sprintf("publish_job_%d", job.ID))
+	}
+
+	btnDelete := menu.Data("🗑 O'chirish", fmt.Sprintf("delete_job_%d", job.ID))
+	btnBack := menu.Data("⬅️ Orqaga", "admin_job_list")
+
+	menu.Inline(
+		menu.Row(btnEditIshHaqqi, btnEditOvqat),
+		menu.Row(btnEditVaqt, btnEditManzil),
+		menu.Row(btnEditXizmatHaqqi, btnEditAvtobuslar),
+		menu.Row(btnEditQoshimcha, btnEditIshKuni),
+		menu.Row(btnEditKerakli),
+		menu.Row(btnStatusOpen, btnStatusToldi, btnStatusClosed),
+		menu.Row(btnPublish),
+		menu.Row(btnDelete),
+		menu.Row(btnBack),
+	)
+
+	return menu
+}
+
+// CancelKeyboard returns a cancel button keyboard
+func CancelKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+	btnCancel := menu.Data("❌ Bekor qilish", "cancel_job_creation")
+	menu.Inline(menu.Row(btnCancel))
+	return menu
+}
+
+// CancelEditKeyboard returns cancel button for editing with return to job detail
+func CancelEditKeyboard(jobID int64) *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+	btnCancel := menu.Data("❌ Bekor qilish", fmt.Sprintf("job_detail_%d", jobID))
+	menu.Inline(menu.Row(btnCancel))
+	return menu
+}
+
+// JobSignupKeyboard returns keyboard with signup button for channel posts
+func JobSignupKeyboard(jobID int64, botUsername string) *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+	signupURL := fmt.Sprintf("https://t.me/%s?start=job_%d", botUsername, jobID)
+	btnSignup := menu.URL("✍️ Ishga yozilish", signupURL)
+	menu.Inline(menu.Row(btnSignup))
+	return menu
+}
+
+// ========== Registration Keyboards ==========
+
+// PublicOfferKeyboard returns accept/decline buttons for public offer
+func PublicOfferKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnAccept := menu.Data("✅ Qabul qilaman", "reg_accept_offer")
+	btnDecline := menu.Data("❌ Rad etaman", "reg_decline_offer")
+
+	menu.Inline(
+		menu.Row(btnAccept, btnDecline),
+	)
+
+	return menu
+}
+
+// PhoneRequestKeyboard returns reply keyboard with contact sharing button
+func PhoneRequestKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{
+		ResizeKeyboard:  true,
+		OneTimeKeyboard: true,
+	}
+
+	btnContact := menu.Contact("📞 Telefon raqamni yuborish")
+	btnCancel := menu.Text("❌ Bekor qilish")
+
+	menu.Reply(
+		menu.Row(btnContact),
+		menu.Row(btnCancel),
+	)
+
+	return menu
+}
+
+// RegistrationConfirmKeyboard returns confirm/edit/cancel buttons
+func RegistrationConfirmKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnConfirm := menu.Data("✅ Tasdiqlash", "reg_confirm")
+	btnEdit := menu.Data("✏️ Tahrirlash", "reg_edit")
+	btnCancel := menu.Data("❌ Bekor qilish", "reg_cancel")
+
+	menu.Inline(
+		menu.Row(btnConfirm),
+		menu.Row(btnEdit, btnCancel),
+	)
+
+	return menu
+}
+
+// RegistrationEditFieldKeyboard returns buttons to select which field to edit
+func RegistrationEditFieldKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnFullName := menu.Data("👤 Ism-familiya", "reg_edit_full_name")
+	btnPhone := menu.Data("📱 Telefon", "reg_edit_phone")
+	btnAge := menu.Data("🎂 Yosh", "reg_edit_age")
+	btnBody := menu.Data("📏 Vazn/Bo'y", "reg_edit_body_params")
+	btnBack := menu.Data("⬅️ Orqaga", "reg_back_to_confirm")
+
+	menu.Inline(
+		menu.Row(btnFullName, btnPhone),
+		menu.Row(btnAge, btnBody),
+		menu.Row(btnBack),
+	)
+
+	return menu
+}
+
+// RegistrationCancelKeyboard returns cancel button for registration flow
+func RegistrationCancelKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+	btnCancel := menu.Data("❌ Bekor qilish", "reg_cancel")
+	menu.Inline(menu.Row(btnCancel))
+	return menu
+}
+
+// RemoveReplyKeyboard returns an empty reply markup to remove any existing reply keyboard
+func RemoveReplyKeyboard() *tele.ReplyMarkup {
+	return &tele.ReplyMarkup{
+		RemoveKeyboard: true,
+	}
+}
+
+// UserMainMenuKeyboard returns the main menu for registered users
+func UserMainMenuKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnJobs := menu.Data("💼 Mavjud ishlar", "user_jobs")
+	btnMyJobs := menu.Data("📋 Mening ishlarim", "user_my_jobs")
+	btnProfile := menu.Data("👤 Profil", "user_profile")
+	btnHelp := menu.Data("❓ Yordam", "help")
+
+	menu.Inline(
+		menu.Row(btnJobs),
+		menu.Row(btnMyJobs, btnProfile),
+		menu.Row(btnHelp),
+	)
+
+	return menu
+}
+
+// ContinueRegistrationKeyboard returns keyboard to continue or restart registration
+func ContinueRegistrationKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnContinue := menu.Data("▶️ Davom ettirish", "reg_continue")
+	btnRestart := menu.Data("🔄 Qaytadan boshlash", "reg_restart")
+
+	menu.Inline(
+		menu.Row(btnContinue),
+		menu.Row(btnRestart),
+	)
+
 	return menu
 }
