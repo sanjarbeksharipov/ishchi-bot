@@ -2,53 +2,63 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"time"
+	"fmt"
 
 	"telegram-bot-starter/bot/models"
+	"telegram-bot-starter/pkg/logger"
 	"telegram-bot-starter/storage"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type jobRepo struct {
-	db *Store
+	db  *pgxpool.Pool
+	log logger.LoggerI
 }
 
 // NewJobRepo creates a new job repository
-func NewJobRepo(db *Store) storage.JobRepoI {
-	return &jobRepo{db: db}
+func NewJobRepo(db *pgxpool.Pool, log logger.LoggerI) storage.JobRepoI {
+	return &jobRepo{
+		db:  db,
+		log: log,
+	}
 }
 
 // Create creates a new job
 func (r *jobRepo) Create(ctx context.Context, job *models.Job) error {
 	query := `
 		INSERT INTO jobs (
-			ish_haqqi, ovqat, vaqt, manzil, xizmat_haqqi, avtobuslar,
-			qoshimcha, ish_kuni, status, kerakli_ishchilar, band_ishchilar,
-			channel_message_id, created_by
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+			order_number, salary, food, work_time, address, service_fee, buses,
+			additional_info, work_date, status, required_workers, reserved_slots, 
+			confirmed_slots, channel_message_id, created_by_admin_id
+		) VALUES (nextval('job_order_number_seq'), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id, order_number, created_at, updated_at
 	`
 
-	err := r.db.db.QueryRow(ctx, query,
-		job.IshHaqqi,
-		job.Ovqat,
-		job.Vaqt,
-		job.Manzil,
-		job.XizmatHaqqi,
-		job.Avtobuslar,
-		job.Qoshimcha,
-		job.IshKuni,
+	err := r.db.QueryRow(ctx, query,
+		job.Salary,
+		job.Food,
+		job.WorkTime,
+		job.Address,
+		job.ServiceFee,
+		job.Buses,
+		job.AdditionalInfo,
+		job.WorkDate,
 		job.Status,
-		job.KerakliIshchilar,
-		job.BandIshchilar,
+		job.RequiredWorkers,
+		job.ReservedSlots,
+		job.ConfirmedSlots,
 		job.ChannelMessageID,
-		job.CreatedBy,
+		job.CreatedByAdminID,
 	).Scan(&job.ID, &job.OrderNumber, &job.CreatedAt, &job.UpdatedAt)
 
 	if err != nil {
-		return err
+		r.log.Error("Failed to create job", logger.Error(err))
+		return fmt.Errorf("failed to create job: %w", err)
 	}
 
 	return nil
@@ -57,30 +67,35 @@ func (r *jobRepo) Create(ctx context.Context, job *models.Job) error {
 // GetByID retrieves a job by ID
 func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 	query := `
-		SELECT id, order_number, ish_haqqi, ovqat, vaqt, manzil, xizmat_haqqi,
-			avtobuslar, qoshimcha, ish_kuni, status, kerakli_ishchilar,
-			band_ishchilar, channel_message_id, created_by, created_at, updated_at
+		SELECT id, order_number, salary, food, work_time, address, service_fee,
+			buses, additional_info, work_date, status, required_workers,
+			reserved_slots, confirmed_slots, channel_message_id, 
+			created_by_admin_id, created_at, updated_at
 		FROM jobs
 		WHERE id = $1
 	`
 
 	job := &models.Job{}
-	err := r.db.db.QueryRow(ctx, query, id).Scan(
+	var food, buses, additionalInfo sql.NullString
+	var channelMessageID sql.NullInt64
+
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&job.ID,
 		&job.OrderNumber,
-		&job.IshHaqqi,
-		&job.Ovqat,
-		&job.Vaqt,
-		&job.Manzil,
-		&job.XizmatHaqqi,
-		&job.Avtobuslar,
-		&job.Qoshimcha,
-		&job.IshKuni,
+		&job.Salary,
+		&food,
+		&job.WorkTime,
+		&job.Address,
+		&job.ServiceFee,
+		&buses,
+		&additionalInfo,
+		&job.WorkDate,
 		&job.Status,
-		&job.KerakliIshchilar,
-		&job.BandIshchilar,
-		&job.ChannelMessageID,
-		&job.CreatedBy,
+		&job.RequiredWorkers,
+		&job.ReservedSlots,
+		&job.ConfirmedSlots,
+		&channelMessageID,
+		&job.CreatedByAdminID,
 		&job.CreatedAt,
 		&job.UpdatedAt,
 	)
@@ -89,7 +104,82 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, storage.ErrNotFound
 		}
-		return nil, err
+		r.log.Error("Failed to get job", logger.Error(err))
+		return nil, fmt.Errorf("failed to get job: %w", err)
+	}
+
+	// Handle nullable fields
+	if food.Valid {
+		job.Food = food.String
+	}
+	if buses.Valid {
+		job.Buses = buses.String
+	}
+	if additionalInfo.Valid {
+		job.AdditionalInfo = additionalInfo.String
+	}
+	if channelMessageID.Valid {
+		job.ChannelMessageID = channelMessageID.Int64
+	}
+
+	return job, nil
+}
+
+// GetByIDForUpdate retrieves a job with row lock (FOR UPDATE)
+func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx interface{}, id int64) (*models.Job, error) {
+	query := `
+		SELECT id, order_number, salary, food, work_time, address, service_fee,
+			buses, additional_info, work_date, status, required_workers,
+			reserved_slots, confirmed_slots, channel_message_id, 
+			created_by_admin_id, created_at, updated_at
+		FROM jobs
+		WHERE id = $1
+		FOR UPDATE
+	`
+
+	job := &models.Job{}
+	var food, buses, additionalInfo sql.NullString
+	var channelMessageID sql.NullInt64
+
+	var err error
+	if tx != nil {
+		pgxTx := tx.(pgx.Tx)
+		err = pgxTx.QueryRow(ctx, query, id).Scan(
+			&job.ID, &job.OrderNumber, &job.Salary, &food,
+			&job.WorkTime, &job.Address, &job.ServiceFee, &buses,
+			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
+			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID,
+			&job.CreatedByAdminID, &job.CreatedAt, &job.UpdatedAt,
+		)
+	} else {
+		err = r.db.QueryRow(ctx, query, id).Scan(
+			&job.ID, &job.OrderNumber, &job.Salary, &food,
+			&job.WorkTime, &job.Address, &job.ServiceFee, &buses,
+			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
+			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID,
+			&job.CreatedByAdminID, &job.CreatedAt, &job.UpdatedAt,
+		)
+	}
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, storage.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get job for update: %w", err)
+	}
+
+	// Handle nullable fields
+	if food.Valid {
+		job.Food = food.String
+	}
+	if buses.Valid {
+		job.Buses = buses.String
+	}
+	if additionalInfo.Valid {
+		job.AdditionalInfo = additionalInfo.String
+	}
+	if channelMessageID.Valid {
+		job.ChannelMessageID = channelMessageID.Int64
 	}
 
 	return job, nil
@@ -98,9 +188,10 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 // GetAll retrieves all jobs with optional status filter
 func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*models.Job, error) {
 	query := `
-		SELECT id, order_number, ish_haqqi, ovqat, vaqt, manzil, xizmat_haqqi,
-			avtobuslar, qoshimcha, ish_kuni, status, kerakli_ishchilar,
-			band_ishchilar, channel_message_id, created_by, created_at, updated_at
+		SELECT id, order_number, salary, food, work_time, address, service_fee,
+			buses, additional_info, work_date, status, required_workers,
+			reserved_slots, confirmed_slots, channel_message_id, 
+			created_by_admin_id, created_at, updated_at
 		FROM jobs
 	`
 	args := []interface{}{}
@@ -112,37 +203,45 @@ func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*mode
 
 	query += " ORDER BY created_at DESC"
 
-	rows, err := r.db.db.Query(ctx, query, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		r.log.Error("Failed to get all jobs", logger.Error(err))
+		return nil, fmt.Errorf("failed to get all jobs: %w", err)
 	}
 	defer rows.Close()
 
 	var jobs []*models.Job
 	for rows.Next() {
 		job := &models.Job{}
+		var food, buses, additionalInfo sql.NullString
+		var channelMessageID sql.NullInt64
+
 		err := rows.Scan(
-			&job.ID,
-			&job.OrderNumber,
-			&job.IshHaqqi,
-			&job.Ovqat,
-			&job.Vaqt,
-			&job.Manzil,
-			&job.XizmatHaqqi,
-			&job.Avtobuslar,
-			&job.Qoshimcha,
-			&job.IshKuni,
-			&job.Status,
-			&job.KerakliIshchilar,
-			&job.BandIshchilar,
-			&job.ChannelMessageID,
-			&job.CreatedBy,
-			&job.CreatedAt,
-			&job.UpdatedAt,
+			&job.ID, &job.OrderNumber, &job.Salary, &food,
+			&job.WorkTime, &job.Address, &job.ServiceFee, &buses,
+			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
+			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID,
+			&job.CreatedByAdminID, &job.CreatedAt, &job.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			r.log.Error("Failed to scan job", logger.Error(err))
+			continue
 		}
+
+		// Handle nullable fields
+		if food.Valid {
+			job.Food = food.String
+		}
+		if buses.Valid {
+			job.Buses = buses.String
+		}
+		if additionalInfo.Valid {
+			job.AdditionalInfo = additionalInfo.String
+		}
+		if channelMessageID.Valid {
+			job.ChannelMessageID = channelMessageID.Int64
+		}
+
 		jobs = append(jobs, job)
 	}
 
@@ -152,47 +251,34 @@ func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*mode
 // Update updates a job
 func (r *jobRepo) Update(ctx context.Context, job *models.Job) error {
 	query := `
-		UPDATE jobs SET
-			ish_haqqi = $1,
-			ovqat = $2,
-			vaqt = $3,
-			manzil = $4,
-			xizmat_haqqi = $5,
-			avtobuslar = $6,
-			qoshimcha = $7,
-			ish_kuni = $8,
-			status = $9,
-			kerakli_ishchilar = $10,
-			band_ishchilar = $11,
-			channel_message_id = $12,
-			updated_at = $13
-		WHERE id = $14
+		UPDATE jobs
+		SET salary = $2, food = $3, work_time = $4, address = $5, service_fee = $6,
+			buses = $7, additional_info = $8, work_date = $9, status = $10,
+			required_workers = $11, reserved_slots = $12, confirmed_slots = $13,
+			channel_message_id = $14, updated_at = NOW()
+		WHERE id = $1
 	`
 
-	job.UpdatedAt = time.Now()
-	result, err := r.db.db.Exec(ctx, query,
-		job.IshHaqqi,
-		job.Ovqat,
-		job.Vaqt,
-		job.Manzil,
-		job.XizmatHaqqi,
-		job.Avtobuslar,
-		job.Qoshimcha,
-		job.IshKuni,
-		job.Status,
-		job.KerakliIshchilar,
-		job.BandIshchilar,
-		job.ChannelMessageID,
-		job.UpdatedAt,
+	_, err := r.db.Exec(ctx, query,
 		job.ID,
+		job.Salary,
+		toNullString(job.Food),
+		job.WorkTime,
+		job.Address,
+		job.ServiceFee,
+		toNullString(job.Buses),
+		toNullString(job.AdditionalInfo),
+		job.WorkDate,
+		job.Status,
+		job.RequiredWorkers,
+		job.ReservedSlots,
+		job.ConfirmedSlots,
+		toNullInt64(job.ChannelMessageID),
 	)
 
 	if err != nil {
-		return err
-	}
-
-	if result.RowsAffected() == 0 {
-		return storage.ErrNotFound
+		r.log.Error("Failed to update job", logger.Error(err))
+		return fmt.Errorf("failed to update job: %w", err)
 	}
 
 	return nil
@@ -200,68 +286,137 @@ func (r *jobRepo) Update(ctx context.Context, job *models.Job) error {
 
 // UpdateStatus updates only the job status
 func (r *jobRepo) UpdateStatus(ctx context.Context, id int64, status models.JobStatus) error {
-	query := `UPDATE jobs SET status = $1, updated_at = NOW() WHERE id = $2`
-
-	result, err := r.db.db.Exec(ctx, query, status, id)
+	query := `UPDATE jobs SET status = $2, updated_at = NOW() WHERE id = $1`
+	_, err := r.db.Exec(ctx, query, id, status)
 	if err != nil {
-		return err
+		r.log.Error("Failed to update job status", logger.Error(err))
+		return fmt.Errorf("failed to update job status: %w", err)
 	}
-
-	if result.RowsAffected() == 0 {
-		return storage.ErrNotFound
-	}
-
 	return nil
 }
 
 // UpdateChannelMessageID updates the channel message ID for a job
 func (r *jobRepo) UpdateChannelMessageID(ctx context.Context, id int64, messageID int64) error {
-	query := `UPDATE jobs SET channel_message_id = $1, updated_at = NOW() WHERE id = $2`
-
-	result, err := r.db.db.Exec(ctx, query, messageID, id)
+	query := `UPDATE jobs SET channel_message_id = $2, updated_at = NOW() WHERE id = $1`
+	_, err := r.db.Exec(ctx, query, id, messageID)
 	if err != nil {
-		return err
+		r.log.Error("Failed to update channel message ID", logger.Error(err))
+		return fmt.Errorf("failed to update channel message ID: %w", err)
 	}
-
-	if result.RowsAffected() == 0 {
-		return storage.ErrNotFound
-	}
-
-	return nil
-}
-
-// IncrementBookedWorkers increments the booked workers count
-func (r *jobRepo) IncrementBookedWorkers(ctx context.Context, id int64) error {
-	query := `
-		UPDATE jobs 
-		SET band_ishchilar = band_ishchilar + 1, updated_at = NOW() 
-		WHERE id = $1 AND band_ishchilar < kerakli_ishchilar
-	`
-
-	result, err := r.db.db.Exec(ctx, query, id)
-	if err != nil {
-		return err
-	}
-
-	if result.RowsAffected() == 0 {
-		return storage.ErrNotFound
-	}
-
 	return nil
 }
 
 // Delete deletes a job by ID
 func (r *jobRepo) Delete(ctx context.Context, id int64) error {
 	query := `DELETE FROM jobs WHERE id = $1`
-
-	result, err := r.db.db.Exec(ctx, query, id)
+	_, err := r.db.Exec(ctx, query, id)
 	if err != nil {
-		return err
+		r.log.Error("Failed to delete job", logger.Error(err))
+		return fmt.Errorf("failed to delete job: %w", err)
+	}
+	return nil
+}
+
+// IncrementReservedSlots atomically increments reserved_slots with validation
+func (r *jobRepo) IncrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error {
+	query := `
+		UPDATE jobs
+		SET reserved_slots = reserved_slots + 1,
+			updated_at = NOW()
+		WHERE id = $1
+		  AND (reserved_slots + confirmed_slots) < required_workers
+	`
+
+	var result pgconn.CommandTag
+	var err error
+
+	if tx != nil {
+		pgxTx := tx.(pgx.Tx)
+		result, err = pgxTx.Exec(ctx, query, jobID)
+	} else {
+		result, err = r.db.Exec(ctx, query, jobID)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to increment reserved slots: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return storage.ErrNotFound
+		return storage.ErrNotFound // Job full or not found
 	}
 
 	return nil
+}
+
+// DecrementReservedSlots atomically decrements reserved_slots
+func (r *jobRepo) DecrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error {
+	query := `
+		UPDATE jobs
+		SET reserved_slots = GREATEST(reserved_slots - 1, 0),
+			updated_at = NOW()
+		WHERE id = $1
+	`
+
+	var err error
+	if tx != nil {
+		pgxTx := tx.(pgx.Tx)
+		_, err = pgxTx.Exec(ctx, query, jobID)
+	} else {
+		_, err = r.db.Exec(ctx, query, jobID)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to decrement reserved slots: %w", err)
+	}
+
+	return nil
+}
+
+// MoveReservedToConfirmed atomically moves slot from reserved to confirmed
+func (r *jobRepo) MoveReservedToConfirmed(ctx context.Context, tx interface{}, jobID int64) error {
+	query := `
+		UPDATE jobs
+		SET reserved_slots = GREATEST(reserved_slots - 1, 0),
+			confirmed_slots = confirmed_slots + 1,
+			updated_at = NOW()
+		WHERE id = $1
+	`
+
+	var err error
+	if tx != nil {
+		pgxTx := tx.(pgx.Tx)
+		_, err = pgxTx.Exec(ctx, query, jobID)
+	} else {
+		_, err = r.db.Exec(ctx, query, jobID)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to move reserved to confirmed: %w", err)
+	}
+
+	return nil
+}
+
+// GetAvailableSlots returns how many slots are available
+func (r *jobRepo) GetAvailableSlots(ctx context.Context, jobID int64) (int, error) {
+	query := `
+		SELECT required_workers - (reserved_slots + confirmed_slots) as available
+		FROM jobs
+		WHERE id = $1
+	`
+
+	var available int
+	err := r.db.QueryRow(ctx, query, jobID).Scan(&available)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, storage.ErrNotFound
+		}
+		return 0, fmt.Errorf("failed to get available slots: %w", err)
+	}
+
+	if available < 0 {
+		available = 0
+	}
+
+	return available, nil
 }

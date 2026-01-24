@@ -46,3 +46,8 @@ Admin :
  
 PC: qo'shimcha tarzda ishga yozilish uchun button bo'lishi kerak. foydalanuvchi ishga yozilish buttoni bosganda botga o'tishi kerak
 
+1. Foydalanuvchi link orqali botga o'tadi 
+2. Agar registratsiya qilmagan bo'lsa registratsiya qilish so'raladi
+3. Registratsiyadan so'ng unga 3 minut ichida to'lov qilish haqida xabar ko'rsatiladi. Etibor berish kerak bo'lgan jihat , agar ish uchun kerakli ishchilar soni misol uchun 3 ta bo'lsa va 5 kishi botga o'tib to'lov qilsa u holda qolgan 2 kishinikini qaytarib berish kerak bo'ladi. Shu sababli buning oldini olish uchun ayni vaqtda ishga yozilmoqchi bo'lganlar ishga kerakli insonlardan ko'p bo'lmasligi kerak. (Yoki o'zing ideal deb bilgan yechimni taklif qil)
+4. Agar shu vaqt oralig'ida chekni yuborsa admin tomonidan tasdiqlanishini kutishini so'raladi
+5. Agar yubormasa xabar tahrirlanib, vaqt o'tib ketgani bildiriladi

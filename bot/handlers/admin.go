@@ -50,8 +50,8 @@ func (h *Handler) HandleCreateJob(c tele.Context) error {
 
 	// Store empty job in session (we'll use user state + temp storage)
 	h.setTempJob(c.Sender().ID, &models.Job{
-		Status:           models.JobStatusOpen,
-		KerakliIshchilar: 1,
+		Status:          models.JobStatusActive,
+		RequiredWorkers: 1,
 	})
 
 	if err := c.Respond(); err != nil {
@@ -308,7 +308,7 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 	ctx := context.Background()
 	job := h.getTempJob(c.Sender().ID)
 	if job == nil {
-		job = &models.Job{Status: models.JobStatusOpen, KerakliIshchilar: 1}
+		job = &models.Job{Status: models.JobStatusDraft, RequiredWorkers: 1}
 	}
 
 	var nextState models.UserState
@@ -316,22 +316,22 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 
 	switch user.State {
 	case models.StateCreatingJobIshHaqqi:
-		job.IshHaqqi = text
+		job.Salary = text
 		nextState = models.StateCreatingJobOvqat
 		nextPrompt = messages.MsgEnterOvqat
 
 	case models.StateCreatingJobOvqat:
-		job.Ovqat = text
+		job.Food = text
 		nextState = models.StateCreatingJobVaqt
 		nextPrompt = messages.MsgEnterVaqt
 
 	case models.StateCreatingJobVaqt:
-		job.Vaqt = text
+		job.WorkTime = text
 		nextState = models.StateCreatingJobManzil
 		nextPrompt = messages.MsgEnterManzil
 
 	case models.StateCreatingJobManzil:
-		job.Manzil = text
+		job.Address = text
 		nextState = models.StateCreatingJobXizmatHaqqi
 		nextPrompt = messages.MsgEnterXizmatHaqqi
 
@@ -340,22 +340,22 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 		if err != nil {
 			return c.Send("❌ Iltimos, raqam kiriting. Masalan: 9990")
 		}
-		job.XizmatHaqqi = xizmatHaqqi
+		job.ServiceFee = xizmatHaqqi
 		nextState = models.StateCreatingJobAvtobuslar
 		nextPrompt = messages.MsgEnterAvtobuslar
 
 	case models.StateCreatingJobAvtobuslar:
-		job.Avtobuslar = text
+		job.Buses = text
 		nextState = models.StateCreatingJobQoshimcha
 		nextPrompt = messages.MsgEnterQoshimcha
 
 	case models.StateCreatingJobQoshimcha:
-		job.Qoshimcha = text
+		job.AdditionalInfo = text
 		nextState = models.StateCreatingJobIshKuni
 		nextPrompt = messages.MsgEnterIshKuni
 
 	case models.StateCreatingJobIshKuni:
-		job.IshKuni = text
+		job.WorkDate = text
 		nextState = models.StateCreatingJobKerakli
 		nextPrompt = messages.MsgEnterKerakliIshchilar
 
@@ -364,10 +364,10 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 		if err != nil || kerakli < 1 {
 			return c.Send("❌ Iltimos, 1 dan katta raqam kiriting.")
 		}
-		job.KerakliIshchilar = kerakli
+		job.RequiredWorkers = kerakli
 
 		// Save job to database
-		job.CreatedBy = c.Sender().ID
+		job.CreatedByAdminID = c.Sender().ID
 		if err := h.storage.Job().Create(ctx, job); err != nil {
 			h.log.Error("Failed to create job", logger.Error(err))
 			return c.Send(messages.MsgError)
@@ -411,31 +411,31 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 
 	switch user.State {
 	case models.StateEditingJobIshHaqqi:
-		job.IshHaqqi = text
+		job.Salary = text
 	case models.StateEditingJobOvqat:
-		job.Ovqat = text
+		job.Food = text
 	case models.StateEditingJobVaqt:
-		job.Vaqt = text
+		job.WorkTime = text
 	case models.StateEditingJobManzil:
-		job.Manzil = text
+		job.Address = text
 	case models.StateEditingJobXizmatHaqqi:
 		xizmatHaqqi, err := strconv.Atoi(text)
 		if err != nil {
 			return c.Send("❌ Iltimos, raqam kiriting. Masalan: 9990")
 		}
-		job.XizmatHaqqi = xizmatHaqqi
+		job.ServiceFee = xizmatHaqqi
 	case models.StateEditingJobAvtobuslar:
-		job.Avtobuslar = text
+		job.Buses = text
 	case models.StateEditingJobQoshimcha:
-		job.Qoshimcha = text
+		job.AdditionalInfo = text
 	case models.StateEditingJobIshKuni:
-		job.IshKuni = text
+		job.WorkDate = text
 	case models.StateEditingJobKerakli:
 		kerakli, err := strconv.Atoi(text)
 		if err != nil || kerakli < 1 {
 			return c.Send("❌ Iltimos, 1 dan katta raqam kiriting.")
 		}
-		job.KerakliIshchilar = kerakli
+		job.RequiredWorkers = kerakli
 	}
 
 	// Update job in database
@@ -499,23 +499,23 @@ func (h *Handler) updateChannelMessage(job *models.Job) {
 func getJobFieldValue(job *models.Job, field string) string {
 	switch field {
 	case "ish_haqqi":
-		return job.IshHaqqi
+		return job.Salary
 	case "ovqat":
-		return job.Ovqat
+		return job.Food
 	case "vaqt":
-		return job.Vaqt
+		return job.WorkTime
 	case "manzil":
-		return job.Manzil
+		return job.Address
 	case "xizmat_haqqi":
-		return fmt.Sprintf("%d", job.XizmatHaqqi)
+		return fmt.Sprintf("%d", job.ServiceFee)
 	case "avtobuslar":
-		return job.Avtobuslar
+		return job.Buses
 	case "qoshimcha":
-		return job.Qoshimcha
+		return job.AdditionalInfo
 	case "ish_kuni":
-		return job.IshKuni
+		return job.WorkDate
 	case "kerakli":
-		return fmt.Sprintf("%d", job.KerakliIshchilar)
+		return fmt.Sprintf("%d", job.RequiredWorkers)
 	default:
 		return ""
 	}

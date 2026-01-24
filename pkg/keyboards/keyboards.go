@@ -68,13 +68,13 @@ func JobListKeyboard(jobs []*models.Job) *tele.ReplyMarkup {
 	var rows []tele.Row
 	for _, job := range jobs {
 		statusIcon := "🟢"
-		if job.Status == models.JobStatusToldi {
+		if job.Status == models.JobStatusFull {
 			statusIcon = "🔴"
-		} else if job.Status == models.JobStatusClosed {
+		} else if job.Status == models.JobStatusCompleted {
 			statusIcon = "⚫"
 		}
 
-		btnText := fmt.Sprintf("%s № %d - %s", statusIcon, job.OrderNumber, job.IshKuni)
+		btnText := fmt.Sprintf("%s № %d - %s", statusIcon, job.OrderNumber, job.WorkDate)
 		btn := menu.Data(btnText, fmt.Sprintf("job_detail_%d", job.ID))
 		rows = append(rows, menu.Row(btn))
 	}
@@ -245,13 +245,11 @@ func RemoveReplyKeyboard() *tele.ReplyMarkup {
 func UserMainMenuKeyboard() *tele.ReplyMarkup {
 	menu := &tele.ReplyMarkup{}
 
-	btnJobs := menu.Data("💼 Mavjud ishlar", "user_jobs")
 	btnMyJobs := menu.Data("📋 Mening ishlarim", "user_my_jobs")
 	btnProfile := menu.Data("👤 Profil", "user_profile")
 	btnHelp := menu.Data("❓ Yordam", "help")
 
 	menu.Inline(
-		menu.Row(btnJobs),
 		menu.Row(btnMyJobs, btnProfile),
 		menu.Row(btnHelp),
 	)

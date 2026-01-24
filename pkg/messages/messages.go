@@ -139,40 +139,40 @@ func FormatWelcomeRegistered(fullName string) string {
 func FormatJobForChannel(job *models.Job) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("💰 Ish haqqi: %s\n", job.IshHaqqi))
+	sb.WriteString(fmt.Sprintf("💰 Ish haqqi: %s\n", job.Salary))
 
-	if job.Ovqat != "" {
-		sb.WriteString(fmt.Sprintf("🍛 Ovqat: %s\n", job.Ovqat))
+	if job.Food != "" {
+		sb.WriteString(fmt.Sprintf("🍛 Ovqat: %s\n", job.Food))
 	} else {
 		sb.WriteString("🍛 Ovqat: kiritilmagan\n")
 	}
 
-	sb.WriteString(fmt.Sprintf("⏰ Vaqt: %s\n", job.Vaqt))
-	sb.WriteString(fmt.Sprintf("📍 Manzil: %s\n", job.Manzil))
-	sb.WriteString(fmt.Sprintf("🌟 Xizmat haqi: %d so'm\n", job.XizmatHaqqi))
+	sb.WriteString(fmt.Sprintf("⏰ Vaqt: %s\n", job.WorkTime))
+	sb.WriteString(fmt.Sprintf("📍 Manzil: %s\n", job.Address))
+	sb.WriteString(fmt.Sprintf("🌟 Xizmat haqi: %d so'm\n", job.ServiceFee))
 
-	if job.Avtobuslar != "" {
-		sb.WriteString(fmt.Sprintf("🚌 Avtobuslar: %s\n", job.Avtobuslar))
+	if job.Buses != "" {
+		sb.WriteString(fmt.Sprintf("🚌 Avtobuslar: %s\n", job.Buses))
 	}
 
-	if job.Qoshimcha != "" {
-		sb.WriteString(fmt.Sprintf("📝 Qo'shimcha: %s\n", job.Qoshimcha))
+	if job.AdditionalInfo != "" {
+		sb.WriteString(fmt.Sprintf("📝 Qo'shimcha: %s\n", job.AdditionalInfo))
 	}
 
 	sb.WriteString("\n")
 
 	// Status
 	switch job.Status {
-	case models.JobStatusOpen:
-		sb.WriteString("🟢 Holat: Ochiq\n")
-	case models.JobStatusToldi:
+	case models.JobStatusActive:
+		sb.WriteString("🟢 Holat: Faol\n")
+	case models.JobStatusFull:
 		sb.WriteString("🔴 Holat: To'ldi\n")
-	case models.JobStatusClosed:
+	case models.JobStatusCompleted:
 		sb.WriteString("⚫ Holat: Yopilgan\n")
 	}
 
-	sb.WriteString(fmt.Sprintf("👥 Ishchilar: %d/%d\n", job.BandIshchilar, job.KerakliIshchilar))
-	sb.WriteString(fmt.Sprintf("📅 %s\n", job.IshKuni))
+	sb.WriteString(fmt.Sprintf("👥 Ishchilar: %d/%d\n", job.ConfirmedSlots, job.RequiredWorkers))
+	sb.WriteString(fmt.Sprintf("📅 %s\n", job.WorkDate))
 	sb.WriteString(fmt.Sprintf("№ %d", job.OrderNumber))
 
 	return sb.String()
@@ -183,15 +183,15 @@ func FormatJobDetailAdmin(job *models.Job) string {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("<b>№ %d</b>\n\n", job.OrderNumber))
-	sb.WriteString(fmt.Sprintf("💰 <b>Ish haqqi:</b> %s\n", job.IshHaqqi))
-	sb.WriteString(fmt.Sprintf("🍛 <b>Ovqat:</b> %s\n", valueOrEmpty(job.Ovqat)))
-	sb.WriteString(fmt.Sprintf("⏰ <b>Vaqt:</b> %s\n", job.Vaqt))
-	sb.WriteString(fmt.Sprintf("📍 <b>Manzil:</b> %s\n", job.Manzil))
-	sb.WriteString(fmt.Sprintf("🌟 <b>Xizmat haqqi:</b> %d so'm\n", job.XizmatHaqqi))
-	sb.WriteString(fmt.Sprintf("🚌 <b>Avtobuslar:</b> %s\n", valueOrEmpty(job.Avtobuslar)))
-	sb.WriteString(fmt.Sprintf("📝 <b>Qo'shimcha:</b> %s\n", valueOrEmpty(job.Qoshimcha)))
-	sb.WriteString(fmt.Sprintf("📅 <b>Ish kuni:</b> %s\n", job.IshKuni))
-	sb.WriteString(fmt.Sprintf("👥 <b>Ishchilar:</b> %d/%d\n", job.BandIshchilar, job.KerakliIshchilar))
+	sb.WriteString(fmt.Sprintf("💰 <b>Ish haqqi:</b> %s\n", job.Salary))
+	sb.WriteString(fmt.Sprintf("🍛 <b>Ovqat:</b> %s\n", valueOrEmpty(job.Food)))
+	sb.WriteString(fmt.Sprintf("⏰ <b>Vaqt:</b> %s\n", job.WorkTime))
+	sb.WriteString(fmt.Sprintf("📍 <b>Manzil:</b> %s\n", job.Address))
+	sb.WriteString(fmt.Sprintf("🌟 <b>Xizmat haqqi:</b> %d so'm\n", job.ServiceFee))
+	sb.WriteString(fmt.Sprintf("🚌 <b>Avtobuslar:</b> %s\n", valueOrEmpty(job.Buses)))
+	sb.WriteString(fmt.Sprintf("📝 <b>Qo'shimcha:</b> %s\n", valueOrEmpty(job.AdditionalInfo)))
+	sb.WriteString(fmt.Sprintf("📅 <b>Ish kuni:</b> %s\n", job.WorkDate))
+	sb.WriteString(fmt.Sprintf("👥 <b>Ishchilar:</b> %d/%d\n", job.ConfirmedSlots, job.RequiredWorkers))
 	sb.WriteString(fmt.Sprintf("\n<b>Status:</b> %s\n", job.Status.Display()))
 
 	if job.ChannelMessageID != 0 {

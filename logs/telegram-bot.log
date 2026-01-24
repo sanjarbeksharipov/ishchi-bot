@@ -227,3 +227,250 @@
 {"level":"INFO","time":"2026-01-24T14:34:35.268+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":442678308}
 {"level":"INFO","time":"2026-01-24T14:34:35.268+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
 {"level":"INFO","time":"2026-01-24T14:34:35.271+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T15:17:24.019+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T15:17:29.023+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T15:17:44.061+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T15:17:44.062+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T15:17:44.097+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T15:17:44.163+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-24T15:17:44.163+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T15:17:44.559+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T15:20:57.133+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T15:21:02.135+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T15:21:04.951+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T15:21:04.952+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T15:21:04.975+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T15:21:04.999+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T15:21:05.001+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T15:21:05.598+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T15:24:28.604+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:24:28.608+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:24:28.608+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:24:28.611+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:24:54.091+0500","logger":"telegram-bot","caller":"service/registration.go:489","msg":"✅ !!!Confirm Registration","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:24:54.106+0500","logger":"telegram-bot","caller":"service/registration.go:515","msg":"✅ Registration completed successfully","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:25:07.219+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:25:07.221+0500","logger":"telegram-bot","caller":"service/registration.go:57","msg":"✅ User is already registered","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:25:17.988+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:25:17.989+0500","logger":"telegram-bot","caller":"service/registration.go:57","msg":"✅ User is already registered","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:47:17.141+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T15:47:22.142+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T15:47:33.249+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T15:47:33.249+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T15:47:33.289+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T15:47:33.312+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T15:47:33.312+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T15:47:33.713+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T15:48:05.049+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:48:05.051+0500","logger":"telegram-bot","caller":"service/registration.go:57","msg":"✅ User is already registered","user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T15:50:09.322+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T15:50:14.323+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T15:50:21.423+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T15:50:21.424+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T15:50:21.448+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T15:50:21.467+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T15:50:21.467+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T15:50:21.880+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T15:51:38.371+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T15:51:38.374+0500","logger":"telegram-bot","caller":"service/registration.go:65","msg":"✅ No registration draft found","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T15:51:38.375+0500","logger":"telegram-bot","caller":"service/registration.go:78","msg":"✅ !!!Start Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T15:51:38.382+0500","logger":"telegram-bot","caller":"service/registration.go:102","msg":"✅ Registration draft created successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T15:52:00.282+0500","logger":"telegram-bot","caller":"service/registration.go:489","msg":"✅ !!!Confirm Registration","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T15:52:00.294+0500","logger":"telegram-bot","caller":"service/registration.go:515","msg":"✅ Registration completed successfully","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T15:59:29.131+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T15:59:34.132+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T15:59:38.964+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T15:59:38.965+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T15:59:38.999+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T15:59:39.016+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T15:59:39.016+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T15:59:39.415+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T16:00:07.972+0500","logger":"telegram-bot","caller":"service/registration.go:47","msg":"✅ !!!Check User Registration Status","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T16:00:07.975+0500","logger":"telegram-bot","caller":"service/registration.go:57","msg":"✅ User is already registered","user_id":442678308}
+{"level":"INFO","time":"2026-01-24T16:03:02.758+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T16:03:07.761+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T16:03:12.348+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T16:03:12.348+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T16:03:12.372+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T16:03:12.392+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T16:03:12.392+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T16:03:12.930+0500","logger":"telegram-bot","caller":"cmd/main.go:75","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T16:08:32.088+0500","logger":"telegram-bot","caller":"cmd/main.go:87","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T16:08:37.089+0500","logger":"telegram-bot","caller":"cmd/main.go:98","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T16:08:41.730+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T16:08:41.730+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T16:08:41.750+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T16:08:41.766+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T16:08:41.766+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T16:08:42.706+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:08:42.707+0500","logger":"telegram-bot","caller":"cmd/main.go:80","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T16:08:42.706+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:32","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:15:33.950+0500","logger":"telegram-bot","caller":"cmd/main.go:92","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T16:15:33.951+0500","logger":"telegram-bot","caller":"cmd/main.go:96","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T16:15:33.951+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:45","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T16:15:38.953+0500","logger":"telegram-bot","caller":"cmd/main.go:107","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T16:15:44.441+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T16:15:44.442+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T16:15:44.489+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T16:15:44.505+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T16:15:44.505+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T16:15:45.112+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:15:45.113+0500","logger":"telegram-bot","caller":"cmd/main.go:80","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T16:15:45.112+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:32","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:15:45.122+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:15:55.120+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:16:05.120+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:16:15.118+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:16:25.115+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:16:35.127+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:16:40.613+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T16:16:40.614+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T16:16:40.654+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T16:16:40.676+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T16:16:40.677+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T16:16:41.076+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:16:41.077+0500","logger":"telegram-bot","caller":"cmd/main.go:80","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T16:16:41.076+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:32","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:16:41.090+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:16:51.083+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:17:01.084+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:17:11.079+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:17:21.082+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:17:31.084+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:17:41.091+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:17:51.082+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:18:01.082+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:18:11.088+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:18:21.086+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:18:31.080+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:18:41.081+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:18:51.075+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:19:01.078+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:19:11.075+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:19:21.077+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:19:31.075+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:19:41.082+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:19:51.087+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:20:14.800+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T16:20:14.801+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T16:20:14.835+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T16:20:14.855+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T16:20:14.855+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T16:20:15.353+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:20:15.353+0500","logger":"telegram-bot","caller":"cmd/main.go:80","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T16:20:15.353+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:32","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:20:15.368+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:72","msg":"✅ Processing expired bookings","count":1}
+{"level":"INFO","time":"2026-01-24T16:20:15.378+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:86","msg":"✅ Released expired booking","booking_id":1,"user_id":8129817409,"job_id":2}
+{"level":"INFO","time":"2026-01-24T16:20:25.362+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:20:35.359+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:20:45.357+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:20:55.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:21:05.358+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:21:15.366+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:21:25.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:21:35.356+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:21:45.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:21:55.356+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:22:05.356+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:22:15.359+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:22:25.356+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:22:35.352+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:22:45.351+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:22:55.353+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:23:05.350+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:23:15.359+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:23:25.352+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:23:35.351+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:23:45.350+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:23:55.351+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:72","msg":"✅ Processing expired bookings","count":1}
+{"level":"INFO","time":"2026-01-24T16:23:55.366+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:86","msg":"✅ Released expired booking","booking_id":2,"user_id":442678308,"job_id":2}
+{"level":"INFO","time":"2026-01-24T16:24:05.353+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:24:15.349+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:24:25.348+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:24:35.349+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:24:45.345+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:24:55.351+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:25:05.346+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:25:15.353+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:25:25.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:25:35.359+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:25:45.359+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:25:55.362+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:26:05.364+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:26:15.364+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:26:25.360+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:26:35.358+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:26:45.364+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:26:55.357+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:27:05.357+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:27:15.362+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:27:25.356+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:27:35.357+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:27:45.356+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:27:55.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:28:05.357+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:28:15.358+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:28:25.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:28:35.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:28:45.354+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:28:55.353+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:29:05.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:29:15.357+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:29:25.353+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:29:35.351+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:29:45.352+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:29:55.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:30:05.352+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:30:15.355+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:30:25.350+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:30:35.350+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:30:45.348+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:30:55.349+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:31:05.348+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:31:15.350+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:31:25.348+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:31:35.349+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:31:45.345+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:31:55.351+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:32:05.352+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:32:15.353+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:32:25.347+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:32:35.350+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:32:45.344+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:32:55.345+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:33:05.350+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:33:15.346+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:33:25.344+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:33:35.343+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:33:45.340+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:33:55.343+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:34:05.342+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:34:15.347+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:34:25.339+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:34:35.341+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:34:45.338+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:34:55.338+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:35:05.339+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:35:15.341+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:35:25.340+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:35:35.337+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:35:45.341+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:35:55.338+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:36:05.336+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:36:15.343+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:36:25.335+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:36:35.335+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:68","msg":"✅ No expired bookings to process"}
+{"level":"INFO","time":"2026-01-24T16:36:40.438+0500","logger":"telegram-bot","caller":"cmd/main.go:92","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T16:36:40.438+0500","logger":"telegram-bot","caller":"cmd/main.go:96","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T16:36:40.438+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:45","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T16:36:45.439+0500","logger":"telegram-bot","caller":"cmd/main.go:107","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T16:36:50.161+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T16:36:50.162+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T16:36:50.187+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T16:36:50.213+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-24T16:36:50.213+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T16:36:50.611+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:36:50.611+0500","logger":"telegram-bot","caller":"cmd/main.go:80","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T16:36:50.611+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:38","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T16:40:20.612+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:77","msg":"✅ Processing expired bookings","count":1}
+{"level":"INFO","time":"2026-01-24T16:40:20.778+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:91","msg":"✅ Released expired booking","booking_id":2,"user_id":442678308,"job_id":2}

@@ -116,10 +116,20 @@ func (s *Store) User() storage.UserRepoI {
 
 // Job returns the job repository
 func (s *Store) Job() storage.JobRepoI {
-	return NewJobRepo(s)
+	return NewJobRepo(s.db, s.logger)
 }
 
 // Registration returns the registration repository
 func (s *Store) Registration() storage.RegistrationRepoI {
 	return NewRegistrationRepo(s.db, s.logger)
+}
+
+// Booking returns the booking repository
+func (s *Store) Booking() storage.BookingRepoI {
+	return NewBookingRepo(s.db, s.logger)
+}
+
+// Transaction returns the transaction manager
+func (s *Store) Transaction() storage.TransactionI {
+	return NewTransactionManager(s.db, s.logger)
 }

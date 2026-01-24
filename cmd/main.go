@@ -59,6 +59,11 @@ func main() {
 	// Initialize bot services and handlers
 	services := service.NewServiceManager(*cfg, log, store, telegramBot)
 
+	// Initialize and start expiry worker
+	expiryWorker := service.NewExpiryWorker(store, log, telegramBot)
+	go expiryWorker.Start()
+	log.Info("Expiry worker started")
+
 	// Initialize handler
 	params := handlers.NewHandlerParams{
 		Logger:   log,
@@ -85,6 +90,10 @@ func main() {
 	<-sigCh
 
 	log.Info("Shutting down bot...")
+
+	// Stop expiry worker
+	expiryWorker.Stop()
+	log.Info("Expiry worker stopped")
 
 	// Create a context with timeout for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

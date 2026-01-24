@@ -25,8 +25,14 @@ type StorageI interface {
 	// Job returns the job repository
 	Job() JobRepoI
 
+	// Booking returns the booking repository
+	Booking() BookingRepoI
+
 	// Registration returns the registration repository
 	Registration() RegistrationRepoI
+
+	// Transaction support
+	Transaction() TransactionI
 }
 
 // UserRepoI defines the interface for user data persistence
@@ -52,29 +58,61 @@ type UserRepoI interface {
 
 // JobRepoI defines the interface for job data persistence
 type JobRepoI interface {
-	// Create creates a new job
+	// Job CRUD operations
 	Create(ctx context.Context, job *models.Job) error
-
-	// GetByID retrieves a job by ID
 	GetByID(ctx context.Context, id int64) (*models.Job, error)
-
-	// GetAll retrieves all jobs with optional status filter
+	GetByIDForUpdate(ctx context.Context, tx interface{}, id int64) (*models.Job, error) // For row locking
 	GetAll(ctx context.Context, status *models.JobStatus) ([]*models.Job, error)
-
-	// Update updates a job
 	Update(ctx context.Context, job *models.Job) error
-
-	// UpdateStatus updates only the job status
 	UpdateStatus(ctx context.Context, id int64, status models.JobStatus) error
+	Delete(ctx context.Context, id int64) error
 
-	// UpdateChannelMessageID updates the channel message ID for a job
+	// Channel message tracking
 	UpdateChannelMessageID(ctx context.Context, id int64, messageID int64) error
 
-	// IncrementBookedWorkers increments the booked workers count
-	IncrementBookedWorkers(ctx context.Context, id int64) error
+	// CRITICAL: Race-safe slot management
+	// IncrementReservedSlots atomically increments reserved_slots with validation
+	IncrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error
 
-	// Delete deletes a job by ID
+	// DecrementReservedSlots atomically decrements reserved_slots
+	DecrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error
+
+	// MoveReservedToConfirmed atomically moves slot from reserved to confirmed
+	MoveReservedToConfirmed(ctx context.Context, tx interface{}, jobID int64) error
+
+	// GetAvailableSlots returns how many slots are available
+	GetAvailableSlots(ctx context.Context, jobID int64) (int, error)
+}
+
+// BookingRepoI defines the interface for job booking persistence
+type BookingRepoI interface {
+	// Booking CRUD operations
+	Create(ctx context.Context, tx interface{}, booking *models.JobBooking) error
+	GetByID(ctx context.Context, id int64) (*models.JobBooking, error)
+	GetByIDForUpdate(ctx context.Context, tx interface{}, id int64) (*models.JobBooking, error)
+	GetByUserAndJob(ctx context.Context, userID, jobID int64) (*models.JobBooking, error)
+	GetByIdempotencyKey(ctx context.Context, tx interface{}, key string) (*models.JobBooking, error)
+	Update(ctx context.Context, tx interface{}, booking *models.JobBooking) error
 	Delete(ctx context.Context, id int64) error
+
+	// Query operations
+	GetExpiredBookings(ctx context.Context, limit int) ([]*models.JobBooking, error)
+	GetPendingApprovals(ctx context.Context) ([]*models.JobBooking, error)
+	GetUserBookings(ctx context.Context, userID int64) ([]*models.JobBooking, error)
+	GetJobBookings(ctx context.Context, jobID int64) ([]*models.JobBooking, error)
+
+	// State transitions
+	UpdateStatus(ctx context.Context, tx interface{}, bookingID int64, status models.BookingStatus) error
+	MarkAsExpired(ctx context.Context, tx interface{}, bookingID int64) error
+	MarkAsConfirmed(ctx context.Context, tx interface{}, bookingID int64, adminID int64) error
+	MarkAsRejected(ctx context.Context, tx interface{}, bookingID int64, adminID int64, reason string) error
+}
+
+// TransactionI defines transaction interface
+type TransactionI interface {
+	Begin(ctx context.Context) (interface{}, error)
+	Commit(ctx context.Context, tx interface{}) error
+	Rollback(ctx context.Context, tx interface{}) error
 }
 
 // RegistrationRepoI defines the interface for registration data persistence

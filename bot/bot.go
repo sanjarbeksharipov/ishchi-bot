@@ -6,6 +6,7 @@ import (
 	"strings"
 	"telegram-bot-starter/bot/handlers"
 	"telegram-bot-starter/bot/models"
+	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
 
 	tele "gopkg.in/telebot.v4"
@@ -53,11 +54,11 @@ func SetUpRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI) {
 				var status models.JobStatus
 				switch statusStr {
 				case "open":
-					status = models.JobStatusOpen
+					status = models.JobStatusActive
 				case "toldi":
-					status = models.JobStatusToldi
+					status = models.JobStatusFull
 				case "closed":
-					status = models.JobStatusClosed
+					status = models.JobStatusCompleted
 				}
 				return handler.HandleChangeJobStatus(c, jobID, status)
 			}
@@ -122,7 +123,23 @@ func SetUpRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI) {
 		case "reg_edit_body_params":
 			return handler.HandleEditField(c, models.EditFieldBodyParams)
 
+		// Booking callbacks
+		case "book_cancel":
+			return c.Edit("❌ Bekor qilindi.", keyboards.BackKeyboard())
+
 		default:
+			// Handle booking confirmation with job ID
+			if strings.HasPrefix(data, "book_confirm_") {
+				jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "book_confirm_"), 10, 64)
+				return handler.HandleBookingConfirm(c, jobID)
+			}
+
+			// Handle registration start with job ID
+			if strings.HasPrefix(data, "start_reg_job_") {
+				jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "start_reg_job_"), 10, 64)
+				return handler.HandleStartRegistrationForJob(c, jobID)
+			}
+
 			fmt.Println(data)
 			return c.Respond(&tele.CallbackResponse{Text: "Unknown action"})
 		}

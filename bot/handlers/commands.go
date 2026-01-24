@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"telegram-bot-starter/bot/models"
@@ -18,10 +19,27 @@ func (h *Handler) HandleStart(c tele.Context) error {
 	user := c.Sender()
 
 	// Get or create user in storage
-	_, err := h.storage.User().GetOrCreateUser(ctx, user.ID, user.Username, user.FirstName, user.LastName)
+	dbUser, err := h.storage.User().GetOrCreateUser(ctx, user.ID, user.Username, user.FirstName, user.LastName)
 	if err != nil {
 		h.log.Error("Failed to get/create user", logger.Error(err))
 		return c.Send(messages.MsgError)
+	}
+
+	// Check for deep link parameter (e.g., /start job_123)
+	payload := c.Message().Payload
+	if payload != "" && strings.HasPrefix(payload, "job_") {
+		jobIDStr := strings.TrimPrefix(payload, "job_")
+		jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+		if err == nil {
+			// Check if user is registered by looking in registered_users table
+			registeredUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, user.ID)
+			if err == nil && registeredUser != nil {
+				// User is registered, start booking flow
+				return h.HandleJobBookingStart(c, dbUser, jobID)
+			}
+			// User not registered yet, save job ID and start registration
+			return h.HandleRegistrationStartWithJob(c, jobID)
+		}
 	}
 
 	// Check if this is an admin
