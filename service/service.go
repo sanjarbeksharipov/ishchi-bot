@@ -12,12 +12,16 @@ import (
 type ServiceManagerI interface {
 	Registration() RegistrationService
 	Sender() *SenderService
+	Booking() BookingService
+	Payment() PaymentService
 }
 
 // ServiceManager holds all service instances
 type ServiceManager struct {
 	registrationService RegistrationService
 	senderService       *SenderService
+	bookingService      BookingService
+	paymentService      PaymentService
 }
 
 // NewServiceManager initializes and returns a new ServiceManager
@@ -26,6 +30,8 @@ func NewServiceManager(cfg config.Config, log logger.LoggerI, storage storage.St
 
 	services.registrationService = NewRegistrationService(cfg, log, storage, services)
 	services.senderService = NewSenderService(cfg, log, bot, services)
+	services.bookingService = NewBookingService(cfg, log, storage, services)
+	services.paymentService = NewPaymentService(cfg, log, storage, services)
 
 	return services
 }
@@ -38,4 +44,14 @@ func (s *ServiceManager) Registration() RegistrationService {
 // Sender returns the sender service
 func (s *ServiceManager) Sender() *SenderService {
 	return s.senderService
+}
+
+// Booking returns the booking service
+func (s *ServiceManager) Booking() BookingService {
+	return s.bookingService
+}
+
+// Payment returns the payment service
+func (s *ServiceManager) Payment() PaymentService {
+	return s.paymentService
 }

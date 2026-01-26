@@ -4,6 +4,7 @@ import (
 	"context"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/pkg/keyboards"
@@ -242,6 +243,21 @@ func (h *Handler) HandleConfirmRegistration(c tele.Context) error {
 	ctx := context.Background()
 	userID := c.Sender().ID
 
+	// Check if there's a pending job ID before completing registration
+	draft, err := h.services.Registration().GetOrCreateDraft(ctx, userID)
+	if err != nil {
+		h.log.Error("Failed to get draft", logger.Error(err))
+	}
+
+	var pendingJobID *int64
+	if draft != nil && draft.PendingJobID != nil {
+		pendingJobID = draft.PendingJobID
+		h.log.Info("Found pending job ID for post-registration redirect",
+			logger.Any("user_id", userID),
+			logger.Any("job_id", *pendingJobID),
+		)
+	}
+
 	result, err := h.services.Registration().ConfirmRegistration(ctx, userID)
 	if err != nil {
 		h.log.Error("Failed to confirm registration", logger.Error(err))
@@ -256,6 +272,26 @@ func (h *Handler) HandleConfirmRegistration(c tele.Context) error {
 
 	// Update user state
 	h.storage.User().UpdateState(ctx, userID, models.StateIdle)
+
+	// If there was a pending job, redirect to booking flow
+	if pendingJobID != nil {
+		user, err := h.storage.User().GetByID(ctx, userID)
+		if err != nil {
+			h.log.Error("Failed to get user for booking redirect", logger.Error(err))
+			return h.services.Sender().EditMessage(c, result.Message, keyboards.UserMainMenuKeyboard())
+		}
+
+		// Send success message first
+		if err := h.services.Sender().EditMessage(c, result.Message); err != nil {
+			h.log.Error("Failed to send success message", logger.Error(err))
+		}
+
+		// Small delay to let user see the success message
+		time.Sleep(1 * time.Second)
+
+		// Redirect to job booking
+		return h.HandleJobBookingStart(c, user, *pendingJobID)
+	}
 
 	// Send success message with main menu
 	return h.services.Sender().EditMessage(c, result.Message, keyboards.UserMainMenuKeyboard())

@@ -129,8 +129,61 @@ func (h *Handler) HandleContact(c tele.Context) error {
 
 // HandlePhoto handles photo messages
 func (h *Handler) HandlePhoto(c tele.Context) error {
-	// Passport photo step has been removed from registration
-	// No special handling needed for photos
+	photo := c.Message().Photo
+	if photo == nil {
+		return nil
+	}
+
+	return h.HandlePaymentReceiptSubmission(c, photo.FileID)
+}
+
+// HandlePaymentReceiptSubmission handles payment receipt photo submission
+func (h *Handler) HandlePaymentReceiptSubmission(c tele.Context, photoFileID string) error {
+	ctx := context.Background()
+	user := c.Sender()
+
+	// Check if user has registered
+	_, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, user.ID)
+	if err != nil {
+		return c.Send("❌ Iltimos, avval ro'yxatdan o'ting: /start")
+	}
+
+	// Submit payment through service
+	booking, err := h.services.Payment().SubmitPayment(ctx, user.ID, photoFileID, int64(c.Message().ID))
+	if err != nil {
+		h.log.Error("Failed to submit payment", logger.Error(err))
+
+		if err.Error() == "no pending booking found" {
+			return c.Send(`❌ Sizda to'lov kutilayotgan booking topilmadi.
+
+Iltimos, avval ish uchun joy band qiling, keyin to'lov chekini yuboring.`)
+		}
+		if err.Error() == "booking has expired" {
+			return c.Send(`⏰ Vaqt tugadi!
+
+Afsuski, sizning booking vaqti tugagan. Iltimos, qaytadan joy band qiling.`)
+		}
+
+		return c.Send("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
+	}
+
+	// Send confirmation to user
+	msg := `✅ <b>TO'LOV CHEKI QABUL QILINDI!</b>
+
+📸 Sizning to'lov chekingiz muvaffaqiyatli qabul qilindi.
+
+⏰ Admin 10-15 daqiqa ichida tekshiradi va javob beradi.
+
+💡 Agar to'lov tasdiqlansa, sizga xabar yuboriladi va booking tasdiqlangan hisoblanadi.
+
+Sabr qilganingiz uchun rahmat! 🙏`
+
+	if err := c.Send(msg, tele.ModeHTML); err != nil {
+		h.log.Error("Failed to send confirmation", logger.Error(err))
+	}
+
+	// Forward to admin group
+	go h.ForwardPaymentToAdminGroup(ctx, booking, photoFileID)
 
 	return nil
 }

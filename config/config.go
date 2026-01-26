@@ -17,12 +17,13 @@ type Config struct {
 
 // BotConfig contains Telegram bot specific configuration
 type BotConfig struct {
-	Token     string
-	Verbose   bool
-	Poller    time.Duration
-	ChannelID int64
-	AdminIDs  []int64
-	Username  string
+	Token        string
+	Verbose      bool
+	Poller       time.Duration
+	ChannelID    int64
+	AdminIDs     []int64
+	AdminGroupID int64 // Admin group for payment approvals
+	Username     string
 }
 
 // DatabaseConfig contains database configuration
@@ -45,12 +46,13 @@ type AppConfig struct {
 func Load() (*Config, error) {
 	cfg := &Config{
 		Bot: BotConfig{
-			Token:     getEnv("BOT_TOKEN", ""),
-			Verbose:   getEnvAsBool("BOT_VERBOSE", false),
-			Poller:    getEnvAsDuration("BOT_POLLER", 10*time.Second),
-			ChannelID: getEnvAsInt64("BOT_CHANNEL_ID", 0),
-			AdminIDs:  getEnvAsInt64Slice("BOT_ADMIN_IDS", nil),
-			Username:  getEnv("BOT_USERNAME", ""),
+			Token:        getEnv("BOT_TOKEN", ""),
+			Verbose:      getEnvAsBool("BOT_VERBOSE", false),
+			Poller:       getEnvAsDuration("BOT_POLLER", 10*time.Second),
+			ChannelID:    getEnvAsInt64("BOT_CHANNEL_ID", 0),
+			AdminIDs:     getEnvAsInt64Slice("BOT_ADMIN_IDS", nil),
+			AdminGroupID: getEnvAsInt64("BOT_ADMIN_GROUP_ID", 0),
+			Username:     getEnv("BOT_USERNAME", ""),
 		},
 		Database: DatabaseConfig{
 			Host:           getEnv("DB_HOST", "localhost"),

@@ -31,6 +31,7 @@ type RegistrationDraft struct {
 	Weight          int               `json:"weight" db:"weight"`
 	Height          int               `json:"height" db:"height"`
 	PassportPhotoID string            `json:"passport_photo_id" db:"passport_photo_id"`
+	PendingJobID    *int64            `json:"pending_job_id" db:"pending_job_id"` // Job to redirect to after registration
 	CreatedAt       time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt       time.Time         `json:"updated_at" db:"updated_at"`
 	PreviousState   RegistrationState `json:"-" db:"-"` // Used to track edit mode (not stored in DB)

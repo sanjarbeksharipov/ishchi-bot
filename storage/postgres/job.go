@@ -126,7 +126,7 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 }
 
 // GetByIDForUpdate retrieves a job with row lock (FOR UPDATE)
-func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx interface{}, id int64) (*models.Job, error) {
+func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.Job, error) {
 	query := `
 		SELECT id, order_number, salary, food, work_time, address, service_fee,
 			buses, additional_info, work_date, status, required_workers,
@@ -194,7 +194,7 @@ func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*mode
 			created_by_admin_id, created_at, updated_at
 		FROM jobs
 	`
-	args := []interface{}{}
+	args := []any{}
 
 	if status != nil {
 		query += " WHERE status = $1"
@@ -318,7 +318,7 @@ func (r *jobRepo) Delete(ctx context.Context, id int64) error {
 }
 
 // IncrementReservedSlots atomically increments reserved_slots with validation
-func (r *jobRepo) IncrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error {
+func (r *jobRepo) IncrementReservedSlots(ctx context.Context, tx any, jobID int64) error {
 	query := `
 		UPDATE jobs
 		SET reserved_slots = reserved_slots + 1,
@@ -349,7 +349,7 @@ func (r *jobRepo) IncrementReservedSlots(ctx context.Context, tx interface{}, jo
 }
 
 // DecrementReservedSlots atomically decrements reserved_slots
-func (r *jobRepo) DecrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error {
+func (r *jobRepo) DecrementReservedSlots(ctx context.Context, tx any, jobID int64) error {
 	query := `
 		UPDATE jobs
 		SET reserved_slots = GREATEST(reserved_slots - 1, 0),
@@ -373,7 +373,7 @@ func (r *jobRepo) DecrementReservedSlots(ctx context.Context, tx interface{}, jo
 }
 
 // MoveReservedToConfirmed atomically moves slot from reserved to confirmed
-func (r *jobRepo) MoveReservedToConfirmed(ctx context.Context, tx interface{}, jobID int64) error {
+func (r *jobRepo) MoveReservedToConfirmed(ctx context.Context, tx any, jobID int64) error {
 	query := `
 		UPDATE jobs
 		SET reserved_slots = GREATEST(reserved_slots - 1, 0),

@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/pkg/logger"
@@ -135,11 +134,31 @@ Davom etamizmi?
 
 // HandleStartRegistrationForJob starts the registration process and saves the job ID
 func (h *Handler) HandleStartRegistrationForJob(c tele.Context, jobID int64) error {
-	// TODO: Save job ID in session/storage to return to it after registration
-	// For now, just start regular registration
+	ctx := context.Background()
+	userID := c.Sender().ID
+
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
+
+	// Get or create draft
+	draft, err := h.services.Registration().GetOrCreateDraft(ctx, userID)
+	if err != nil {
+		h.log.Error("Failed to get draft", logger.Error(err))
+		return c.Send("❌ Xatolik yuz berdi.")
+	}
+
+	// Save the job ID to redirect after registration
+	draft.PendingJobID = &jobID
+	if err := h.storage.Registration().UpdateDraft(ctx, draft); err != nil {
+		h.log.Error("Failed to save pending job ID", logger.Error(err))
+		// Continue anyway - not critical
+	}
+
+	h.log.Info("Saved pending job ID for post-registration redirect",
+		logger.Any("user_id", userID),
+		logger.Any("job_id", jobID),
+	)
 
 	return h.HandleAcceptOffer(c)
 }
@@ -153,9 +172,8 @@ func (h *Handler) HandleBookingConfirm(c tele.Context, jobID int64) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Check if user already has an active booking for this job
-	idempotencyKey := models.GenerateIdempotencyKey(userID, jobID)
-	existingBooking, _ := h.storage.Booking().GetByIdempotencyKey(ctx, nil, idempotencyKey)
+	// Check idempotency through service
+	existingBooking, _ := h.services.Booking().CheckIdempotency(ctx, userID, jobID)
 	if existingBooking != nil {
 		if existingBooking.Status == models.BookingStatusSlotReserved && !existingBooking.IsExpired() {
 			// User already has a reservation, show remaining time
@@ -172,39 +190,26 @@ func (h *Handler) HandleBookingConfirm(c tele.Context, jobID int64) error {
 		}
 	}
 
-	// Start SERIALIZABLE transaction for atomic booking
-	tx, err := h.storage.Transaction().Begin(ctx)
+	// Get job details for payment info
+	job, err := h.storage.Job().GetByID(ctx, jobID)
 	if err != nil {
-		h.log.Error("Failed to begin transaction", logger.Error(err))
-		return c.Edit("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
-	}
-
-	// Rollback helper
-	rollback := func() {
-		if rbErr := h.storage.Transaction().Rollback(ctx, tx); rbErr != nil {
-			h.log.Error("Failed to rollback transaction", logger.Error(rbErr))
-		}
-	}
-
-	// Lock job row and get current state
-	job, err := h.storage.Job().GetByIDForUpdate(ctx, tx, jobID)
-	if err != nil {
-		rollback()
-		h.log.Error("Failed to lock job", logger.Error(err))
+		h.log.Error("Failed to get job", logger.Error(err))
 		return c.Edit("❌ Xatolik yuz berdi.")
 	}
 
-	// Check if job is still active
-	if job.Status != models.JobStatusActive {
-		rollback()
-		return c.Edit("❌ Bu ish endi faol emas.")
-	}
+	// Confirm booking through service (handles all business logic)
+	booking, err := h.services.Booking().ConfirmBooking(ctx, userID, jobID)
+	if err != nil {
+		h.log.Error("Failed to confirm booking", logger.Error(err), logger.Any("error_msg", err.Error()))
 
-	// Check if slots are available (database will also enforce with CHECK constraint)
-	if job.IsFull() {
-		rollback()
-		// Check if there are reserved slots that might expire
-		if job.ReservedSlots > 0 {
+		// Handle specific error cases
+		if err.Error() == "job is not active" {
+			return c.Edit("❌ Bu ish endi faol emas.")
+		}
+		if err.Error() == "all slots are full" {
+			return c.Edit("❌ Kechirasiz, barcha joylar band bo'lib qoldi! 😔")
+		}
+		if err.Error() == "all slots reserved, try again in a few minutes" {
 			msg := fmt.Sprintf(`
 ⏳ <b>Hozirda barcha joylar band</b>
 
@@ -220,38 +225,7 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 `, job.RequiredWorkers, job.ReservedSlots, job.ConfirmedSlots)
 			return c.Edit(msg, tele.ModeHTML)
 		}
-		return c.Edit("❌ Kechirasiz, barcha joylar band bo'lib qoldi! 😔")
-	}
 
-	// Atomically increment reserved_slots (includes validation)
-	if err := h.storage.Job().IncrementReservedSlots(ctx, tx, jobID); err != nil {
-		rollback()
-		h.log.Error("Failed to increment reserved slots", logger.Error(err))
-		return c.Edit("❌ Kechirasiz, barcha joylar band bo'lib qoldi! 😔")
-	}
-
-	// Create booking record with 3-minute expiry
-	now := time.Now()
-	booking := &models.JobBooking{
-		JobID:          jobID,
-		UserID:         userID,
-		Status:         models.BookingStatusSlotReserved,
-		ReservedAt:     now,
-		ExpiresAt:      now.Add(3 * time.Minute),
-		IdempotencyKey: idempotencyKey,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	if err := h.storage.Booking().Create(ctx, tx, booking); err != nil {
-		rollback()
-		h.log.Error("Failed to create booking", logger.Error(err))
-		return c.Edit("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
-	}
-
-	// Commit transaction
-	if err := h.storage.Transaction().Commit(ctx, tx); err != nil {
-		h.log.Error("Failed to commit transaction", logger.Error(err))
 		return c.Edit("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
 	}
 
@@ -272,14 +246,13 @@ Sizga 3 daqiqa vaqt berildi. Iltimos, quyidagi ma'lumotlarga to'lovni amalga osh
 To'lov chekini yuboring (screenshot):
 `, job.ServiceFee)
 
-	// Edit the message and get the message object to store its ID
+	// Edit the message
 	if err := c.Edit(msg, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to edit message", logger.Error(err))
 		return c.Send(msg, tele.ModeHTML)
 	}
 
 	// Store the callback message ID in the booking for later deletion/editing
-	// The message ID is from the callback query
 	if c.Callback() != nil && c.Callback().Message != nil {
 		messageID := int64(c.Callback().Message.ID)
 		// Update booking with message ID in a separate transaction (non-critical)

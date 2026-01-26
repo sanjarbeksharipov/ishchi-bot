@@ -47,23 +47,17 @@ func main() {
 	log.Info("Storage layer initialized")
 
 	// Create bot instance
-	pref := tele.Settings{
+	botSettings := tele.Settings{
 		Token:  cfg.Bot.Token,
 		Poller: &tele.LongPoller{Timeout: cfg.Bot.Poller},
 	}
 
-	telegramBot, err := tele.NewBot(pref)
+	telegramBot, err := tele.NewBot(botSettings)
 	if err != nil {
 		log.Fatal("Failed to create bot: " + err.Error())
 	}
-	// Initialize bot services and handlers
+	// Initialize bot services
 	services := service.NewServiceManager(*cfg, log, store, telegramBot)
-
-	// Initialize and start expiry worker
-	expiryWorker := service.NewExpiryWorker(store, log, telegramBot)
-	go expiryWorker.Start()
-	log.Info("Expiry worker started")
-
 	// Initialize handler
 	params := handlers.NewHandlerParams{
 		Logger:   log,
@@ -75,7 +69,10 @@ func main() {
 	handler := handlers.NewHandler(params)
 
 	// Set up routes
-	bot.SetUpRoutes(telegramBot, handler, log)
+	bot.RegisterRoutes(telegramBot, handler, log)
+	// Initialize and start expiry worker
+	expiryWorker := service.NewExpiryWorker(store, log, telegramBot)
+	go expiryWorker.Start()
 
 	log.Info("Bot started successfully! Press Ctrl+C to stop.")
 
@@ -93,7 +90,6 @@ func main() {
 
 	// Stop expiry worker
 	expiryWorker.Stop()
-	log.Info("Expiry worker stopped")
 
 	// Create a context with timeout for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

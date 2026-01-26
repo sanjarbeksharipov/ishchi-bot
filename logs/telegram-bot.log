@@ -474,3 +474,55 @@
 {"level":"INFO","time":"2026-01-24T16:36:50.611+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:38","msg":"✅ Expiry worker started"}
 {"level":"INFO","time":"2026-01-24T16:40:20.612+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:77","msg":"✅ Processing expired bookings","count":1}
 {"level":"INFO","time":"2026-01-24T16:40:20.778+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:91","msg":"✅ Released expired booking","booking_id":2,"user_id":442678308,"job_id":2}
+{"level":"INFO","time":"2026-01-24T17:32:50.903+0500","logger":"telegram-bot","caller":"cmd/main.go:92","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T17:32:50.903+0500","logger":"telegram-bot","caller":"cmd/main.go:96","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T17:32:50.903+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:51","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T17:32:55.905+0500","logger":"telegram-bot","caller":"cmd/main.go:107","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T17:33:01.085+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T17:33:01.086+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T17:33:01.119+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T17:33:01.162+0500","logger":"telegram-bot","caller":"postgres/postgres.go:98","msg":"✅ Migrations applied successfully"}
+{"level":"INFO","time":"2026-01-24T17:33:01.162+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T17:33:01.675+0500","logger":"telegram-bot","caller":"cmd/main.go:65","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T17:33:01.675+0500","logger":"telegram-bot","caller":"cmd/main.go:80","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T17:33:01.676+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:38","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T17:33:24.369+0500","logger":"telegram-bot","caller":"handlers/commands.go:219","msg":"✅ Payment receipt submitted","booking_id":1,"user_id":8129817409,"job_id":2}
+{"level":"INFO","time":"2026-01-24T17:33:24.617+0500","logger":"telegram-bot","caller":"handlers/payment.go:120","msg":"✅ Payment receipt forwarded to admin group","booking_id":1,"user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T17:38:31.296+0500","logger":"telegram-bot","caller":"handlers/commands.go:219","msg":"✅ Payment receipt submitted","booking_id":5,"user_id":8129817409,"job_id":3}
+{"level":"INFO","time":"2026-01-24T17:38:31.440+0500","logger":"telegram-bot","caller":"handlers/payment.go:120","msg":"✅ Payment receipt forwarded to admin group","booking_id":5,"user_id":8129817409}
+{"level":"INFO","time":"2026-01-24T17:39:54.049+0500","logger":"telegram-bot","caller":"cmd/main.go:92","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T17:39:54.052+0500","logger":"telegram-bot","caller":"cmd/main.go:96","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T17:39:54.052+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:51","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T17:39:59.053+0500","logger":"telegram-bot","caller":"cmd/main.go:107","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T17:40:40.747+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T17:40:40.748+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T17:40:40.770+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T17:40:40.790+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T17:40:40.790+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T17:40:41.296+0500","logger":"telegram-bot","caller":"cmd/main.go:79","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T17:40:41.296+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:38","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T17:42:27.373+0500","logger":"telegram-bot","caller":"handlers/commands.go:219","msg":"✅ Payment receipt submitted","booking_id":6,"user_id":8129817409,"job_id":4}
+{"level":"INFO","time":"2026-01-24T17:42:27.606+0500","logger":"telegram-bot","caller":"handlers/payment.go:121","msg":"✅ Payment receipt forwarded to admin group","booking_id":6,"user_id":8129817409}
+{"level":"ERROR","time":"2026-01-24T17:42:48.853+0500","logger":"telegram-bot","caller":"handlers/payment.go:260","msg":"🔴 Failed to parse booking ID","error":"strconv.ParseInt: parsing \"\\freject_payment_6\": invalid syntax","callback_data":"\u000creject_payment_6"}
+{"level":"ERROR","time":"2026-01-24T17:42:51.543+0500","logger":"telegram-bot","caller":"handlers/payment.go:378","msg":"🔴 Failed to parse user and booking IDs","error":"expected integer","callback_data":"\u000cblock_user_8129817409_6"}
+{"level":"INFO","time":"2026-01-24T17:52:13.093+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T17:52:13.094+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T17:52:13.113+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T17:52:13.127+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T17:52:13.127+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T17:52:13.578+0500","logger":"telegram-bot","caller":"cmd/main.go:79","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T17:52:13.578+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:38","msg":"✅ Expiry worker started"}
+{"level":"ERROR","time":"2026-01-24T17:52:18.123+0500","logger":"telegram-bot","caller":"handlers/payment.go:356","msg":"🔴 Failed to edit admin message","error":"telegram: Bad Request: there is no text in the message to edit (400)"}
+{"level":"INFO","time":"2026-01-24T17:54:18.875+0500","logger":"telegram-bot","caller":"cmd/main.go:91","msg":"✅ Shutting down bot..."}
+{"level":"INFO","time":"2026-01-24T17:54:18.876+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:51","msg":"✅ Expiry worker stopped"}
+{"level":"INFO","time":"2026-01-24T17:54:23.877+0500","logger":"telegram-bot","caller":"cmd/main.go:105","msg":"✅ Bot stopped gracefully"}
+{"level":"INFO","time":"2026-01-24T17:54:28.148+0500","logger":"telegram-bot","caller":"cmd/main.go:38","msg":"✅ Starting Telegram Bot..."}
+{"level":"INFO","time":"2026-01-24T17:54:28.148+0500","logger":"telegram-bot","caller":"postgres/postgres.go:28","msg":"✅ Connecting to database: localhost:5432/ishchi_bot"}
+{"level":"INFO","time":"2026-01-24T17:54:28.188+0500","logger":"telegram-bot","caller":"postgres/postgres.go:67","msg":"✅ Postgres connection established"}
+{"level":"INFO","time":"2026-01-24T17:54:28.210+0500","logger":"telegram-bot","caller":"postgres/postgres.go:96","msg":"✅ No new migrations to apply"}
+{"level":"INFO","time":"2026-01-24T17:54:28.210+0500","logger":"telegram-bot","caller":"cmd/main.go:47","msg":"✅ Storage layer initialized"}
+{"level":"INFO","time":"2026-01-24T17:54:28.605+0500","logger":"telegram-bot","caller":"cmd/main.go:79","msg":"✅ Bot started successfully! Press Ctrl+C to stop."}
+{"level":"INFO","time":"2026-01-24T17:54:28.606+0500","logger":"telegram-bot","caller":"service/expiry_worker.go:38","msg":"✅ Expiry worker started"}
+{"level":"INFO","time":"2026-01-24T17:55:05.238+0500","logger":"telegram-bot","caller":"handlers/commands.go:219","msg":"✅ Payment receipt submitted","booking_id":6,"user_id":8129817409,"job_id":4}
+{"level":"INFO","time":"2026-01-24T17:55:05.372+0500","logger":"telegram-bot","caller":"handlers/payment.go:121","msg":"✅ Payment receipt forwarded to admin group","booking_id":6,"user_id":8129817409}
+{"level":"ERROR","time":"2026-01-24T17:55:10.782+0500","logger":"telegram-bot","caller":"handlers/payment.go:356","msg":"🔴 Failed to edit admin message","error":"telegram: Bad Request: there is no text in the message to edit (400)","message":"🆕 YANGI TO'LOV CHEKI\n\n👤 Foydalanuvchi:\n• Ism: Abdulahad Abduqahhorov\n• Telefon: +998999014764\n• Telegram: @ (ID: 8129817409)\n\n💼 Ish ma'lumotlari:\n• Nomi: 400000\n• Tartib raqami: #4\n• Xizmat haqqi: 10000 so'm\n• Ish haqqi: 400000\n\n📋 Booking ID: #6\n⏰ Yuborilgan vaqt: 24.01.2026 17:55\n\n👇 To'lov cheki:\n\n❌ <b>RAD ETILDI</b>\n👤 Admin: @AbdulahadAbduqahhorov\n⏰ Vaqt: 24.01.2026 17:55\n💬 Sabab: To'lov cheki noto'g'ri yoki aniq emas"}

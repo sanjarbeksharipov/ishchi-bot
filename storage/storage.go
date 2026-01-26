@@ -61,7 +61,7 @@ type JobRepoI interface {
 	// Job CRUD operations
 	Create(ctx context.Context, job *models.Job) error
 	GetByID(ctx context.Context, id int64) (*models.Job, error)
-	GetByIDForUpdate(ctx context.Context, tx interface{}, id int64) (*models.Job, error) // For row locking
+	GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.Job, error) // For row locking
 	GetAll(ctx context.Context, status *models.JobStatus) ([]*models.Job, error)
 	Update(ctx context.Context, job *models.Job) error
 	UpdateStatus(ctx context.Context, id int64, status models.JobStatus) error
@@ -72,13 +72,13 @@ type JobRepoI interface {
 
 	// CRITICAL: Race-safe slot management
 	// IncrementReservedSlots atomically increments reserved_slots with validation
-	IncrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error
+	IncrementReservedSlots(ctx context.Context, tx any, jobID int64) error
 
 	// DecrementReservedSlots atomically decrements reserved_slots
-	DecrementReservedSlots(ctx context.Context, tx interface{}, jobID int64) error
+	DecrementReservedSlots(ctx context.Context, tx any, jobID int64) error
 
 	// MoveReservedToConfirmed atomically moves slot from reserved to confirmed
-	MoveReservedToConfirmed(ctx context.Context, tx interface{}, jobID int64) error
+	MoveReservedToConfirmed(ctx context.Context, tx any, jobID int64) error
 
 	// GetAvailableSlots returns how many slots are available
 	GetAvailableSlots(ctx context.Context, jobID int64) (int, error)
@@ -87,32 +87,33 @@ type JobRepoI interface {
 // BookingRepoI defines the interface for job booking persistence
 type BookingRepoI interface {
 	// Booking CRUD operations
-	Create(ctx context.Context, tx interface{}, booking *models.JobBooking) error
+	Create(ctx context.Context, tx any, booking *models.JobBooking) error
 	GetByID(ctx context.Context, id int64) (*models.JobBooking, error)
-	GetByIDForUpdate(ctx context.Context, tx interface{}, id int64) (*models.JobBooking, error)
+	GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.JobBooking, error)
 	GetByUserAndJob(ctx context.Context, userID, jobID int64) (*models.JobBooking, error)
-	GetByIdempotencyKey(ctx context.Context, tx interface{}, key string) (*models.JobBooking, error)
-	Update(ctx context.Context, tx interface{}, booking *models.JobBooking) error
+	GetByIdempotencyKey(ctx context.Context, tx any, key string) (*models.JobBooking, error)
+	Update(ctx context.Context, tx any, booking *models.JobBooking) error
 	Delete(ctx context.Context, id int64) error
 
 	// Query operations
 	GetExpiredBookings(ctx context.Context, limit int) ([]*models.JobBooking, error)
 	GetPendingApprovals(ctx context.Context) ([]*models.JobBooking, error)
 	GetUserBookings(ctx context.Context, userID int64) ([]*models.JobBooking, error)
+	GetUserBookingsByStatus(ctx context.Context, userID int64, status models.BookingStatus) ([]*models.JobBooking, error)
 	GetJobBookings(ctx context.Context, jobID int64) ([]*models.JobBooking, error)
 
 	// State transitions
-	UpdateStatus(ctx context.Context, tx interface{}, bookingID int64, status models.BookingStatus) error
-	MarkAsExpired(ctx context.Context, tx interface{}, bookingID int64) error
-	MarkAsConfirmed(ctx context.Context, tx interface{}, bookingID int64, adminID int64) error
-	MarkAsRejected(ctx context.Context, tx interface{}, bookingID int64, adminID int64, reason string) error
+	UpdateStatus(ctx context.Context, tx any, bookingID int64, status models.BookingStatus) error
+	MarkAsExpired(ctx context.Context, tx any, bookingID int64) error
+	MarkAsConfirmed(ctx context.Context, tx any, bookingID int64, adminID int64) error
+	MarkAsRejected(ctx context.Context, tx any, bookingID int64, adminID int64, reason string) error
 }
 
 // TransactionI defines transaction interface
 type TransactionI interface {
-	Begin(ctx context.Context) (interface{}, error)
-	Commit(ctx context.Context, tx interface{}) error
-	Rollback(ctx context.Context, tx interface{}) error
+	Begin(ctx context.Context) (any, error)
+	Commit(ctx context.Context, tx any) error
+	Rollback(ctx context.Context, tx any) error
 }
 
 // RegistrationRepoI defines the interface for registration data persistence

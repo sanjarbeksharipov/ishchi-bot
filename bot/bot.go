@@ -12,11 +12,10 @@ import (
 	tele "gopkg.in/telebot.v4"
 )
 
-func SetUpRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI) {
-	// Initialize handlers
-
+func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI) {
 	// Apply middleware
 	// bot.Use(middleware.LoggingMiddleware(log))
+
 	// Register command handlers
 	bot.Handle("/start", handler.HandleStart)
 	bot.Handle("/help", handler.HandleHelp)
@@ -26,18 +25,83 @@ func SetUpRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI) {
 
 	// Register callback handlers
 	bot.Handle(tele.OnCallback, func(c tele.Context) error {
-		data := c.Callback().Data
-		data = strings.TrimSpace(data)
+		return handleCallBacks(c, handler)
+	})
 
+	// Register text message handler
+	bot.Handle(tele.OnText, handler.HandleText)
+
+	// Register contact handler (for phone sharing)
+	bot.Handle(tele.OnContact, handler.HandleContact)
+
+	// Register photo handler (for payment proofs)
+	bot.Handle(tele.OnPhoto, handler.HandlePhoto)
+}
+
+func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
+	data := c.Callback().Data
+	data = strings.TrimSpace(data)
+
+	switch data {
+	case "help":
+		return handler.HandleHelpCallback(c)
+	case "about":
+		return handler.HandleAboutCallback(c)
+	case "settings":
+		return handler.HandleSettingsCallback(c)
+	case "back":
+		return handler.HandleBackCallback(c)
+	case "confirm_yes":
+		return handler.HandleConfirmYesCallback(c)
+	case "confirm_no":
+		return handler.HandleConfirmNoCallback(c)
+	// Admin callbacks
+	case "admin_menu":
+		return handler.HandleAdminPanel(c)
+	case "admin_create_job":
+		return handler.HandleCreateJob(c)
+	case "admin_job_list":
+		return handler.HandleJobList(c)
+	case "cancel_job_creation":
+		return handler.HandleCancelJobCreation(c)
+	// Registration callbacks
+	case "reg_accept_offer":
+		return handler.HandleAcceptOffer(c)
+	case "reg_decline_offer":
+		return handler.HandleDeclineOffer(c)
+	case "reg_continue":
+		return handler.HandleContinueRegistration(c)
+	case "reg_restart":
+		return handler.HandleRestartRegistration(c)
+	case "reg_confirm":
+		return handler.HandleConfirmRegistration(c)
+	case "reg_edit":
+		return handler.HandleEditRegistration(c)
+	case "reg_cancel":
+		return handler.HandleCancelRegistration(c)
+	case "reg_back_to_confirm":
+		return handler.HandleBackToConfirm(c)
+	case "reg_edit_full_name":
+		return handler.HandleEditField(c, models.EditFieldFullName)
+	case "reg_edit_phone":
+		return handler.HandleEditField(c, models.EditFieldPhone)
+	case "reg_edit_age":
+		return handler.HandleEditField(c, models.EditFieldAge)
+	case "reg_edit_body_params":
+		return handler.HandleEditField(c, models.EditFieldBodyParams)
+	// Booking callbacks
+	case "book_cancel":
+		return c.Edit("❌ Bekor qilindi.", keyboards.BackKeyboard())
+	default:
 		// Handle admin callbacks with job IDs
-		if strings.HasPrefix(data, "job_detail_") {
-			jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "job_detail_"), 10, 64)
+		if after, ok := strings.CutPrefix(data, "job_detail_"); ok {
+			jobID, _ := strconv.ParseInt(after, 10, 64)
 			return handler.HandleJobDetail(c, jobID)
 		}
 
-		if strings.HasPrefix(data, "edit_job_") {
+		if after, ok := strings.CutPrefix(data, "edit_job_"); ok {
 			// Format: edit_job_{id}_{field}
-			parts := strings.Split(strings.TrimPrefix(data, "edit_job_"), "_")
+			parts := strings.Split(after, "_")
 			if len(parts) >= 2 {
 				jobID, _ := strconv.ParseInt(parts[0], 10, 64)
 				field := strings.Join(parts[1:], "_")
@@ -73,84 +137,32 @@ func SetUpRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI) {
 			jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "delete_job_"), 10, 64)
 			return handler.HandleDeleteJob(c, jobID)
 		}
-
-		switch data {
-		case "help":
-			return handler.HandleHelpCallback(c)
-		case "about":
-			return handler.HandleAboutCallback(c)
-		case "settings":
-			return handler.HandleSettingsCallback(c)
-		case "back":
-			return handler.HandleBackCallback(c)
-		case "confirm_yes":
-			return handler.HandleConfirmYesCallback(c)
-		case "confirm_no":
-			return handler.HandleConfirmNoCallback(c)
-		// Admin callbacks
-		case "admin_menu":
-			return handler.HandleAdminPanel(c)
-		case "admin_create_job":
-			return handler.HandleCreateJob(c)
-		case "admin_job_list":
-			return handler.HandleJobList(c)
-		case "cancel_job_creation":
-			return handler.HandleCancelJobCreation(c)
-
-		// Registration callbacks
-		case "reg_accept_offer":
-			return handler.HandleAcceptOffer(c)
-		case "reg_decline_offer":
-			return handler.HandleDeclineOffer(c)
-		case "reg_continue":
-			return handler.HandleContinueRegistration(c)
-		case "reg_restart":
-			return handler.HandleRestartRegistration(c)
-		case "reg_confirm":
-			return handler.HandleConfirmRegistration(c)
-		case "reg_edit":
-			return handler.HandleEditRegistration(c)
-		case "reg_cancel":
-			return handler.HandleCancelRegistration(c)
-		case "reg_back_to_confirm":
-			return handler.HandleBackToConfirm(c)
-		case "reg_edit_full_name":
-			return handler.HandleEditField(c, models.EditFieldFullName)
-		case "reg_edit_phone":
-			return handler.HandleEditField(c, models.EditFieldPhone)
-		case "reg_edit_age":
-			return handler.HandleEditField(c, models.EditFieldAge)
-		case "reg_edit_body_params":
-			return handler.HandleEditField(c, models.EditFieldBodyParams)
-
-		// Booking callbacks
-		case "book_cancel":
-			return c.Edit("❌ Bekor qilindi.", keyboards.BackKeyboard())
-
-		default:
-			// Handle booking confirmation with job ID
-			if strings.HasPrefix(data, "book_confirm_") {
-				jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "book_confirm_"), 10, 64)
-				return handler.HandleBookingConfirm(c, jobID)
-			}
-
-			// Handle registration start with job ID
-			if strings.HasPrefix(data, "start_reg_job_") {
-				jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "start_reg_job_"), 10, 64)
-				return handler.HandleStartRegistrationForJob(c, jobID)
-			}
-
-			fmt.Println(data)
-			return c.Respond(&tele.CallbackResponse{Text: "Unknown action"})
+		// Handle booking confirmation with job ID
+		if strings.HasPrefix(data, "book_confirm_") {
+			jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "book_confirm_"), 10, 64)
+			return handler.HandleBookingConfirm(c, jobID)
 		}
-	})
 
-	// Register text message handler
-	bot.Handle(tele.OnText, handler.HandleText)
+		// Handle registration start with job ID
+		if strings.HasPrefix(data, "start_reg_job_") {
+			jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "start_reg_job_"), 10, 64)
+			return handler.HandleStartRegistrationForJob(c, jobID)
+		}
 
-	// Register contact handler (for phone sharing)
-	bot.Handle(tele.OnContact, handler.HandleContact)
+		// Handle admin payment approval callbacks
+		if strings.HasPrefix(data, "approve_payment") {
+			return handler.HandleApprovePayment(c)
+		}
 
-	// Register photo handler (for passport photo)
-	bot.Handle(tele.OnPhoto, handler.HandlePhoto)
+		if strings.HasPrefix(data, "reject_payment") {
+			return handler.HandleRejectPayment(c)
+		}
+
+		if strings.HasPrefix(data, "block_user") {
+			return handler.HandleBlockUser(c)
+		}
+
+		fmt.Println(data)
+		return c.Respond(&tele.CallbackResponse{Text: "Unknown action"})
+	}
 }

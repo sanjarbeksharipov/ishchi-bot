@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -17,12 +18,7 @@ import (
 
 // IsAdmin checks if a user is an admin
 func (h *Handler) IsAdmin(userID int64) bool {
-	for _, adminID := range h.cfg.Bot.AdminIDs {
-		if adminID == userID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(h.cfg.Bot.AdminIDs, userID)
 }
 
 // HandleAdminPanel shows the admin panel

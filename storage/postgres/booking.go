@@ -30,7 +30,7 @@ func NewBookingRepo(db *pgxpool.Pool, log logger.LoggerI) storage.BookingRepoI {
 }
 
 // Create creates a new booking (must be called within transaction)
-func (r *bookingRepo) Create(ctx context.Context, tx interface{}, booking *models.JobBooking) error {
+func (r *bookingRepo) Create(ctx context.Context, tx any, booking *models.JobBooking) error {
 	query := `
 		INSERT INTO job_bookings (
 			job_id, user_id, status, reserved_at, expires_at, idempotency_key
@@ -148,7 +148,7 @@ func (r *bookingRepo) GetByID(ctx context.Context, id int64) (*models.JobBooking
 }
 
 // GetByIDForUpdate retrieves a booking with row lock (FOR UPDATE)
-func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx interface{}, id int64) (*models.JobBooking, error) {
+func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.JobBooking, error) {
 	query := `
 		SELECT id, job_id, user_id, status, payment_receipt_file_id, payment_receipt_message_id,
 			   payment_instruction_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
@@ -283,7 +283,7 @@ func (r *bookingRepo) GetByUserAndJob(ctx context.Context, userID, jobID int64) 
 }
 
 // GetByIdempotencyKey retrieves a booking by idempotency key (within transaction)
-func (r *bookingRepo) GetByIdempotencyKey(ctx context.Context, tx interface{}, key string) (*models.JobBooking, error) {
+func (r *bookingRepo) GetByIdempotencyKey(ctx context.Context, tx any, key string) (*models.JobBooking, error) {
 	query := `
 		SELECT id, job_id, user_id, status, reserved_at, expires_at, created_at, updated_at
 		FROM job_bookings
@@ -318,7 +318,7 @@ func (r *bookingRepo) GetByIdempotencyKey(ctx context.Context, tx interface{}, k
 }
 
 // Update updates a booking
-func (r *bookingRepo) Update(ctx context.Context, tx interface{}, booking *models.JobBooking) error {
+func (r *bookingRepo) Update(ctx context.Context, tx any, booking *models.JobBooking) error {
 	query := `
 		UPDATE job_bookings
 		SET status = $2, payment_receipt_file_id = $3, payment_receipt_message_id = $4,
@@ -483,6 +483,74 @@ func (r *bookingRepo) GetUserBookings(ctx context.Context, userID int64) ([]*mod
 	return bookings, nil
 }
 
+// GetUserBookingsByStatus retrieves user bookings filtered by status
+func (r *bookingRepo) GetUserBookingsByStatus(ctx context.Context, userID int64, status models.BookingStatus) ([]*models.JobBooking, error) {
+	query := `
+		SELECT id, job_id, user_id, status, payment_receipt_file_id, payment_receipt_message_id,
+			   payment_instruction_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
+			   reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
+			   created_at, updated_at
+		FROM job_bookings
+		WHERE user_id = $1 AND status = $2
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, userID, status)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user bookings by status: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []*models.JobBooking
+	for rows.Next() {
+		booking := &models.JobBooking{}
+		var paymentReceiptFileID, rejectionReason sql.NullString
+		var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID sql.NullInt64
+		var paymentSubmittedAt, confirmedAt, reviewedAt sql.NullTime
+
+		if err := rows.Scan(
+			&booking.ID, &booking.JobID, &booking.UserID, &booking.Status,
+			&paymentReceiptFileID, &paymentReceiptMsgID, &paymentInstructionMsgID,
+			&booking.ReservedAt, &booking.ExpiresAt, &paymentSubmittedAt, &confirmedAt,
+			&reviewedByAdminID, &reviewedAt, &rejectionReason, &booking.IdempotencyKey,
+			&booking.CreatedAt, &booking.UpdatedAt,
+		); err != nil {
+			r.log.Error("Failed to scan booking", logger.Error(err))
+			continue
+		}
+
+		// Handle nullable fields
+		if paymentReceiptFileID.Valid {
+			booking.PaymentReceiptFileID = paymentReceiptFileID.String
+		}
+		if paymentReceiptMsgID.Valid {
+			booking.PaymentReceiptMsgID = paymentReceiptMsgID.Int64
+		}
+		if paymentInstructionMsgID.Valid {
+			booking.PaymentInstructionMsgID = paymentInstructionMsgID.Int64
+		}
+		if paymentSubmittedAt.Valid {
+			booking.PaymentSubmittedAt = &paymentSubmittedAt.Time
+		}
+		if confirmedAt.Valid {
+			booking.ConfirmedAt = &confirmedAt.Time
+		}
+		if reviewedByAdminID.Valid {
+			booking.ReviewedByAdminID = &reviewedByAdminID.Int64
+		}
+		if reviewedAt.Valid {
+			booking.ReviewedAt = &reviewedAt.Time
+		}
+		if rejectionReason.Valid {
+			booking.RejectionReason = rejectionReason.String
+		}
+
+		bookings = append(bookings, booking)
+	}
+
+	return bookings, nil
+}
+
 // GetJobBookings retrieves all bookings for a job
 func (r *bookingRepo) GetJobBookings(ctx context.Context, jobID int64) ([]*models.JobBooking, error) {
 	query := `
@@ -512,7 +580,7 @@ func (r *bookingRepo) GetJobBookings(ctx context.Context, jobID int64) ([]*model
 }
 
 // UpdateStatus updates booking status
-func (r *bookingRepo) UpdateStatus(ctx context.Context, tx interface{}, bookingID int64, status models.BookingStatus) error {
+func (r *bookingRepo) UpdateStatus(ctx context.Context, tx any, bookingID int64, status models.BookingStatus) error {
 	query := `
 		UPDATE job_bookings
 		SET status = $2, updated_at = NOW()
@@ -531,12 +599,12 @@ func (r *bookingRepo) UpdateStatus(ctx context.Context, tx interface{}, bookingI
 }
 
 // MarkAsExpired marks a booking as expired
-func (r *bookingRepo) MarkAsExpired(ctx context.Context, tx interface{}, bookingID int64) error {
+func (r *bookingRepo) MarkAsExpired(ctx context.Context, tx any, bookingID int64) error {
 	return r.UpdateStatus(ctx, tx, bookingID, models.BookingStatusExpired)
 }
 
 // MarkAsConfirmed marks a booking as confirmed by admin
-func (r *bookingRepo) MarkAsConfirmed(ctx context.Context, tx interface{}, bookingID int64, adminID int64) error {
+func (r *bookingRepo) MarkAsConfirmed(ctx context.Context, tx any, bookingID int64, adminID int64) error {
 	query := `
 		UPDATE job_bookings
 		SET status = 'CONFIRMED',
@@ -559,7 +627,7 @@ func (r *bookingRepo) MarkAsConfirmed(ctx context.Context, tx interface{}, booki
 }
 
 // MarkAsRejected marks a booking as rejected by admin
-func (r *bookingRepo) MarkAsRejected(ctx context.Context, tx interface{}, bookingID int64, adminID int64, reason string) error {
+func (r *bookingRepo) MarkAsRejected(ctx context.Context, tx any, bookingID int64, adminID int64, reason string) error {
 	query := `
 		UPDATE job_bookings
 		SET status = 'REJECTED',

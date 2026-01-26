@@ -25,7 +25,7 @@ func NewTransactionManager(db *pgxpool.Pool, log logger.LoggerI) storage.Transac
 }
 
 // Begin starts a new transaction
-func (tm *transactionManager) Begin(ctx context.Context) (interface{}, error) {
+func (tm *transactionManager) Begin(ctx context.Context) (any, error) {
 	tx, err := tm.db.BeginTx(ctx, pgx.TxOptions{
 		IsoLevel: pgx.Serializable,
 	})
@@ -36,7 +36,7 @@ func (tm *transactionManager) Begin(ctx context.Context) (interface{}, error) {
 }
 
 // Commit commits the transaction
-func (tm *transactionManager) Commit(ctx context.Context, tx interface{}) error {
+func (tm *transactionManager) Commit(ctx context.Context, tx any) error {
 	pgxTx, ok := tx.(pgx.Tx)
 	if !ok {
 		return fmt.Errorf("invalid transaction type")
@@ -49,7 +49,7 @@ func (tm *transactionManager) Commit(ctx context.Context, tx interface{}) error 
 }
 
 // Rollback rolls back the transaction
-func (tm *transactionManager) Rollback(ctx context.Context, tx interface{}) error {
+func (tm *transactionManager) Rollback(ctx context.Context, tx any) error {
 	pgxTx, ok := tx.(pgx.Tx)
 	if !ok {
 		return fmt.Errorf("invalid transaction type")

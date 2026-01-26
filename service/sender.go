@@ -14,7 +14,7 @@ import (
 type MessageRequest struct {
 	ChatID    int64
 	Message   string
-	Options   []interface{} // ReplyMarkup, ParseMode, etc.
+	Options   []any // ReplyMarkup, ParseMode, etc.
 	Photo     *tele.Photo
 	IsEdit    bool
 	MessageID int // For editing existing messages
@@ -53,7 +53,7 @@ func NewSenderService(cfg config.Config, log logger.LoggerI, bot *tele.Bot, serv
 }
 
 // Send sends a message to a user
-func (s *SenderService) Send(ctx context.Context, chatID int64, message string, opts ...interface{}) error {
+func (s *SenderService) Send(ctx context.Context, chatID int64, message string, opts ...any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -73,7 +73,7 @@ func (s *SenderService) Send(ctx context.Context, chatID int64, message string, 
 }
 
 // SendPhoto sends a photo to a user
-func (s *SenderService) SendPhoto(ctx context.Context, chatID int64, photo *tele.Photo, opts ...interface{}) error {
+func (s *SenderService) SendPhoto(ctx context.Context, chatID int64, photo *tele.Photo, opts ...any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -88,7 +88,7 @@ func (s *SenderService) SendPhoto(ctx context.Context, chatID int64, photo *tele
 }
 
 // Edit edits an existing message
-func (s *SenderService) Edit(ctx context.Context, chatID int64, messageID int, message string, opts ...interface{}) error {
+func (s *SenderService) Edit(ctx context.Context, chatID int64, messageID int, message string, opts ...any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -107,19 +107,19 @@ func (s *SenderService) Edit(ctx context.Context, chatID int64, messageID int, m
 }
 
 // Reply sends a reply using telebot context (for immediate responses)
-func (s *SenderService) Reply(c tele.Context, message string, opts ...interface{}) error {
+func (s *SenderService) Reply(c tele.Context, message string, opts ...any) error {
 	// For immediate context-based replies, we don't need queue
 	// This is used for user-initiated actions where immediate response is expected
 	return c.Send(message, opts...)
 }
 
 // ReplyWithPhoto sends a photo reply using telebot context
-func (s *SenderService) ReplyWithPhoto(c tele.Context, photo *tele.Photo, opts ...interface{}) error {
+func (s *SenderService) ReplyWithPhoto(c tele.Context, photo *tele.Photo, opts ...any) error {
 	return c.Send(photo, opts...)
 }
 
 // EditMessage edits the message in callback context
-func (s *SenderService) EditMessage(c tele.Context, message string, opts ...interface{}) error {
+func (s *SenderService) EditMessage(c tele.Context, message string, opts ...any) error {
 	return c.Edit(message, opts...)
 }
 
