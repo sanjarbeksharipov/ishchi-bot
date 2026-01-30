@@ -166,6 +166,11 @@ func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) 
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
+	// Use special keyboard with skip button for buses field
+	if state == models.StateEditingJobAvtobuslar {
+		return c.Send(prompt+"\n\nJoriy qiymat: "+getJobFieldValue(job, field), keyboards.CancelOrSkipKeyboard())
+	}
+
 	return c.Send(prompt+"\n\nJoriy qiymat: "+getJobFieldValue(job, field), keyboards.CancelEditKeyboard(job.ID))
 }
 
@@ -341,7 +346,12 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 		nextPrompt = messages.MsgEnterAvtobuslar
 
 	case models.StateCreatingJobAvtobuslar:
-		job.Buses = text
+		// Allow skipping buses field
+		if text == "Skip" || text == "skip" || text == "-" {
+			job.Buses = ""
+		} else {
+			job.Buses = text
+		}
 		nextState = models.StateCreatingJobQoshimcha
 		nextPrompt = messages.MsgEnterQoshimcha
 
@@ -389,6 +399,11 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 		return c.Send(messages.MsgError)
 	}
 
+	// Use special keyboard with skip button for buses field
+	if nextState == models.StateCreatingJobAvtobuslar {
+		return c.Send(nextPrompt, keyboards.CancelOrSkipKeyboard())
+	}
+
 	return c.Send(nextPrompt, keyboards.CancelKeyboard())
 }
 
@@ -421,7 +436,12 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 		}
 		job.ServiceFee = xizmatHaqqi
 	case models.StateEditingJobAvtobuslar:
-		job.Buses = text
+		// Allow skipping buses field
+		if text == "Skip" || text == "skip" || text == "-" {
+			job.Buses = ""
+		} else {
+			job.Buses = text
+		}
 	case models.StateEditingJobQoshimcha:
 		job.AdditionalInfo = text
 	case models.StateEditingJobIshKuni:
@@ -474,6 +494,33 @@ func (h *Handler) HandleCancelJobCreation(c tele.Context) error {
 	}
 
 	return c.Edit(messages.MsgAdminPanel, keyboards.AdminMenuKeyboard())
+}
+
+// HandleSkipField handles skipping optional fields during job creation
+func (h *Handler) HandleSkipField(c tele.Context) error {
+	ctx := context.Background()
+	user, err := h.storage.User().GetOrCreateUser(ctx, c.Sender().ID, c.Sender().Username, c.Sender().FirstName, c.Sender().LastName)
+	if err != nil {
+		h.log.Error("Failed to get user", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Only handle skip for buses field during job creation
+	if user.State == models.StateCreatingJobAvtobuslar {
+		// Use empty string for buses and continue to next field
+		return h.handleJobCreationInput(c, user, "Skip")
+	}
+
+	// For editing, handle skip similarly
+	if user.State == models.StateEditingJobAvtobuslar {
+		return h.handleJobEditingInput(c, user, "Skip")
+	}
+
+	if err := c.Respond(&tele.CallbackResponse{Text: "❌ Bu maydon o'tkazib yuborilmaydi"}); err != nil {
+		h.log.Error("Failed to respond to callback", logger.Error(err))
+	}
+
+	return nil
 }
 
 // Helper to update channel message

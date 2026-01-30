@@ -135,45 +135,50 @@ func FormatWelcomeRegistered(fullName string) string {
 	return fmt.Sprintf(MsgWelcomeRegistered, fullName)
 }
 
-// FormatJobForChannel formats a job for posting to the channel
 func FormatJobForChannel(job *models.Job) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("💰 Ish haqqi: %s\n", job.Salary))
+	// Header with Order Number
+	fmt.Fprintf(&sb, "📋 №%d\n\n", job.OrderNumber)
+	// Main Details
+	fmt.Fprintf(&sb, "📅Sana: %s\n", job.WorkDate)
+	fmt.Fprintf(&sb, "💰Maosh: %s\n", job.Salary)
+	fmt.Fprintf(&sb, "⏰Ish vaqti: %s\n", job.WorkTime)
 
-	if job.Food != "" {
-		sb.WriteString(fmt.Sprintf("🍛 Ovqat: %s\n", job.Food))
+	// Conditional Food Info
+	if job.Food == "" {
+		fmt.Fprintf(&sb, "🍛Ovqat: Berilmaydi\n")
 	} else {
-		sb.WriteString("🍛 Ovqat: kiritilmagan\n")
+		fmt.Fprintf(&sb, "🍛Ovqat: %s\n", job.Food)
 	}
 
-	sb.WriteString(fmt.Sprintf("⏰ Vaqt: %s\n", job.WorkTime))
-	sb.WriteString(fmt.Sprintf("📍 Manzil: %s\n", job.Address))
-	sb.WriteString(fmt.Sprintf("🌟 Xizmat haqi: %d so'm\n", job.ServiceFee))
+	fmt.Fprintf(&sb, "📍Manzil: %s\n", job.Address)
 
+	// Transport
 	if job.Buses != "" {
-		sb.WriteString(fmt.Sprintf("🚌 Avtobuslar: %s\n", job.Buses))
+		fmt.Fprintf(&sb, "🚌Avtobuslar: %s\n", job.Buses)
 	}
 
+	// Money matters
+	fmt.Fprintf(&sb, "💳Xizmat haqi: %d so'm\n", job.ServiceFee)
 	if job.AdditionalInfo != "" {
-		sb.WriteString(fmt.Sprintf("📝 Qo'shimcha: %s\n", job.AdditionalInfo))
+		fmt.Fprintf(&sb, "\n📝Batafsil: %s \n", job.AdditionalInfo)
 	}
 
-	sb.WriteString("\n")
-
-	// Status
-	switch job.Status {
-	case models.JobStatusActive:
-		sb.WriteString("🟢 Holat: Faol\n")
-	case models.JobStatusFull:
-		sb.WriteString("🔴 Holat: To'ldi\n")
-	case models.JobStatusCompleted:
-		sb.WriteString("⚫ Holat: Yopilgan\n")
+	// Progress Bar and Status
+	statusEmoji := "🟢"
+	statusText := "FAOL"
+	if job.Status == models.JobStatusFull {
+		statusEmoji = "🔴"
+		statusText = "TO'LDI"
+	} else if job.Status == models.JobStatusCompleted {
+		statusEmoji = "⚫"
+		statusText = "YOPILGAN"
 	}
 
-	sb.WriteString(fmt.Sprintf("👥 Ishchilar: %d/%d\n", job.ConfirmedSlots, job.RequiredWorkers))
-	sb.WriteString(fmt.Sprintf("📅 %s\n", job.WorkDate))
-	sb.WriteString(fmt.Sprintf("№ %d", job.OrderNumber))
+	// Visual Capacity Bar
+	fmt.Fprintf(&sb, "%sHolat: %s\n", statusEmoji, statusText)
+	fmt.Fprintf(&sb, "👥Ishchilar: %d ta kerak (%d ta qabul qilindi)\n", job.RequiredWorkers, job.ConfirmedSlots)
 
 	return sb.String()
 }

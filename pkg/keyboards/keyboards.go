@@ -140,6 +140,18 @@ func CancelKeyboard() *tele.ReplyMarkup {
 	return menu
 }
 
+// CancelOrSkipKeyboard returns cancel and skip buttons for optional fields
+func CancelOrSkipKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+	btnSkip := menu.Data("⏭ O'tkazib yuborish", "skip_field")
+	btnCancel := menu.Data("❌ Bekor qilish", "cancel_job_creation")
+	menu.Inline(
+		menu.Row(btnSkip),
+		menu.Row(btnCancel),
+	)
+	return menu
+}
+
 // CancelEditKeyboard returns cancel button for editing with return to job detail
 func CancelEditKeyboard(jobID int64) *tele.ReplyMarkup {
 	menu := &tele.ReplyMarkup{}

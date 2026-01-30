@@ -140,6 +140,24 @@ func (s *paymentService) ApprovePayment(ctx context.Context, bookingID, adminID 
 		return nil, fmt.Errorf("failed to move slot: %w", err)
 	}
 
+	// Get updated job to check if full
+	job, err := s.storage.Job().GetByID(ctx, booking.JobID)
+	if err != nil {
+		s.log.Error("Failed to get job", logger.Error(err))
+		return nil, fmt.Errorf("failed to get job: %w", err)
+	}
+
+	// Check if job is now full and update status
+	if job.IsFull() && job.Status != models.JobStatusFull {
+		if err := s.storage.Job().UpdateStatus(ctx, job.ID, models.JobStatusFull); err != nil {
+			s.log.Error("Failed to update job status to FULL", logger.Error(err))
+			// Don't return error, just log it
+		} else {
+			job.Status = models.JobStatusFull
+			s.log.Info("Job status updated to FULL", logger.Any("job_id", job.ID))
+		}
+	}
+
 	// Commit transaction
 	if err := s.storage.Transaction().Commit(ctx, tx); err != nil {
 		s.log.Error("Failed to commit transaction", logger.Error(err))
@@ -150,6 +168,11 @@ func (s *paymentService) ApprovePayment(ctx context.Context, bookingID, adminID 
 		logger.Any("booking_id", bookingID),
 		logger.Any("admin_id", adminID),
 	)
+
+	// Update channel message after successful commit
+	if s.manager != nil {
+		go s.manager.Sender().UpdateChannelJobPost(context.Background(), job)
+	}
 
 	return booking, nil
 }
@@ -199,6 +222,24 @@ func (s *paymentService) RejectPayment(ctx context.Context, bookingID, adminID i
 		return nil, fmt.Errorf("failed to release slot: %w", err)
 	}
 
+	// Get updated job to check status
+	job, err := s.storage.Job().GetByID(ctx, booking.JobID)
+	if err != nil {
+		s.log.Error("Failed to get job", logger.Error(err))
+		return nil, fmt.Errorf("failed to get job: %w", err)
+	}
+
+	// If job was FULL but now has slots, update status to ACTIVE
+	if job.Status == models.JobStatusFull && !job.IsFull() {
+		if err := s.storage.Job().UpdateStatus(ctx, job.ID, models.JobStatusActive); err != nil {
+			s.log.Error("Failed to update job status to ACTIVE", logger.Error(err))
+			// Don't return error, just log it
+		} else {
+			job.Status = models.JobStatusActive
+			s.log.Info("Job status updated to ACTIVE", logger.Any("job_id", job.ID))
+		}
+	}
+
 	// Commit transaction
 	if err := s.storage.Transaction().Commit(ctx, tx); err != nil {
 		s.log.Error("Failed to commit transaction", logger.Error(err))
@@ -210,6 +251,11 @@ func (s *paymentService) RejectPayment(ctx context.Context, bookingID, adminID i
 		logger.Any("admin_id", adminID),
 		logger.Any("reason", reason),
 	)
+
+	// Update channel message after successful commit
+	if s.manager != nil {
+		go s.manager.Sender().UpdateChannelJobPost(context.Background(), job)
+	}
 
 	return booking, nil
 }
@@ -256,6 +302,23 @@ func (s *paymentService) BlockUserAndRejectPayment(ctx context.Context, bookingI
 		}
 	}
 
+	// Get updated job
+	job, err := s.storage.Job().GetByID(ctx, booking.JobID)
+	if err != nil {
+		s.log.Error("Failed to get job", logger.Error(err))
+		return nil, fmt.Errorf("failed to get job: %w", err)
+	}
+
+	// If job was FULL but now has slots, update status to ACTIVE
+	if job.Status == models.JobStatusFull && !job.IsFull() {
+		if err := s.storage.Job().UpdateStatus(ctx, job.ID, models.JobStatusActive); err != nil {
+			s.log.Error("Failed to update job status to ACTIVE", logger.Error(err))
+		} else {
+			job.Status = models.JobStatusActive
+			s.log.Info("Job status updated to ACTIVE", logger.Any("job_id", job.ID))
+		}
+	}
+
 	// TODO: Add to blocked_users table when implemented
 
 	// Commit transaction
@@ -269,6 +332,11 @@ func (s *paymentService) BlockUserAndRejectPayment(ctx context.Context, bookingI
 		logger.Any("booking_id", bookingID),
 		logger.Any("admin_id", adminID),
 	)
+
+	// Update channel message after successful commit
+	if s.manager != nil {
+		go s.manager.Sender().UpdateChannelJobPost(context.Background(), job)
+	}
 
 	return booking, nil
 }

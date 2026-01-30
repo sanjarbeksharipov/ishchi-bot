@@ -62,7 +62,7 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 🌟 <b>Xizmat haqi:</b> %d so'm
 📅 <b>Ish kuni:</b> %s
 
-👥 <b>Bo'sh joylar:</b> %d/%d
+👥 <b>Bo'sh joylar:</b> %d
 
 Ishga yozilishni tasdiqlaysizmi?
 `,
@@ -73,7 +73,6 @@ Ishga yozilishni tasdiqlaysizmi?
 		job.ServiceFee,
 		job.WorkDate,
 		job.AvailableSlots(),
-		job.RequiredWorkers,
 	)
 
 	// Create confirmation keyboard

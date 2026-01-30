@@ -2,10 +2,14 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
+	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/config"
+	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
+	"telegram-bot-starter/pkg/messages"
 
 	tele "gopkg.in/telebot.v4"
 )
@@ -131,6 +135,44 @@ func (s *SenderService) Respond(c tele.Context, response *tele.CallbackResponse)
 // RemoveKeyboard removes reply keyboard by sending a message with RemoveKeyboard option
 func (s *SenderService) RemoveKeyboard(c tele.Context) error {
 	return c.Send("\u200B", &tele.ReplyMarkup{RemoveKeyboard: true})
+}
+
+// UpdateChannelJobPost updates a job post in the channel with latest info
+func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Job) error {
+	if job.ChannelMessageID == 0 {
+		s.log.Warn("Cannot update channel message: no channel message ID", logger.Any("job_id", job.ID))
+		return fmt.Errorf("no channel message ID for job %d", job.ID)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	msg := &tele.Message{
+		ID:   int(job.ChannelMessageID),
+		Chat: &tele.Chat{ID: s.cfg.Bot.ChannelID},
+	}
+
+	channelMsg := messages.FormatJobForChannel(job)
+	signupBtn := keyboards.JobSignupKeyboard(job.ID, s.cfg.Bot.Username)
+
+	_, err := s.bot.Edit(msg, channelMsg, signupBtn, tele.ModeHTML)
+	if err != nil {
+		s.log.Error("Failed to update channel message",
+			logger.Error(err),
+			logger.Any("job_id", job.ID),
+			logger.Any("channel_message_id", job.ChannelMessageID),
+		)
+		return fmt.Errorf("failed to update channel message: %w", err)
+	}
+
+	s.log.Info("Channel message updated successfully",
+		logger.Any("job_id", job.ID),
+		logger.Any("confirmed_slots", job.ConfirmedSlots),
+		logger.Any("required_workers", job.RequiredWorkers),
+		logger.Any("status", job.Status),
+	)
+
+	return nil
 }
 
 // ============ Queue Implementation (Future) ============

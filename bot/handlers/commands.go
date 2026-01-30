@@ -44,7 +44,7 @@ func (h *Handler) HandleStart(c tele.Context) error {
 
 	// Check if this is an admin
 	if h.IsAdmin(user.ID) {
-		return c.Send(messages.MsgWelcome, keyboards.MainMenuKeyboard())
+		return c.Send(messages.MsgAdminPanel, keyboards.AdminMenuKeyboard())
 	}
 
 	// For regular users, start/continue registration flow

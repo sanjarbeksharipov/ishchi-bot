@@ -64,6 +64,8 @@ func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
 		return handler.HandleJobList(c)
 	case "cancel_job_creation":
 		return handler.HandleCancelJobCreation(c)
+	case "skip_field":
+		return handler.HandleSkipField(c)
 	// Registration callbacks
 	case "reg_accept_offer":
 		return handler.HandleAcceptOffer(c)

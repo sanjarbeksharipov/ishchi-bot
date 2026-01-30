@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -139,13 +140,20 @@ func (h *Handler) HandleApprovePayment(c tele.Context) error {
 	}
 
 	// Get booking ID from callback data
-	bookingIDStr := strings.TrimPrefix(c.Callback().Data, "approve_payment_")
-	bookingID, err := strconv.ParseInt(bookingIDStr, 10, 64)
-	if err != nil {
+	callbackData := strings.TrimSpace(c.Callback().Data)
+	callbackDataSl := strings.Split(callbackData, "_")
+	if len(callbackDataSl) != 3 {
 		return c.Respond(&tele.CallbackResponse{
 			Text:      "❌ Noto'g'ri booking ID.",
 			ShowAlert: true,
 		})
+	}
+
+	bookingIDStr := callbackDataSl[2]
+	bookingID, err := strconv.ParseInt(bookingIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Failed to parse booking ID", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri booking ID.", ShowAlert: true})
 	}
 
 	// Approve payment through service
@@ -442,10 +450,5 @@ Afsuski, qoidabuzarlik sababli sizning hisobingiz bloklandi.
 
 // isAdmin checks if user is admin
 func (h *Handler) isAdmin(userID int64) bool {
-	for _, adminID := range h.cfg.Bot.AdminIDs {
-		if adminID == userID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(h.cfg.Bot.AdminIDs, userID)
 }
