@@ -11,6 +11,7 @@ import (
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/config"
 	"telegram-bot-starter/pkg/logger"
+	"telegram-bot-starter/pkg/messages"
 	"telegram-bot-starter/pkg/validation"
 	"telegram-bot-starter/storage"
 )
@@ -516,7 +517,7 @@ func (s RegistrationService) ConfirmRegistration(ctx context.Context, userID int
 	return &RegistrationResult{
 		Success:   true,
 		NextState: models.RegStateCompleted,
-		Message:   "🎉 Tabriklaymiz! Ro'yxatdan muvaffaqiyatli o'tdingiz!\n\nEndi siz ishlarni ko'rishingiz va ishga yozilishingiz mumkin.",
+		Message:   messages.MsgRegistrationComplete,
 		Draft:     nil,
 	}, nil
 }

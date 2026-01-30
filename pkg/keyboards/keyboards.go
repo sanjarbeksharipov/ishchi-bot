@@ -268,6 +268,19 @@ func UserMainMenuKeyboard() *tele.ReplyMarkup {
 
 	return menu
 }
+func UserMainMenuReplyKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+	btnMyJobs := menu.Text("📋 Mening ishlarim")
+	btnProfile := menu.Text("👤 Profil")
+	btnHelp := menu.Text("❓ Yordam")
+
+	menu.Reply(
+		menu.Row(btnMyJobs, btnProfile),
+		menu.Row(btnHelp),
+	)
+
+	return menu
+}
 
 // ContinueRegistrationKeyboard returns keyboard to continue or restart registration
 func ContinueRegistrationKeyboard() *tele.ReplyMarkup {
@@ -280,6 +293,18 @@ func ContinueRegistrationKeyboard() *tele.ReplyMarkup {
 		menu.Row(btnContinue),
 		menu.Row(btnRestart),
 	)
+
+	return menu
+}
+
+// ReplyCancelKeyboard returns a reply keyboard with only cancel button
+func ReplyCancelKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{
+		ResizeKeyboard: true,
+	}
+
+	btnCancel := menu.Text("❌ Bekor qilish")
+	menu.Reply(menu.Row(btnCancel))
 
 	return menu
 }

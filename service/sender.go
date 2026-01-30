@@ -137,6 +137,11 @@ func (s *SenderService) RemoveKeyboard(c tele.Context) error {
 	return c.Send("\u200B", &tele.ReplyMarkup{RemoveKeyboard: true})
 }
 
+// DeleteMessage deletes the message in callback context
+func (s *SenderService) DeleteMessage(c tele.Context) error {
+	return c.Delete()
+}
+
 // UpdateChannelJobPost updates a job post in the channel with latest info
 func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Job) error {
 	if job.ChannelMessageID == 0 {

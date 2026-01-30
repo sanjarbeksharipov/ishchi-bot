@@ -103,7 +103,7 @@ func (h *Handler) HandleAcceptOffer(c tele.Context) error {
 	h.services.Sender().EditMessage(c, "✅ Oferta qabul qilindi")
 
 	// Send next step as new message
-	return h.services.Sender().Reply(c, result.Message, keyboards.RegistrationCancelKeyboard())
+	return h.services.Sender().Reply(c, result.Message, keyboards.ReplyCancelKeyboard())
 }
 
 // HandleDeclineOffer handles the decline offer callback
@@ -167,6 +167,11 @@ func (h *Handler) HandleRegistrationTextInput(c tele.Context, state models.Regis
 	userID := c.Sender().ID
 	text := strings.TrimSpace(c.Text())
 
+	// Handle cancel button
+	if text == "❌ Bekor qilish" {
+		return h.HandleCancelRegistration(c)
+	}
+
 	switch state {
 	case models.RegStateFullName:
 		return h.processFullName(ctx, c, userID, text)
@@ -183,6 +188,11 @@ func (h *Handler) HandleRegistrationTextInput(c tele.Context, state models.Regis
 	default:
 		return nil
 	}
+}
+
+// HandleCancelText handles the "❌ Bekor qilish" text command
+func (h *Handler) HandleCancelText(c tele.Context) error {
+	return h.HandleCancelRegistration(c)
 }
 
 // HandleRegistrationContact handles contact sharing during registration
@@ -213,15 +223,13 @@ func (h *Handler) HandleRegistrationContact(c tele.Context) error {
 	// Update state
 	h.storage.User().UpdateState(ctx, userID, models.UserState(result.NextState))
 
-	// Remove any keyboard
-	h.services.Sender().RemoveKeyboard(c)
 	// If we're returning to confirmation, show confirmation screen
 	if result.NextState == models.RegStateConfirm {
 		return h.showRegistrationConfirmation(ctx, c, userID)
 	}
 
-	// Send next step (keyboard will be automatically replaced)
-	return h.services.Sender().Reply(c, result.Message, keyboards.RegistrationCancelKeyboard())
+	// Send next step with ReplyCancelKeyboard (replaces the phone button)
+	return h.services.Sender().Reply(c, result.Message, keyboards.ReplyCancelKeyboard())
 }
 
 // showRegistrationConfirmation shows the registration summary for confirmation
@@ -292,9 +300,9 @@ func (h *Handler) HandleConfirmRegistration(c tele.Context) error {
 		// Redirect to job booking
 		return h.HandleJobBookingStart(c, user, *pendingJobID)
 	}
-
-	// Send success message with main menu
-	return h.services.Sender().EditMessage(c, result.Message, keyboards.UserMainMenuKeyboard())
+	h.services.Sender().DeleteMessage(c)
+	// We need to send a new message to ensure the ReplyCancelKeyboard is removed/replaced
+	return h.services.Sender().Reply(c, result.Message, keyboards.UserMainMenuReplyKeyboard())
 }
 
 // HandleEditRegistration shows edit field selection
@@ -357,11 +365,16 @@ func (h *Handler) HandleCancelRegistration(c tele.Context) error {
 	// Reset user state
 	h.storage.User().UpdateState(ctx, userID, models.StateIdle)
 
-	h.services.Sender().Respond(c, &tele.CallbackResponse{Text: "Bekor qilindi"})
+	// Check if this is a callback or text message
+	if c.Callback() != nil {
+		h.services.Sender().Respond(c, &tele.CallbackResponse{Text: "Bekor qilindi"})
+		// Remove any reply keyboard just in case
+		h.services.Sender().RemoveKeyboard(c)
+		return h.services.Sender().EditMessage(c, messages.MsgRegistrationCancelled)
+	}
 
-	// Remove any reply keyboard and send message
-	h.services.Sender().RemoveKeyboard(c)
-	return h.services.Sender().EditMessage(c, messages.MsgRegistrationCancelled)
+	// If text message (from Reply button)
+	return h.services.Sender().Reply(c, messages.MsgRegistrationCancelled, keyboards.RemoveReplyKeyboard())
 }
 
 // processPhone handles phone input (text or contact)
@@ -378,15 +391,14 @@ func (h *Handler) processPhone(ctx context.Context, c tele.Context, userID int64
 
 	// Update state
 	h.storage.User().UpdateState(ctx, userID, models.UserState(result.NextState))
-	// Remove any keyboard
-	h.services.Sender().RemoveKeyboard(c)
 
 	// If we're returning to confirmation (edit mode), show confirmation screen directly
 	if result.NextState == models.RegStateConfirm {
 		return h.showRegistrationConfirmation(ctx, c, userID)
 	}
 
-	return h.services.Sender().Reply(c, result.Message, keyboards.RegistrationCancelKeyboard())
+	// Send next step with ReplyCancelKeyboard (replaces phone button)
+	return h.services.Sender().Reply(c, result.Message, keyboards.ReplyCancelKeyboard())
 }
 
 // processFullName handles full name input
@@ -435,7 +447,7 @@ func (h *Handler) processAge(ctx context.Context, c tele.Context, userID int64, 
 		return h.showRegistrationConfirmation(ctx, c, userID)
 	}
 
-	return h.services.Sender().Reply(c, result.Message, keyboards.RegistrationCancelKeyboard())
+	return h.services.Sender().Reply(c, result.Message)
 }
 
 // processBodyParams handles body params input
@@ -447,7 +459,7 @@ func (h *Handler) processBodyParams(ctx context.Context, c tele.Context, userID 
 	}
 
 	if !result.Success {
-		return h.services.Sender().Reply(c, result.ErrorMessage+"\n\n"+messages.MsgEnterBodyParams, keyboards.RegistrationCancelKeyboard())
+		return h.services.Sender().Reply(c, result.ErrorMessage+"\n\n"+messages.MsgEnterBodyParams)
 	}
 
 	// Update state
