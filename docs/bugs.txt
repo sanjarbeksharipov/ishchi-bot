@@ -1,0 +1,27 @@
+✅ RESOLVED ISSUES:
+
+1. Add inline buttons for admin (Add work, List work)
+   - Status: Already implemented
+   - The AdminMenuKeyboard() already provides inline buttons for "Ish yaratish" and "Ishlar ro'yxati"
+
+2. Change format of work that sent to channel
+   - Status: Completed
+   - Improved formatting with bold headers
+   - Better organization with order number and date at top
+   - Cleaner layout using HTML formatting
+
+3. Admin can skip adding buses and if buses is empty, don't add it to work msg while sending to channel
+   - Status: Completed  
+   - Added "Skip" functionality - admin can type "Skip", "skip", or "-" to skip buses field
+   - Added skip button in keyboard for buses field
+   - Channel message now hides buses line when empty
+   - Works for both creating new jobs and editing existing ones 
+
+4. After sharing phone number during registration, the share phone number button does not disappear
+   - Status: Completed
+   - Implemented "Reply Button Replacement" strategy
+   - Replaced "Share Phone" button with "Cancel" reply button after submission
+   - Added handling for "Cancel" reply button in registration text input
+   - Ensures keyboard is properly cleaned up (or switched to menu) upon completion
+
+✅ UNRESOLVED ISSUES:
