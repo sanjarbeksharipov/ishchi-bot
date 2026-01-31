@@ -27,7 +27,7 @@ func (h *Handler) HandleAdminPanel(c tele.Context) error {
 		return c.Send("❌ Sizda admin huquqi yo'q.")
 	}
 
-	return c.Send(messages.MsgAdminPanel, keyboards.AdminMenuKeyboard())
+	return c.Send(messages.MsgAdminPanel, keyboards.AdminMenuReplyKeyboard())
 }
 
 // HandleCreateJob starts the job creation flow
@@ -74,7 +74,7 @@ func (h *Handler) HandleJobList(c tele.Context) error {
 		if err := c.Respond(); err != nil {
 			h.log.Error("Failed to respond to callback", logger.Error(err))
 		}
-		return c.Send("📋 Hozircha ishlar yo'q.", keyboards.AdminMenuKeyboard())
+		return c.Send("📋 Hozircha ishlar yo'q.", keyboards.AdminMenuReplyKeyboard())
 	}
 
 	if err := c.Respond(); err != nil {
@@ -141,15 +141,18 @@ func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) 
 	case "avtobuslar":
 		state = models.StateEditingJobAvtobuslar
 		prompt = messages.MsgEnterAvtobuslar
-	case "qoshimcha":
-		state = models.StateEditingJobQoshimcha
-		prompt = messages.MsgEnterQoshimcha
+	case "ish_tavsifi":
+		state = models.StateEditingJobIshTavsifi
+		prompt = messages.MsgEnterIshTavsifi
 	case "ish_kuni":
 		state = models.StateEditingJobIshKuni
 		prompt = messages.MsgEnterIshKuni
 	case "kerakli":
 		state = models.StateEditingJobKerakli
 		prompt = messages.MsgEnterKerakliIshchilar
+	case "confirmed":
+		state = models.StateEditingJobConfirmed
+		prompt = messages.MsgEnterConfirmedSlots
 	default:
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri maydon"})
 	}
@@ -209,7 +212,7 @@ func (h *Handler) HandleChangeJobStatus(c tele.Context, jobID int64, status mode
 	return c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
 }
 
-// HandlePublishJob publishes the job to the channel
+// HandlePublishJob publishes the job to the channel (only if not yet published)
 func (h *Handler) HandlePublishJob(c tele.Context, jobID int64) error {
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
@@ -220,6 +223,11 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobID int64) error {
 	if err != nil {
 		h.log.Error("Failed to get job", logger.Error(err))
 		return c.Send(messages.MsgError)
+	}
+
+	// Check if already published - should not happen with proper UI
+	if job.ChannelMessageID != 0 {
+		return c.Respond(&tele.CallbackResponse{Text: "⚠️ Bu ish allaqachon kanalda"})
 	}
 
 	// Format job message for channel
@@ -252,7 +260,48 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobID int64) error {
 	return c.Edit(detailMsg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
 }
 
-// HandleDeleteJob deletes a job
+// HandleDeleteChannelMessage deletes the channel message only (keeps job in DB)
+func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobID int64) error {
+	if !h.IsAdmin(c.Sender().ID) {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
+	}
+
+	ctx := context.Background()
+	job, err := h.storage.Job().GetByID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get job", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Check if channel message exists
+	if job.ChannelMessageID == 0 {
+		return c.Respond(&tele.CallbackResponse{Text: "⚠️ Kanal xabari mavjud emas"})
+	}
+
+	// Delete channel message
+	msgToDelete := &tele.Message{ID: int(job.ChannelMessageID), Chat: &tele.Chat{ID: h.cfg.Bot.ChannelID}}
+	if err := h.bot.Delete(msgToDelete); err != nil {
+		h.log.Error("Failed to delete channel message", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Xabarni o'chirishda xatolik"})
+	}
+
+	// Clear channel message ID from job
+	if err := h.storage.Job().UpdateChannelMessageID(ctx, job.ID, 0); err != nil {
+		h.log.Error("Failed to clear channel message ID", logger.Error(err))
+	}
+
+	job.ChannelMessageID = 0
+
+	if err := c.Respond(&tele.CallbackResponse{Text: "✅ Kanal xabari o'chirildi"}); err != nil {
+		h.log.Error("Failed to respond to callback", logger.Error(err))
+	}
+
+	// Show updated job detail
+	msg := messages.FormatJobDetailAdmin(job)
+	return c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+}
+
+// HandleDeleteJob deletes the entire job from database (and channel message if exists)
 func (h *Handler) HandleDeleteJob(c tele.Context, jobID int64) error {
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
@@ -285,7 +334,8 @@ func (h *Handler) HandleDeleteJob(c tele.Context, jobID int64) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	return c.Edit("✅ Ish muvaffaqiyatli o'chirildi.", keyboards.AdminMenuKeyboard())
+	c.Delete()
+	return c.Send("✅ Ish muvaffaqiyatli o'chirildi.", keyboards.AdminMenuReplyKeyboard())
 }
 
 // HandleAdminTextInput handles text input during job creation/editing
@@ -352,10 +402,10 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 		} else {
 			job.Buses = text
 		}
-		nextState = models.StateCreatingJobQoshimcha
-		nextPrompt = messages.MsgEnterQoshimcha
+		nextState = models.StateCreatingJobIshTavsifi
+		nextPrompt = messages.MsgEnterIshTavsifi
 
-	case models.StateCreatingJobQoshimcha:
+	case models.StateCreatingJobIshTavsifi:
 		job.AdditionalInfo = text
 		nextState = models.StateCreatingJobIshKuni
 		nextPrompt = messages.MsgEnterIshKuni
@@ -442,7 +492,7 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 		} else {
 			job.Buses = text
 		}
-	case models.StateEditingJobQoshimcha:
+	case models.StateEditingJobIshTavsifi:
 		job.AdditionalInfo = text
 	case models.StateEditingJobIshKuni:
 		job.WorkDate = text
@@ -452,6 +502,23 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 			return c.Send("❌ Iltimos, 1 dan katta raqam kiriting.")
 		}
 		job.RequiredWorkers = kerakli
+	case models.StateEditingJobConfirmed:
+		confirmed, err := strconv.Atoi(text)
+		if err != nil || confirmed < 0 {
+			return c.Send("❌ Iltimos, 0 yoki undan katta raqam kiriting.")
+		}
+		if confirmed > job.RequiredWorkers {
+			return c.Send(fmt.Sprintf("❌ Qabul qilingan soni kerakli sondan (%d) oshmasligi kerak.", job.RequiredWorkers))
+		}
+		job.ConfirmedSlots = confirmed
+
+		// Automatically update job status based on confirmed slots
+		if job.ConfirmedSlots >= job.RequiredWorkers {
+			job.Status = models.JobStatusFull
+		} else if job.Status == models.JobStatusFull && job.ConfirmedSlots < job.RequiredWorkers {
+			// If job was full but now has available slots, reopen it
+			job.Status = models.JobStatusActive
+		}
 	}
 
 	// Update job in database
@@ -493,7 +560,11 @@ func (h *Handler) HandleCancelJobCreation(c tele.Context) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	return c.Edit(messages.MsgAdminPanel, keyboards.AdminMenuKeyboard())
+	// If called from callback, delete the message or edit it to simple text
+	if c.Callback() != nil {
+		c.Delete()
+	}
+	return c.Send(messages.MsgAdminPanel, keyboards.AdminMenuReplyKeyboard())
 }
 
 // HandleSkipField handles skipping optional fields during job creation
@@ -553,12 +624,14 @@ func getJobFieldValue(job *models.Job, field string) string {
 		return fmt.Sprintf("%d", job.ServiceFee)
 	case "avtobuslar":
 		return job.Buses
-	case "qoshimcha":
+	case "ish_tavsifi":
 		return job.AdditionalInfo
 	case "ish_kuni":
 		return job.WorkDate
 	case "kerakli":
 		return fmt.Sprintf("%d", job.RequiredWorkers)
+	case "confirmed":
+		return fmt.Sprintf("%d", job.ConfirmedSlots)
 	default:
 		return ""
 	}

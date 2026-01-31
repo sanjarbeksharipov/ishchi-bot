@@ -60,6 +60,19 @@ func AdminMenuKeyboard() *tele.ReplyMarkup {
 
 	return menu
 }
+func AdminMenuReplyKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnCreateJob := menu.Text("➕ Ish yaratish")
+	btnJobList := menu.Text("📋 Ishlar ro'yxati")
+
+	menu.Reply(
+		menu.Row(btnCreateJob),
+		menu.Row(btnJobList),
+	)
+
+	return menu
+}
 
 // JobListKeyboard returns keyboard with list of jobs
 func JobListKeyboard(jobs []*models.Job) *tele.ReplyMarkup {
@@ -68,9 +81,10 @@ func JobListKeyboard(jobs []*models.Job) *tele.ReplyMarkup {
 	var rows []tele.Row
 	for _, job := range jobs {
 		statusIcon := "🟢"
-		if job.Status == models.JobStatusFull {
+		switch job.Status {
+		case models.JobStatusFull:
 			statusIcon = "🔴"
-		} else if job.Status == models.JobStatusCompleted {
+		case models.JobStatusCompleted:
 			statusIcon = "⚫"
 		}
 
@@ -97,9 +111,10 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 	btnEditManzil := menu.Data("📍 Manzil", fmt.Sprintf("edit_job_%d_manzil", job.ID))
 	btnEditXizmatHaqqi := menu.Data("🌟 Xizmat haqqi", fmt.Sprintf("edit_job_%d_xizmat_haqqi", job.ID))
 	btnEditAvtobuslar := menu.Data("🚌 Avtobuslar", fmt.Sprintf("edit_job_%d_avtobuslar", job.ID))
-	btnEditQoshimcha := menu.Data("📝 Qo'shimcha", fmt.Sprintf("edit_job_%d_qoshimcha", job.ID))
+	btnEditIshTavsifi := menu.Data("📝 Ish tavsifi", fmt.Sprintf("edit_job_%d_ish_tavsifi", job.ID))
 	btnEditIshKuni := menu.Data("📅 Ish kuni", fmt.Sprintf("edit_job_%d_ish_kuni", job.ID))
 	btnEditKerakli := menu.Data("👥 Kerakli ishchilar", fmt.Sprintf("edit_job_%d_kerakli", job.ID))
+	btnEditConfirmed := menu.Data("✅ Qabul qilingan", fmt.Sprintf("edit_job_%d_confirmed", job.ID))
 
 	// Status buttons
 	btnStatusOpen := menu.Data("🟢 Ochiq", fmt.Sprintf("job_status_%d_open", job.ID))
@@ -107,27 +122,30 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 	btnStatusClosed := menu.Data("⚫ Yopilgan", fmt.Sprintf("job_status_%d_closed", job.ID))
 
 	// Action buttons
-	var btnPublish tele.Btn
+	var rows []tele.Row
+	rows = append(rows, menu.Row(btnEditIshHaqqi, btnEditOvqat))
+	rows = append(rows, menu.Row(btnEditVaqt, btnEditManzil))
+	rows = append(rows, menu.Row(btnEditXizmatHaqqi, btnEditAvtobuslar))
+	rows = append(rows, menu.Row(btnEditIshTavsifi, btnEditIshKuni))
+	rows = append(rows, menu.Row(btnEditKerakli, btnEditConfirmed))
+	rows = append(rows, menu.Row(btnStatusOpen, btnStatusToldi, btnStatusClosed))
+
+	// Publish or delete message buttons
 	if job.ChannelMessageID == 0 {
-		btnPublish = menu.Data("📢 Kanalga yuborish", fmt.Sprintf("publish_job_%d", job.ID))
+		btnPublish := menu.Data("📢 Kanalga yuborish", fmt.Sprintf("publish_job_%d", job.ID))
+		rows = append(rows, menu.Row(btnPublish))
 	} else {
-		btnPublish = menu.Data("🔄 Kanaldagi xabarni yangilash", fmt.Sprintf("publish_job_%d", job.ID))
+		btnDeleteMsg := menu.Data("🗑 Kanaldagi xabarni o'chirish", fmt.Sprintf("delete_channel_msg_%d", job.ID))
+		rows = append(rows, menu.Row(btnDeleteMsg))
 	}
 
-	btnDelete := menu.Data("🗑 O'chirish", fmt.Sprintf("delete_job_%d", job.ID))
+	btnDelete := menu.Data("❌ Ishni butunlay o'chirish", fmt.Sprintf("delete_job_%d", job.ID))
 	btnBack := menu.Data("⬅️ Orqaga", "admin_job_list")
 
-	menu.Inline(
-		menu.Row(btnEditIshHaqqi, btnEditOvqat),
-		menu.Row(btnEditVaqt, btnEditManzil),
-		menu.Row(btnEditXizmatHaqqi, btnEditAvtobuslar),
-		menu.Row(btnEditQoshimcha, btnEditIshKuni),
-		menu.Row(btnEditKerakli),
-		menu.Row(btnStatusOpen, btnStatusToldi, btnStatusClosed),
-		menu.Row(btnPublish),
-		menu.Row(btnDelete),
-		menu.Row(btnBack),
-	)
+	rows = append(rows, menu.Row(btnDelete))
+	rows = append(rows, menu.Row(btnBack))
+
+	menu.Inline(rows...)
 
 	return menu
 }

@@ -28,7 +28,7 @@ const (
 	StateCreatingJobManzil      UserState = "creating_job_manzil"
 	StateCreatingJobXizmatHaqqi UserState = "creating_job_xizmat_haqqi"
 	StateCreatingJobAvtobuslar  UserState = "creating_job_avtobuslar"
-	StateCreatingJobQoshimcha   UserState = "creating_job_qoshimcha"
+	StateCreatingJobIshTavsifi  UserState = "creating_job_ish_tavsifi"
 	StateCreatingJobIshKuni     UserState = "creating_job_ish_kuni"
 	StateCreatingJobKerakli     UserState = "creating_job_kerakli"
 
@@ -39,9 +39,10 @@ const (
 	StateEditingJobManzil      UserState = "editing_job_manzil"
 	StateEditingJobXizmatHaqqi UserState = "editing_job_xizmat_haqqi"
 	StateEditingJobAvtobuslar  UserState = "editing_job_avtobuslar"
-	StateEditingJobQoshimcha   UserState = "editing_job_qoshimcha"
+	StateEditingJobIshTavsifi  UserState = "editing_job_ish_tavsifi"
 	StateEditingJobIshKuni     UserState = "editing_job_ish_kuni"
 	StateEditingJobKerakli     UserState = "editing_job_kerakli"
+	StateEditingJobConfirmed   UserState = "editing_job_confirmed"
 )
 
 // NewUser creates a new User instance

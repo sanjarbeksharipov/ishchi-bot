@@ -51,9 +51,10 @@ Ishlarni boshqarish uchun quyidagi tugmalardan foydalaning:`
 	MsgEnterManzil           = "📍 Manzilni kiriting:\n\nMasalan: Yunusobod Amir Temur xiyoboniga yaqin"
 	MsgEnterXizmatHaqqi      = "🌟 Xizmat haqqini kiriting (faqat raqam):\n\nMasalan: 9990"
 	MsgEnterAvtobuslar       = "🚌 Avtobuslar haqida ma'lumot kiriting:\n\nMasalan: 45, 67, 89 avtobuslar"
-	MsgEnterQoshimcha        = "📝 Qo'shimcha ma'lumot kiriting:\n\nMasalan: Ish yengil 3-4 soatlik ish"
+	MsgEnterIshTavsifi       = "📝 Ish tavsifi va talablarni kiriting:\n\nMasalan: Ish yengil, 3-4 soatlik. Kiyim: Qora kiyim talab qilinadi"
 	MsgEnterIshKuni          = "📅 Ish kunini kiriting:\n\nMasalan: Ertaga yoki 25-yanvar"
 	MsgEnterKerakliIshchilar = "👥 Kerakli ishchilar sonini kiriting:\n\nMasalan: 5"
+	MsgEnterConfirmedSlots   = "✅ Qabul qilingan ishchilar sonini kiriting:\n\nMasalan: 3\n\n⚠️ Qabul qilingan soni kerakli sondan oshmasligi kerak."
 
 	// Registration messages
 	MsgRegistrationWelcome = `👋 Xush kelibsiz!
@@ -162,24 +163,30 @@ func FormatJobForChannel(job *models.Job) string {
 	// Money matters
 	fmt.Fprintf(&sb, "💳Xizmat haqi: %d so'm\n", job.ServiceFee)
 	if job.AdditionalInfo != "" {
-		fmt.Fprintf(&sb, "\n📝Batafsil: %s \n", job.AdditionalInfo)
+		fmt.Fprintf(&sb, "📝Batafsil: %s \n\n", job.AdditionalInfo)
 	}
 
 	// Progress Bar and Status
 	statusEmoji := "🟢"
 	statusText := "FAOL"
-	if job.Status == models.JobStatusFull {
+	switch job.Status {
+	case models.JobStatusFull:
 		statusEmoji = "🔴"
 		statusText = "TO'LDI"
-	} else if job.Status == models.JobStatusCompleted {
+	case models.JobStatusCompleted:
 		statusEmoji = "⚫"
 		statusText = "YOPILGAN"
 	}
 
 	// Visual Capacity Bar
 	fmt.Fprintf(&sb, "%sHolat: %s\n", statusEmoji, statusText)
-	fmt.Fprintf(&sb, "👥Ishchilar: %d ta kerak (%d ta qabul qilindi)\n", job.RequiredWorkers, job.ConfirmedSlots)
-
+	fmt.Fprintf(
+		&sb,
+		"👥 Ishchilar: %d/%d (Bo‘sh: %d ta)\n",
+		job.ConfirmedSlots,
+		job.RequiredWorkers,
+		job.RequiredWorkers-job.ConfirmedSlots,
+	)
 	return sb.String()
 }
 
@@ -194,7 +201,7 @@ func FormatJobDetailAdmin(job *models.Job) string {
 	sb.WriteString(fmt.Sprintf("📍 <b>Manzil:</b> %s\n", job.Address))
 	sb.WriteString(fmt.Sprintf("🌟 <b>Xizmat haqqi:</b> %d so'm\n", job.ServiceFee))
 	sb.WriteString(fmt.Sprintf("🚌 <b>Avtobuslar:</b> %s\n", valueOrEmpty(job.Buses)))
-	sb.WriteString(fmt.Sprintf("📝 <b>Qo'shimcha:</b> %s\n", valueOrEmpty(job.AdditionalInfo)))
+	sb.WriteString(fmt.Sprintf("📝 <b>Ish tavsifi:</b> %s\n", valueOrEmpty(job.AdditionalInfo)))
 	sb.WriteString(fmt.Sprintf("📅 <b>Ish kuni:</b> %s\n", job.WorkDate))
 	sb.WriteString(fmt.Sprintf("👥 <b>Ishchilar:</b> %d/%d\n", job.ConfirmedSlots, job.RequiredWorkers))
 	sb.WriteString(fmt.Sprintf("\n<b>Status:</b> %s\n", job.Status.Display()))

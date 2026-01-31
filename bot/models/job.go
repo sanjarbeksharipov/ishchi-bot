@@ -65,7 +65,7 @@ func (s JobStatus) Display() string {
 	case JobStatusFull:
 		return "🔴 To'ldi"
 	case JobStatusCompleted:
-		return "✅ Yakunlandi"
+		return "⚫ Yakunlandi"
 	case JobStatusCancelled:
 		return "⚫ Bekor qilindi"
 	default:

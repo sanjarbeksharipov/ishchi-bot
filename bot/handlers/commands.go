@@ -44,7 +44,7 @@ func (h *Handler) HandleStart(c tele.Context) error {
 
 	// Check if this is an admin
 	if h.IsAdmin(user.ID) {
-		return c.Send(messages.MsgAdminPanel, keyboards.AdminMenuKeyboard())
+		return c.Send(messages.MsgAdminPanel, keyboards.AdminMenuReplyKeyboard())
 	}
 
 	// For regular users, start/continue registration flow
@@ -91,16 +91,33 @@ func (h *Handler) HandleText(c tele.Context) error {
 	}
 
 	// Check if user is in job creation/editing flow (admin only)
-	if h.IsAdmin(sender.ID) && (strings.HasPrefix(string(user.State), "creating_job_") || strings.HasPrefix(string(user.State), "editing_job_")) {
+	isCreatingJob := strings.HasPrefix(string(user.State), "creating_job_")
+	isEditingJob := strings.HasPrefix(string(user.State), "editing_job_")
+
+	if h.IsAdmin(sender.ID) && (isCreatingJob || isEditingJob) {
 		return h.HandleAdminTextInput(c, user)
+	}
+
+	// Handle admin menu reply buttons
+	if h.IsAdmin(sender.ID) {
+		switch text {
+		case "➕ Ish yaratish":
+			return h.HandleCreateJob(c)
+		case "📋 Ishlar ro'yxati":
+			return h.HandleJobList(c)
+		}
 	}
 
 	// Default: check user state
 	switch user.State {
 	case models.StateIdle:
 		// Echo the message back with a prefix
-		response := "You said: " + c.Text()
-		return c.Send(response)
+		// Only echo if not an admin command or handled above
+		if !h.IsAdmin(sender.ID) {
+			response := "You said: " + c.Text()
+			return c.Send(response)
+		}
+		return nil
 	default:
 		response := "You said: " + c.Text()
 		return c.Send(response)

@@ -135,6 +135,11 @@ func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
 			return handler.HandlePublishJob(c, jobID)
 		}
 
+		if strings.HasPrefix(data, "delete_channel_msg_") {
+			jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "delete_channel_msg_"), 10, 64)
+			return handler.HandleDeleteChannelMessage(c, jobID)
+		}
+
 		if strings.HasPrefix(data, "delete_job_") {
 			jobID, _ := strconv.ParseInt(strings.TrimPrefix(data, "delete_job_"), 10, 64)
 			return handler.HandleDeleteJob(c, jobID)
