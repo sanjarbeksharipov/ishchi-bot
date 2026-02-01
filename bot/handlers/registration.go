@@ -42,6 +42,11 @@ func (h *Handler) HandleRegistrationStart(c tele.Context) error {
 
 	// If has draft, ask to continue or restart
 	if hasDraft && draft != nil {
+		// If status is PublicOffer (fresh draft), just show the offer
+		if draft.State == models.RegStatePublicOffer {
+			return h.showPublicOffer(c)
+		}
+
 		if draft.State == models.RegStateDeclined {
 			// Previous registration was declined, start fresh
 			_, err = regService.RestartRegistration(ctx, userID)
@@ -69,15 +74,12 @@ func (h *Handler) HandleRegistrationStart(c tele.Context) error {
 // showPublicOffer displays the public offer and accept/decline buttons
 func (h *Handler) showPublicOffer(c tele.Context) error {
 	// Load public offer text
-	offerPath := filepath.Join(".", "public_offer.txt")
-	_, err := h.services.Registration().LoadPublicOffer(offerPath)
+	offerPath := filepath.Join(".", "docs", "public_offer.txt")
+	summary, err := h.services.Registration().LoadPublicOffer(offerPath)
 	if err != nil {
 		h.log.Error("Failed to load public offer", logger.Error(err))
 		// Use fallback summary
 	}
-
-	// Generate summary
-	summary := h.services.Registration().GeneratePublicOfferSummary("")
 
 	return h.services.Sender().Reply(c, summary, keyboards.PublicOfferKeyboard(), tele.ModeMarkdown)
 }
@@ -139,6 +141,11 @@ func (h *Handler) HandleContinueRegistration(c tele.Context) error {
 	}
 
 	h.services.Sender().Respond(c, &tele.CallbackResponse{Text: "Davom etamiz"})
+
+	// If user hasn't accepted public offer yet, show it first
+	if draft.State == models.RegStatePublicOffer {
+		return h.showPublicOffer(c)
+	}
 
 	// Continue from current state
 	return h.sendStatePrompt(c, draft.State)

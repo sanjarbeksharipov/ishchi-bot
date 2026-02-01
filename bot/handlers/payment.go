@@ -65,10 +65,10 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 • Telegram: @%s (ID: <code>%d</code>)
 
 💼 <b>Ish ma'lumotlari:</b>
-• Nomi: %s
 • Tartib raqami: #%d
-• Xizmat haqqi: %d so'm
 • Ish haqqi: %s
+• Xizmat haqqi: %d so'm
+• Ish kuni: %s
 
 📋 <b>Booking ID:</b> #%d
 ⏰ <b>Yuborilgan vaqt:</b> %s
@@ -78,10 +78,10 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 		registeredUser.Phone,
 		telegramUser.Username,
 		booking.UserID,
+		job.OrderNumber,
 		job.Salary,
-		job.ID,
 		job.ServiceFee,
-		job.Salary,
+		job.WorkDate,
 		booking.ID,
 		time.Now().Format("02.01.2006 15:04"),
 	)
@@ -368,9 +368,9 @@ func (h *Handler) notifyUserPaymentApproved(booking *models.JobBooking) {
 🎉 Tabriklaymiz! Sizning to'lovingiz admin tomonidan tasdiqlandi.
 
 💼 <b>Ish ma'lumotlari:</b>
-• Nomi: %s
 • Tartib raqami: #%d
 • Ish haqqi: %s
+• Ish kuni: %s
 
 📋 <b>Keyingi qadamlar:</b>
 1️⃣ Ishga tayyor bo'ling
@@ -381,9 +381,9 @@ func (h *Handler) notifyUserPaymentApproved(booking *models.JobBooking) {
 Agar savollaringiz bo'lsa, ish beruvchi bilan bog'laning.
 
 ✨ Omad tilaymiz!`,
+		job.OrderNumber,
 		job.Salary,
-		job.ID,
-		job.Salary,
+		job.WorkDate,
 	)
 
 	_, err = h.bot.Send(&tele.User{ID: booking.UserID}, message, tele.ModeHTML)
@@ -407,7 +407,7 @@ func (h *Handler) notifyUserPaymentRejected(booking *models.JobBooking) {
 
 Afsuski, sizning to'lov chekingiz admin tomonidan rad etildi.
 
-💼 <b>Ish:</b> %s (Tartib #%d)
+💼 <b>Ish:</b> №%d
 💬 <b>Sabab:</b> %s
 
 📝 <b>Nima qilish kerak:</b>
@@ -421,8 +421,7 @@ Afsuski, sizning to'lov chekingiz admin tomonidan rad etildi.
 • Sana bugungi kunni ko'rsatishi kerak
 
 Agar joylar to'lgan bo'lsa, keyingi ishlar e'lon qilinishini kuting.`,
-		job.Salary,
-		job.ID,
+		job.OrderNumber,
 		booking.RejectionReason,
 	)
 

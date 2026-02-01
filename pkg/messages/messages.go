@@ -19,7 +19,6 @@ I'm here to help you. Use /help to see available commands.`
 /help - Show this help message
 /about - About this bot
 /settings - Bot settings
-/admin - Admin panel (only for admins)
 
 Feel free to send me any message!`
 

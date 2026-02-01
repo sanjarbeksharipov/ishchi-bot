@@ -53,6 +53,22 @@ func (s *bookingService) ConfirmBooking(ctx context.Context, userID, jobID int64
 		}
 	}
 
+	// Check if user has ANY other active booking (Reserved or PaymentSubmitted)
+	// User can only have one pending booking at a time
+	reservedBookings, err := s.storage.Booking().GetUserBookingsByStatus(ctx, userID, models.BookingStatusSlotReserved)
+	if err == nil {
+		for _, b := range reservedBookings {
+			if !b.IsExpired() && b.JobID != jobID {
+				return nil, fmt.Errorf("you have another active booking (Job #%d)", b.JobID)
+			}
+		}
+	}
+
+	submittedBookings, err := s.storage.Booking().GetUserBookingsByStatus(ctx, userID, models.BookingStatusPaymentSubmitted)
+	if err == nil && len(submittedBookings) > 0 {
+		return nil, fmt.Errorf("you have a payment under review for another job (Job #%d)", submittedBookings[0].JobID)
+	}
+
 	// Start SERIALIZABLE transaction
 	tx, err := s.storage.Transaction().Begin(ctx)
 	if err != nil {

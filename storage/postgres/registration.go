@@ -31,8 +31,8 @@ func NewRegistrationRepo(db *pgxpool.Pool, log logger.LoggerI) storage.Registrat
 // CreateDraft creates a new registration draft
 func (r *registrationRepo) CreateDraft(ctx context.Context, draft *models.RegistrationDraft) error {
 	query := `
-		INSERT INTO registration_drafts (user_id, state, previous_state, full_name, phone, age, weight, height, passport_photo_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO registration_drafts (user_id, state, previous_state, full_name, phone, age, weight, height, passport_photo_id, created_at, updated_at, pending_job_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING id
 	`
 
@@ -48,6 +48,7 @@ func (r *registrationRepo) CreateDraft(ctx context.Context, draft *models.Regist
 		draft.PassportPhotoID,
 		draft.CreatedAt,
 		draft.UpdatedAt,
+		draft.PendingJobID,
 	).Scan(&draft.ID)
 
 	if err != nil {
@@ -61,7 +62,7 @@ func (r *registrationRepo) CreateDraft(ctx context.Context, draft *models.Regist
 // GetDraftByUserID retrieves a draft by user ID
 func (r *registrationRepo) GetDraftByUserID(ctx context.Context, userID int64) (*models.RegistrationDraft, error) {
 	query := `
-		SELECT id, user_id, state, previous_state, full_name, phone, age, weight, height, passport_photo_id, created_at, updated_at
+		SELECT id, user_id, state, previous_state, full_name, phone, age, weight, height, passport_photo_id, created_at, updated_at, pending_job_id
 		FROM registration_drafts
 		WHERE user_id = $1
 	`
@@ -83,6 +84,7 @@ func (r *registrationRepo) GetDraftByUserID(ctx context.Context, userID int64) (
 		&passportPhotoID,
 		&draft.CreatedAt,
 		&draft.UpdatedAt,
+		&draft.PendingJobID,
 	)
 
 	if err != nil {
@@ -120,7 +122,7 @@ func (r *registrationRepo) GetDraftByUserID(ctx context.Context, userID int64) (
 func (r *registrationRepo) UpdateDraft(ctx context.Context, draft *models.RegistrationDraft) error {
 	query := `
 		UPDATE registration_drafts
-		SET state = $2, previous_state = $3, full_name = $4, phone = $5, age = $6, weight = $7, height = $8, passport_photo_id = $9, updated_at = $10
+		SET state = $2, previous_state = $3, full_name = $4, phone = $5, age = $6, weight = $7, height = $8, passport_photo_id = $9, updated_at = $10, pending_job_id = $11
 		WHERE user_id = $1
 	`
 
@@ -137,6 +139,7 @@ func (r *registrationRepo) UpdateDraft(ctx context.Context, draft *models.Regist
 		draft.Height,
 		draft.PassportPhotoID,
 		draft.UpdatedAt,
+		draft.PendingJobID,
 	)
 
 	if err != nil {

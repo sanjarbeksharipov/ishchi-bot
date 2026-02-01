@@ -53,8 +53,9 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 
 	// Show job details with booking confirmation
 	msg := fmt.Sprintf(`
-📋 <b>ISH HAQIDA MA'LUMOT</b>
+<b>ISH HAQIDA MA'LUMOT</b>
 
+📋 <b>№:</b> %d
 💰 <b>Ish haqqi:</b> %s
 🍛 <b>Ovqat:</b> %s
 ⏰ <b>Vaqt:</b> %s
@@ -66,6 +67,7 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 
 Ishga yozilishni tasdiqlaysizmi?
 `,
+		job.OrderNumber,
 		job.Salary,
 		valueOrDefault(job.Food, "ko'rsatilmagan"),
 		job.WorkTime,
@@ -159,7 +161,7 @@ func (h *Handler) HandleStartRegistrationForJob(c tele.Context, jobID int64) err
 		logger.Any("job_id", jobID),
 	)
 
-	return h.HandleAcceptOffer(c)
+	return h.HandleRegistrationStart(c)
 }
 
 // HandleBookingConfirm handles the booking confirmation with atomic slot reservation
@@ -223,6 +225,14 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 ⏰ Bir necha daqiqadan so'ng qaytadan tekshiring.
 `, job.RequiredWorkers, job.ReservedSlots, job.ConfirmedSlots)
 			return c.Edit(msg, tele.ModeHTML)
+		}
+
+		// Handle single booking constraint errors
+		if len(err.Error()) > 28 && err.Error()[:29] == "you have another active booki" {
+			return c.Edit("⚠️ Sizda allaqachon boshqa faol bandlovingiz bor. Iltimos, avval uni yakunlang yoki bekor qiling.")
+		}
+		if len(err.Error()) > 30 && err.Error()[:31] == "you have a payment under review" {
+			return c.Edit("⚠️ Sizning boshqa ish uchun to'lovingiz ko'rib chiqilmoqda. Iltimos, admin javobini kuting.")
 		}
 
 		return c.Edit("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")

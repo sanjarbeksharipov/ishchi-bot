@@ -126,68 +126,12 @@ func (s RegistrationService) LoadPublicOffer(filePath string) (string, error) {
 	return string(content), nil
 }
 
-// GeneratePublicOfferSummary generates a summary of the public offer
-func (s RegistrationService) GeneratePublicOfferSummary(fullText string) string {
-	summary := `FOYDALANUVCHI OFERTASI
+// // GeneratePublicOfferSummary generates a summary of the public offer
+// func (s RegistrationService) GeneratePublicOfferSummary(fullText string) string {
+// 	summary := ``
 
-KASKA UZ XIZMATLARIDAN FOYDALANISH SHARTLARI
-
-1. UMUMIY QOIDALAR
-
-1.1. Kaska Uz - ish beruvchilar va kunlik ish izlovchi nomzodlarni bog'lovchi axborot platformasidir.
-
-1.2. Kaska Uz ish beruvchi emas, faqat vositachi vazifasini bajaradi.
-
-1.3. Botdan foydalanish orqali siz ushbu ofertani o'qib chiqqaningizni va qabul qilganingizni tasdiqlaysiz.
-
-2. XIZMAT HAQI VA TO'LOV
-
-2.1. Har bir ish e'lonida xizmat haqi va ish shartlari alohida ko'rsatiladi.
-
-2.2. Nomzod ishga yozilishdan oldin xizmat haqini to'laydi va check yuboradi.
-
-2.3. Soxta check yuborish platformadan chetlashtirishga olib keladi.
-
-3. NOMZOD MAJBURIYATLARI
-
-3.1. To'lov qilingandan keyin belgilangan vaqtda ishga chiqish majburiy.
-
-3.2. Sababsiz ishga chiqmaslik blokirovka qilishga sabab bo'ladi.
-
-3.3. Ish joyida ish beruvchi tomonidan belgilangan qoidalarga rioya qilish shart.
-
-4. YOSH VA ISH VAQTI
-
-4.1. 18 yoshga to'lmagan shaxslar ishga qabul qilinmaydi.
-
-4.2. Ish vaqti e'londa ko'rsatilgan shartlarga muvofiq.
-
-4.3. Belgilangan vaqtni to'liq bajarmagan taqdirda ish haqi to'lanmasligi yoki kamaytirilishi mumkin.
-
-5. XAVFSIZLIK
-
-5.1. Ish jarayonida xavfsizlik qoidalariga qat'iy rioya qilish majburiy.
-
-5.2. Texnika va jihozlarga ruxsatsiz tegish taqiqlanadi.
-
-6. JAVOBGARLIK
-
-6.1. Ish haqi, ish sharoiti va kelishuvlar uchun faqat ish beruvchi javobgar.
-
-6.2. Nomzodning o'z aybi bilan yuzaga kelgan jarohatlar uchun Kaska Uz javobgar emas.
-
-6.3. Telefon, pul va shaxsiy buyumlar uchun Kaska Uz javobgar emas.
-
-7. YAKUNIY QOIDALAR
-
-7.1. Oferta shartlari bir tomonlama yangilanishi mumkin.
-
-7.2. Botdan foydalanish orqali siz barcha shartlarga rozilik bildirasiz.
-
-Davom etish uchun quyidagi tugmalardan birini tanlang.`
-
-	return summary
-}
+// 	return summary
+// }
 
 // ProcessPublicOfferResponse handles accept/decline response
 func (s RegistrationService) ProcessPublicOfferResponse(ctx context.Context, userID int64, accepted bool) (*RegistrationResult, error) {

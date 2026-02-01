@@ -94,6 +94,11 @@ func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
 	// Booking callbacks
 	case "book_cancel":
 		return c.Edit("❌ Bekor qilindi.", keyboards.BackKeyboard())
+	// User callbacks
+	case "user_my_jobs":
+		return handler.HandleUserMyJobs(c)
+	case "user_profile":
+		return handler.HandleUserProfile(c)
 	default:
 		// Handle admin callbacks with job IDs
 		if after, ok := strings.CutPrefix(data, "job_detail_"); ok {

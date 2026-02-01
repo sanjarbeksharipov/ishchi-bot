@@ -33,7 +33,7 @@ func (h *Handler) HandleAdminPanel(c tele.Context) error {
 // HandleCreateJob starts the job creation flow
 func (h *Handler) HandleCreateJob(c tele.Context) error {
 	if !h.IsAdmin(c.Sender().ID) {
-		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
+		return c.Send("❌ Sizda admin huquqi yo'q.")
 	}
 
 	ctx := context.Background()
@@ -50,17 +50,13 @@ func (h *Handler) HandleCreateJob(c tele.Context) error {
 		RequiredWorkers: 1,
 	})
 
-	if err := c.Respond(); err != nil {
-		h.log.Error("Failed to respond to callback", logger.Error(err))
-	}
-
 	return c.Send(messages.MsgEnterIshHaqqi, keyboards.CancelKeyboard())
 }
 
 // HandleJobList shows the list of jobs
 func (h *Handler) HandleJobList(c tele.Context) error {
 	if !h.IsAdmin(c.Sender().ID) {
-		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
+		return c.Send("❌ Sizda admin huquqi yo'q.")
 	}
 
 	ctx := context.Background()

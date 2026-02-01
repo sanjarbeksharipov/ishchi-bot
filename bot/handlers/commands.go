@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -108,19 +109,31 @@ func (h *Handler) HandleText(c tele.Context) error {
 		}
 	}
 
+	// Handle user menu reply buttons
+	switch text {
+	case "👤 Profil":
+		return h.HandleUserProfile(c)
+	case "📋 Mening ishlarim":
+		return h.HandleUserMyJobs(c)
+	case "❓ Yordam":
+		// Check if we have a specific help message for users, otherwise generic
+		return h.HandleHelp(c)
+	}
+
 	// Default: check user state
 	switch user.State {
 	case models.StateIdle:
 		// Echo the message back with a prefix
 		// Only echo if not an admin command or handled above
 		if !h.IsAdmin(sender.ID) {
-			response := "You said: " + c.Text()
-			return c.Send(response)
+			// Don't echo, just ignore or send help hint?
+			// For now, let's just ignore to avoid spamming
+			return nil
 		}
 		return nil
 	default:
-		response := "You said: " + c.Text()
-		return c.Send(response)
+		// If state is not handled, do nothing
+		return nil
 	}
 }
 
@@ -191,7 +204,7 @@ Afsuski, sizning booking vaqti tugagan. Iltimos, qaytadan joy band qiling.`)
 
 ⏰ Admin 10-15 daqiqa ichida tekshiradi va javob beradi.
 
-💡 Agar to'lov tasdiqlansa, sizga xabar yuboriladi va booking tasdiqlangan hisoblanadi.
+💡 Agar to'lov tasdiqlansa, sizga xabar yuboriladi.
 
 Sabr qilganingiz uchun rahmat! 🙏`
 
@@ -203,4 +216,95 @@ Sabr qilganingiz uchun rahmat! 🙏`
 	go h.ForwardPaymentToAdminGroup(ctx, booking, photoFileID)
 
 	return nil
+}
+
+// HandleUserProfile displays the user's profile
+func (h *Handler) HandleUserProfile(c tele.Context) error {
+	ctx := context.Background()
+	userID := c.Sender().ID
+
+	// Get registered user details
+	regUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, userID)
+	if err != nil {
+		return c.Send("❌ Siz hali ro'yxatdan o'tmagansiz. /start buyrug'ini bosing.")
+	}
+
+	msg := fmt.Sprintf(`👤 <b>SIZNING PROFILINGIZ</b>
+
+📝 <b>F.I.SH:</b> %s
+📱 <b>Telefon:</b> %s
+🎂 <b>Yosh:</b> %d
+⚖️ <b>Vazn:</b> %d kg
+📏 <b>Bo'y:</b> %d sm
+
+✅ <b>Holat:</b> Faol
+📅 <b>Ro'yxatdan o'tgan sana:</b> %s
+`,
+		regUser.FullName,
+		regUser.Phone,
+		regUser.Age,
+		regUser.Weight,
+		regUser.Height,
+		regUser.CreatedAt.Format("02.01.2006"),
+	)
+
+	return c.Send(msg, tele.ModeHTML)
+}
+
+// HandleUserMyJobs displays the user's bookings
+func (h *Handler) HandleUserMyJobs(c tele.Context) error {
+	ctx := context.Background()
+	userID := c.Sender().ID
+
+	// Get user's bookings
+	// We want active bookings: Reserved, PaymentSubmitted, Confirmed
+	statuses := []models.BookingStatus{
+		models.BookingStatusSlotReserved,
+		models.BookingStatusPaymentSubmitted,
+		models.BookingStatusConfirmed,
+	}
+
+	var activeBookings []*models.JobBooking
+	for _, status := range statuses {
+		bookings, err := h.storage.Booking().GetUserBookingsByStatus(ctx, userID, status)
+		if err == nil {
+			activeBookings = append(activeBookings, bookings...)
+		}
+	}
+
+	if len(activeBookings) == 0 {
+		return c.Send("📭 Sizda hozircha faol ishlar yo'q.")
+	}
+
+	var sb strings.Builder
+	sb.WriteString("📋 <b>SIZNING ISHLARINGIZ</b>\n\n")
+
+	for _, booking := range activeBookings {
+		job, err := h.storage.Job().GetByID(ctx, booking.JobID)
+		if err != nil {
+			continue
+		}
+
+		statusIcon := "❓"
+		statusText := string(booking.Status)
+
+		switch booking.Status {
+		case models.BookingStatusSlotReserved:
+			statusIcon = "⏳"
+			statusText = "To'lov kutilmoqda"
+		case models.BookingStatusPaymentSubmitted:
+			statusIcon = "📩"
+			statusText = "Tekshirilmoqda"
+		case models.BookingStatusConfirmed:
+			statusIcon = "✅"
+			statusText = "Tasdiqlangan"
+		}
+
+		fmt.Fprintf(&sb, "<b>Ish №%d</b>\n", job.OrderNumber)
+		fmt.Fprintf(&sb, "📅 Sana: %s\n", job.WorkDate)
+		fmt.Fprintf(&sb, "💰 Ish haqqi: %s\n", job.Salary)
+		fmt.Fprintf(&sb, "📊 Holat: %s %s\n\n", statusIcon, statusText)
+	}
+
+	return c.Send(sb.String(), tele.ModeHTML)
 }
