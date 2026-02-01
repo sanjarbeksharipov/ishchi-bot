@@ -54,6 +54,13 @@ type UserRepoI interface {
 
 	// GetOrCreateUser gets a user by ID or creates a new one if not found
 	GetOrCreateUser(ctx context.Context, id int64, username, firstName, lastName string) (*models.User, error)
+
+	// Blocking and violations
+	AddViolation(ctx context.Context, tx any, violation *models.UserViolation) error
+	GetViolationCount(ctx context.Context, tx any, userID int64) (int, error)
+	BlockUser(ctx context.Context, tx any, block *models.BlockedUser) error
+	GetBlockStatus(ctx context.Context, userID int64) (*models.BlockedUser, error)
+	UnblockUser(ctx context.Context, userID int64) error
 }
 
 // JobRepoI defines the interface for job data persistence

@@ -63,12 +63,18 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 • Ism: %s
 • Telefon: %s
 • Telegram: @%s (ID: <code>%d</code>)
+• Yosh: %d
+• Vazn: %d kg
+• Bo'y: %d sm
 
 💼 <b>Ish ma'lumotlari:</b>
 • Tartib raqami: #%d
 • Ish haqqi: %s
-• Xizmat haqqi: %d so'm
 • Ish kuni: %s
+• Vaqt: %s
+• Manzil: %s
+• Ovqat: %s
+• Xizmat haqqi: %d so'm
 
 📋 <b>Booking ID:</b> #%d
 ⏰ <b>Yuborilgan vaqt:</b> %s
@@ -78,10 +84,16 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 		registeredUser.Phone,
 		telegramUser.Username,
 		booking.UserID,
+		registeredUser.Age,
+		registeredUser.Weight,
+		registeredUser.Height,
 		job.OrderNumber,
 		job.Salary,
-		job.ServiceFee,
 		job.WorkDate,
+		job.WorkTime,
+		job.Address,
+		job.Food,
+		job.ServiceFee,
 		booking.ID,
 		time.Now().Format("02.01.2006 15:04"),
 	)
@@ -298,21 +310,38 @@ func (h *Handler) HandleBlockUser(c tele.Context) error {
 			ShowAlert: true,
 		})
 	}
-
-	// Parse callback data: block_user_userID_bookingID
-	data := strings.TrimPrefix(c.Callback().Data, "block_user_")
-	var userID, bookingID int64
-	_, err := fmt.Sscanf(data, "%d_%d", &userID, &bookingID)
-	if err != nil {
-		h.log.Error("Failed to parse user and booking IDs", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
+	// Get booking ID,user ID from callback data : block_user_userID_bookingID
+	callbackData := strings.TrimSpace(c.Callback().Data)
+	callbackDataSl := strings.Split(callbackData, "_")
+	if len(callbackDataSl) != 4 {
 		return c.Respond(&tele.CallbackResponse{
-			Text:      "❌ Noto'g'ri ma'lumot.",
+			Text:      "❌ Noto'g'ri booking ID.",
+			ShowAlert: true,
+		})
+	}
+
+	userIDStr := callbackDataSl[2]
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Failed to parse user ID", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
+		return c.Respond(&tele.CallbackResponse{
+			Text:      "❌ Noto'g'ri user ID.",
+			ShowAlert: true,
+		})
+	}
+
+	bookingIDStr := callbackDataSl[3]
+	bookingID, err := strconv.ParseInt(bookingIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Failed to parse booking ID", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
+		return c.Respond(&tele.CallbackResponse{
+			Text:      "❌ Noto'g'ri booking ID.",
 			ShowAlert: true,
 		})
 	}
 
 	// Block user and reject payment through service
-	_, err = h.services.Payment().BlockUserAndRejectPayment(ctx, bookingID, userID, c.Sender().ID)
+	booking, err := h.services.Payment().BlockUserAndRejectPayment(ctx, bookingID, userID, c.Sender().ID)
 	if err != nil {
 		h.log.Error("Failed to block user", logger.Error(err))
 		return c.Respond(&tele.CallbackResponse{
@@ -321,8 +350,24 @@ func (h *Handler) HandleBlockUser(c tele.Context) error {
 		})
 	}
 
-	// Notify user
-	go h.notifyUserBlocked(userID)
+	// Get violation count to determine notification type
+	violationCount, err := h.storage.User().GetViolationCount(ctx, nil, userID)
+	if err != nil {
+		h.log.Error("Failed to get violation count", logger.Error(err))
+		violationCount = 0 // fallback
+	}
+	// Get job
+	job, err := h.storage.Job().GetByID(ctx, booking.JobID)
+	if err != nil {
+		h.log.Error("Failed to get job for violation notification", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{
+			Text:      "❌ Xatolik yuz berdi.",
+			ShowAlert: true,
+		})
+	}
+
+	// Notify user based on violation count
+	go h.notifyUserViolation(userID, int64(job.OrderNumber), violationCount)
 
 	// Update admin group message
 	adminUsername := c.Sender().Username
@@ -431,7 +476,79 @@ Agar joylar to'lgan bo'lsa, keyingi ishlar e'lon qilinishini kuting.`,
 	}
 }
 
-// notifyUserBlocked sends notification to blocked user
+// notifyUserViolation sends progressive violation notifications
+func (h *Handler) notifyUserViolation(userID, jobID int64, violationCount int) {
+	var message string
+
+	switch violationCount {
+	case 1:
+		// First strike - warning
+		message = fmt.Sprintf(`⚠️ <b>OGOHLANTIRISH</b>
+
+Sizning to'lov kvitansiyangiz №%d ish uchun soxta yoki noto'g'ri deb topildi.
+
+❗️ <b>Muhim:</b>
+• Faqat haqiqiy to'lov chekini yuboring
+• To'lov cheki aniq va to'liq bo'lishi kerak
+• To'lov summasi va sanasi to'g'ri bo'lishi kerak
+
+⚠️ <b>Ogohlantirish:</b>
+Bu sizning birinchi ogohlantirishingiz.
+
+Yana 1 marta soxta to'lov yuborilsa - 24 soat bloklanasiz.
+Yana 2 marta soxta to'lov yuborilsa - doimiy bloklanasiz!
+
+📞 Savol bo'lsa admin bilan bog'laning.`,
+			jobID,
+		)
+	case 2:
+		// Second strike - 24h block
+		message = fmt.Sprintf(`🚫 <b>24 SOAT BLOKLANGANSIZ</b>
+
+Sizning to'lov kvitansiyangiz №%d ish uchun ikkinchi marta soxta deb topildi.
+
+⏰ <b>Bloklash muddati:</b> 24 soat
+
+❌ Siz 24 soat davomida:
+• Ish bron qila olmaysiz
+• To'lov yubora olmaysiz
+• Ishlar ro'yxatini ko'rishingiz mumkin
+
+⚠️ <b>OXIRGI OGOHLANTIRISH:</b>
+Yana 1 marta soxta to'lov yuborilsa, doimiy bloklanasiz va endi ish bandlash imkoniyatiga ega bo'lmaysiz!
+
+⏳ 24 soatdan keyin qaytadan urinib ko'rishingiz mumkin.`,
+			jobID,
+		)
+	default:
+		// Third strike - permanent block
+		message = fmt.Sprintf(`🚫 <b>DOIMIY BLOKLANGANSIZ</b>
+
+Sizning to'lov kvitansiyangiz №%d ish uchun uchinchi marta soxta deb topildi.
+
+❌ <b>Hisobingiz doimiy bloklandi.</b>
+
+Siz endi:
+• Ish bron qila olmaysiz
+• To'lov yubora olmaysiz
+• Tizimdan foydalana olmaysiz
+
+3 marta soxta to'lov kvitansiyasi yuborish tizimdan doimiy chiqarilishga olib keladi.
+
+📞 <b>Apellyatsiya:</b>
+Agar bu xato deb hisoblasangiz, admin bilan bog'laning.
+Ammo soxta to'lov aniq isbot bo'lsa, bloklash olib tashlanmaydi.`,
+			jobID,
+		)
+	}
+
+	_, err := h.bot.Send(&tele.User{ID: userID}, message, tele.ModeHTML)
+	if err != nil {
+		h.log.Error("Failed to notify user about violation", logger.Error(err))
+	}
+}
+
+// notifyUserBlocked sends notification to blocked user (legacy, kept for backward compatibility)
 func (h *Handler) notifyUserBlocked(userID int64) {
 	message := `🚫 <b>SIZNING HISOBINGIZ BLOKLANDI</b>
 

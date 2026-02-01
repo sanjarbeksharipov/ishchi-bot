@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/pkg/logger"
@@ -47,9 +48,6 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 		}
 		return c.Send("❌ Bu ishga barcha joylar band.")
 	}
-
-	// Check if user already has a booking for this job
-	// TODO: Add check for existing booking
 
 	// Show job details with booking confirmation
 	msg := fmt.Sprintf(`
@@ -203,14 +201,22 @@ func (h *Handler) HandleBookingConfirm(c tele.Context, jobID int64) error {
 	if err != nil {
 		h.log.Error("Failed to confirm booking", logger.Error(err), logger.Any("error_msg", err.Error()))
 
-		// Handle specific error cases
-		if err.Error() == "job is not active" {
+		// Handle known errors
+		errStr := err.Error()
+
+		// 1. Blocked user errors
+		if strings.Contains(errStr, "Siz doimiy bloklangansiz") || strings.Contains(errStr, "Siz vaqtincha bloklangansiz") {
+			return c.Edit(errStr, tele.ModeHTML)
+		}
+
+		// 2. Job status errors
+		if errStr == "job is not active" {
 			return c.Edit("❌ Bu ish endi faol emas.")
 		}
-		if err.Error() == "all slots are full" {
+		if errStr == "all slots are full" {
 			return c.Edit("❌ Kechirasiz, barcha joylar band bo'lib qoldi! 😔")
 		}
-		if err.Error() == "all slots reserved, try again in a few minutes" {
+		if errStr == "all slots reserved, try again in a few minutes" {
 			msg := fmt.Sprintf(`
 ⏳ <b>Hozirda barcha joylar band</b>
 
@@ -227,12 +233,15 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 			return c.Edit(msg, tele.ModeHTML)
 		}
 
-		// Handle single booking constraint errors
-		if len(err.Error()) > 28 && err.Error()[:29] == "you have another active booki" {
+		// 3. User constraint errors
+		if strings.Contains(errStr, "you have another active booking") {
 			return c.Edit("⚠️ Sizda allaqachon boshqa faol bandlovingiz bor. Iltimos, avval uni yakunlang yoki bekor qiling.")
 		}
-		if len(err.Error()) > 30 && err.Error()[:31] == "you have a payment under review" {
+		if strings.Contains(errStr, "payment is being reviewed") || strings.Contains(errStr, "you have a payment under review") {
 			return c.Edit("⚠️ Sizning boshqa ish uchun to'lovingiz ko'rib chiqilmoqda. Iltimos, admin javobini kuting.")
+		}
+		if errStr == "booking already confirmed" {
+			return c.Edit("✅ Siz allaqachon tasdiqlangansiz!")
 		}
 
 		return c.Edit("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")

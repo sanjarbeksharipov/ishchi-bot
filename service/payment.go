@@ -264,7 +264,7 @@ func (s *paymentService) BlockUserAndRejectPayment(ctx context.Context, bookingI
 		booking.Status = models.BookingStatusRejected
 		booking.ReviewedByAdminID = &adminID
 		booking.ReviewedAt = &now
-		booking.RejectionReason = "Foydalanuvchi bloklandi"
+		booking.RejectionReason = "Soxta to'lov kvitansiyasi"
 
 		if err := s.storage.Booking().Update(ctx, tx, booking); err != nil {
 			s.log.Error("Failed to update booking", logger.Error(err))
@@ -278,7 +278,69 @@ func (s *paymentService) BlockUserAndRejectPayment(ctx context.Context, bookingI
 		}
 	}
 
-	// TODO: Add to blocked_users table when implemented
+	// Record violation
+	violation := &models.UserViolation{
+		UserID:        userID,
+		ViolationType: "fake_payment",
+		BookingID:     &bookingID,
+		AdminID:       &adminID,
+	}
+	if err := s.storage.User().AddViolation(ctx, tx, violation); err != nil {
+		s.log.Error("Failed to record violation", logger.Error(err))
+		return nil, fmt.Errorf("failed to record violation: %w", err)
+	}
+
+	// Get total violations (within transaction to see the just-added violation)
+	violationCount, err := s.storage.User().GetViolationCount(ctx, tx, userID)
+	if err != nil {
+		s.log.Error("Failed to get violation count", logger.Error(err))
+		return nil, fmt.Errorf("failed to get violation count: %w", err)
+	}
+
+	// Apply progressive blocking
+	var blockedUntil *time.Time
+	var reason string
+
+	switch violationCount {
+	case 1:
+		reason = "⚠️ Ogohlantirish: Soxta to'lov kvitansiyasi yuborildi"
+		// No block, just warning
+	case 2:
+		t := time.Now().Add(24 * time.Hour)
+		blockedUntil = &t
+		reason = "⚠️ Ikkinchi marta soxta to'lov! 24 soat bron qilish taqiqlangan"
+	default: // 3 or more
+		reason = "🚫 Doimiy bloklandi: 3 marta soxta to'lov kvitansiyasi yuborildi"
+		// blockedUntil = nil means permanent
+	}
+
+	// Block user if violations >= 2
+	if violationCount >= 2 {
+		block := &models.BlockedUser{
+			UserID:           userID,
+			BlockedUntil:     blockedUntil,
+			TotalViolations:  violationCount,
+			BlockedByAdminID: adminID,
+			Reason:           reason,
+		}
+
+		s.log.Info("Blocking user",
+			logger.Any("user_id", userID),
+			logger.Any("violation_count", violationCount),
+			logger.Any("blocked_until", blockedUntil),
+			logger.Any("is_permanent", blockedUntil == nil),
+		)
+
+		if err := s.storage.User().BlockUser(ctx, tx, block); err != nil {
+			s.log.Error("Failed to block user", logger.Error(err))
+			return nil, fmt.Errorf("failed to block user: %w", err)
+		}
+
+		s.log.Info("User blocked successfully",
+			logger.Any("user_id", userID),
+			logger.Any("blocked_until", block.BlockedUntil),
+		)
+	}
 
 	// Commit transaction
 	if err := s.storage.Transaction().Commit(ctx, tx); err != nil {
@@ -286,10 +348,12 @@ func (s *paymentService) BlockUserAndRejectPayment(ctx context.Context, bookingI
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	s.log.Info("User blocked and payment rejected",
+	s.log.Info("User violation recorded",
 		logger.Any("user_id", userID),
 		logger.Any("booking_id", bookingID),
 		logger.Any("admin_id", adminID),
+		logger.Any("violation_count", violationCount),
+		logger.Any("blocked_until", blockedUntil),
 	)
 
 	return booking, nil

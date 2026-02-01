@@ -13,6 +13,27 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// UserViolation represents a user violation record
+type UserViolation struct {
+	ID            int64     `json:"id"`
+	UserID        int64     `json:"user_id"`
+	ViolationType string    `json:"violation_type"`
+	BookingID     *int64    `json:"booking_id,omitempty"`
+	AdminID       *int64    `json:"admin_id,omitempty"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+// BlockedUser represents a blocked user
+type BlockedUser struct {
+	UserID           int64      `json:"user_id"`
+	BlockedUntil     *time.Time `json:"blocked_until,omitempty"` // nil = permanent
+	TotalViolations  int        `json:"total_violations"`
+	BlockedByAdminID int64      `json:"blocked_by_admin_id"`
+	Reason           string     `json:"reason"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+}
+
 // UserState represents the current state of a user in the conversation flow
 type UserState string
 

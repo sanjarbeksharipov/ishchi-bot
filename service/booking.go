@@ -38,6 +38,52 @@ func NewBookingService(cfg config.Config, log logger.LoggerI, storage storage.St
 
 // ConfirmBooking atomically reserves a slot and creates booking with idempotency
 func (s *bookingService) ConfirmBooking(ctx context.Context, userID, jobID int64) (*models.JobBooking, error) {
+	// Check if user is blocked
+	block, err := s.storage.User().GetBlockStatus(ctx, userID)
+	if err != nil {
+		s.log.Error("Failed to check block status", logger.Error(err))
+		return nil, fmt.Errorf("failed to check block status: %w", err)
+	}
+
+	if block != nil {
+		s.log.Info("Block check for user",
+			logger.Any("user_id", userID),
+			logger.Any("blocked_until", block.BlockedUntil),
+			logger.Any("total_violations", block.TotalViolations),
+			logger.Any("current_time", time.Now()),
+		)
+
+		if block.BlockedUntil == nil {
+			// Permanent block (BlockedUntil is NULL)
+			s.log.Warn("User is permanently blocked", logger.Any("user_id", userID))
+			return nil, fmt.Errorf("❌ Siz doimiy bloklangansiz.\n\nSabab: %s\n\nQo'shimcha ma'lumot uchun admin bilan bog'laning.", block.Reason)
+		}
+
+		now := time.Now()
+		if now.Before(*block.BlockedUntil) {
+			// Temporary block still active
+			remaining := time.Until(*block.BlockedUntil)
+			hours := int(remaining.Hours())
+			minutes := int(remaining.Minutes()) % 60
+			s.log.Warn("User is temporarily blocked",
+				logger.Any("user_id", userID),
+				logger.Any("blocked_until", block.BlockedUntil),
+				logger.Any("remaining_hours", hours),
+				logger.Any("remaining_minutes", minutes),
+			)
+			return nil, fmt.Errorf("⚠️ Siz vaqtincha bloklangansiz.\n\nSabab: %s\n\nQolgan vaqt: %d soat %d daqiqa", block.Reason, hours, minutes)
+		}
+
+		// Block expired, auto-unblock
+		s.log.Info("Block expired, auto-unblocking user", logger.Any("user_id", userID))
+		if err := s.storage.User().UnblockUser(ctx, userID); err != nil {
+			s.log.Error("Failed to auto-unblock user", logger.Error(err))
+			// Don't return error, continue with booking
+		} else {
+			s.log.Info("User auto-unblocked after 24h ban", logger.Any("user_id", userID))
+		}
+	}
+
 	// Check idempotency
 	idempotencyKey := models.GenerateIdempotencyKey(userID, jobID)
 	existingBooking, _ := s.storage.Booking().GetByIdempotencyKey(ctx, nil, idempotencyKey)
@@ -118,6 +164,7 @@ func (s *bookingService) ConfirmBooking(ctx context.Context, userID, jobID int64
 		Status:         models.BookingStatusSlotReserved,
 		IdempotencyKey: idempotencyKey,
 		CreatedAt:      now,
+		ReservedAt:     now,
 		ExpiresAt:      expiresAt,
 	}
 
