@@ -24,4 +24,46 @@
    - Added handling for "Cancel" reply button in registration text input
    - Ensures keyboard is properly cleaned up (or switched to menu) upon completion
 
+6. Registration from channel link skipped Public Offer
+   - Status: Completed
+   - Issue: When clicking "Register" from a job post, `HandleStartRegistrationForJob` was calling `HandleAcceptOffer` directly.
+   - Fix: Changed to call `HandleRegistrationStart`.
+   - Improvement: Updated `HandleRegistrationStart` to skip "Continue?" prompt for fresh drafts.
+
+7. Single Booking Constraint
+   - Status: Completed
+   - Prevented users from booking multiple jobs simultaneously if they have a reserved or pending payment booking.
+
+8. User Profile & My Jobs
+   - Status: Completed
+   - Implemented `user_profile` and `user_my_jobs` handlers for both text and callback interactions.
+
+9. Payment & Confirmation Messages
+   - Status: Completed
+   - Fixed "Nomi" duplication (replaced with WorkDate/OrderNumber).
+   - Corrected Job ID usage to OrderNumber.
+   - Cleaned up formatting for Admin and User messages.
+
+10. Payment Check Message Details
+   - Status: Completed
+   - Added user details: Age, Weight, Height
+   - Added job details: Work Date, Time, Address, Food information
+   
+11. Blocking Mechanism Improvements
+   - Status: Completed
+   - Implemented check in `ConfirmBooking` to prevent blocked users from creating new bookings.
+   - Removed global middleware approach to avoid blocking other interactions (Profile, etc.).
+   - Handles both permanent and temporary blocks with expiration checks.
+   
+12. Booking Handler Improvements
+   - Status: Completed
+   - Refactored `HandleBookingConfirm` error handling to correctly surface Blocked User messages.
+   - Cleaned up string matching logic for errors.
+   - Removed obsolete TODOs and added missing imports.
+
+13. Fixed Zero Timestamp for ReservedAt
+   - Status: Completed
+   - Issue: `reserved_at` was saving as 0001-01-01 because it was missing in `ConfirmBooking`.
+   - Fix: Added `ReservedAt: now` to the booking creation logic.
+
 ✅ UNRESOLVED ISSUES:
