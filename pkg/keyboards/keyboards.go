@@ -139,6 +139,10 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 		rows = append(rows, menu.Row(btnDeleteMsg))
 	}
 
+	// View bookings button
+	btnViewBookings := menu.Data("👥 Yozilganlarni ko'rish", fmt.Sprintf("view_job_bookings_%d", job.ID))
+	rows = append(rows, menu.Row(btnViewBookings))
+
 	btnDelete := menu.Data("❌ Ishni butunlay o'chirish", fmt.Sprintf("delete_job_%d", job.ID))
 	btnBack := menu.Data("⬅️ Orqaga", "admin_job_list")
 

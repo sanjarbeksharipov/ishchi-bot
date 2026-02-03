@@ -683,6 +683,101 @@ func getJobFieldValue(job *models.Job, field string) string {
 	}
 }
 
+// HandleViewJobBookings shows all users who booked a specific job
+func (h *Handler) HandleViewJobBookings(c tele.Context, jobID int64) error {
+	if !h.IsAdmin(c.Sender().ID) {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
+	}
+
+	ctx := context.Background()
+
+	// Get job details
+	job, err := h.storage.Job().GetByID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get job", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Ish topilmadi."})
+	}
+
+	// Get all bookings for this job (confirmed and payment submitted)
+	allBookings, err := h.storage.Booking().GetJobBookings(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get job bookings", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Xatolik yuz berdi."})
+	}
+
+	// Filter for active bookings (PaymentSubmitted and Confirmed)
+	var activeBookings []*models.JobBooking
+	for _, booking := range allBookings {
+		if booking.Status == models.BookingStatusPaymentSubmitted || booking.Status == models.BookingStatusConfirmed {
+			activeBookings = append(activeBookings, booking)
+		}
+	}
+
+	if len(activeBookings) == 0 {
+		return c.Respond(&tele.CallbackResponse{
+			Text:      "📭 Bu ishga hech kim yozilmagan.",
+			ShowAlert: true,
+		})
+	}
+
+	// Build message with user details
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "👥 <b>ISH №%d - YOZILGANLAR</b>\n\n", job.OrderNumber)
+	fmt.Fprintf(&sb, "📅 Ish kuni: %s\n", job.WorkDate)
+	fmt.Fprintf(&sb, "📊 Jami: %d ta ishchi\n\n", len(activeBookings))
+	sb.WriteString("━━━━━━━━━━━━━━━━━━━\n\n")
+
+	for i, booking := range activeBookings {
+		// Get user's Telegram info
+		user, err := h.storage.User().GetByID(ctx, booking.UserID)
+		if err != nil {
+			h.log.Error("Failed to get user", logger.Error(err))
+			continue
+		}
+
+		// Get registered user info (full name and phone)
+		registeredUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, booking.UserID)
+		if err != nil {
+			h.log.Error("Failed to get registered user", logger.Error(err))
+			continue
+		}
+
+		// Status icon
+		statusIcon := "📩"
+		statusText := "To'lov tekshirilmoqda"
+		if booking.Status == models.BookingStatusConfirmed {
+			statusIcon = "✅"
+			statusText = "Tasdiqlangan"
+		}
+
+		fmt.Fprintf(&sb, "<b>%d. %s</b>\n", i+1, registeredUser.FullName)
+
+		// Telegram username with link
+		if user.Username != "" {
+			fmt.Fprintf(&sb, "📱 Telegram: @%s\n", user.Username)
+		} else {
+			fmt.Fprintf(&sb, "📱 Telegram: <a href=\"tg://user?id=%d\">%s</a>\n", user.ID, user.FirstName)
+		}
+
+		fmt.Fprintf(&sb, "📞 Telefon: %s\n", registeredUser.Phone)
+		fmt.Fprintf(&sb, "🎂 Yosh: %d\n", registeredUser.Age)
+		fmt.Fprintf(&sb, "⚖️ Vazn/Bo'y: %d kg / %d cm\n", registeredUser.Weight, registeredUser.Height)
+		fmt.Fprintf(&sb, "📊 Holat: %s %s\n", statusIcon, statusText)
+		sb.WriteString("\n")
+	}
+
+	// Add back button
+	menu := &tele.ReplyMarkup{}
+	btnBack := menu.Data("⬅️ Orqaga", fmt.Sprintf("job_detail_%d", jobID))
+	menu.Inline(menu.Row(btnBack))
+
+	if err := c.Respond(); err != nil {
+		h.log.Error("Failed to respond to callback", logger.Error(err))
+	}
+
+	return c.Edit(sb.String(), menu, tele.ModeHTML)
+}
+
 // Helper to delete admin message (single-message enforcement)
 func (h *Handler) deleteAdminMessage(job *models.Job) {
 	ctx := context.Background()
