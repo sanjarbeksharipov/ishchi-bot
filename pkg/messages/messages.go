@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"telegram-bot-starter/bot/models"
+	"telegram-bot-starter/pkg/helper"
 )
 
 // Common bot messages
@@ -160,7 +161,7 @@ func FormatJobForChannel(job *models.Job) string {
 	}
 
 	// Money matters
-	fmt.Fprintf(&sb, "💳Xizmat haqi: %d so'm\n", job.ServiceFee)
+	fmt.Fprintf(&sb, "💳Xizmat haqqi: %d so'm\n", job.ServiceFee)
 	if job.AdditionalInfo != "" {
 		fmt.Fprintf(&sb, "📝Batafsil: %s \n\n", job.AdditionalInfo)
 	}
@@ -219,4 +220,65 @@ func valueOrEmpty(s string) string {
 		return "—"
 	}
 	return s
+}
+func FormatNoAvailableSlots(job *models.Job) string {
+	msg := fmt.Sprintf(`
+⏳ <b>Hozircha bo'sh joylar qolmadi</b>
+
+📊 <b>Bandlik holati:</b>
+- Jami o'rinlar: <b>%d</b> ta
+- Tasdiqlangan: <b>%d</b> ta
+- To'lov kutilmoqda: <b>%d</b> ta
+💡 <b>Eslatma:</b>
+Ayrim foydalanuvchilar to'lovni o'z vaqtida amalga oshirmasliklari mumkin. Bunday holda, band qilingan joylar <b>3 daqiqa ichida</b> qayta ochiladi.
+
+⏰ Bir necha daqiqadan so'ng qaytadan urinib ko'ring!
+`, job.RequiredWorkers, job.ReservedSlots, job.ConfirmedSlots)
+	return msg
+}
+
+func FormatJobDetailUser(job *models.Job) string {
+	msg := fmt.Sprintf(`
+<b>ISH HAQIDA MA'LUMOT</b>
+
+📋 <b>№:</b> %d
+💰 <b>Ish haqqi:</b> %s
+🍛 <b>Ovqat:</b> %s
+⏰ <b>Vaqt:</b> %s
+📍 <b>Manzil:</b> %s
+🌟 <b>Xizmat haqqi:</b> %d so'm
+📅 <b>Ish kuni:</b> %s
+
+👥 <b>Bo'sh joylar:</b> %d
+
+Ishga yozilishni tasdiqlaysizmi?
+`,
+		job.OrderNumber,
+		job.Salary,
+		helper.ValueOrDefault(job.Food, "ko'rsatilmagan"),
+		job.WorkTime,
+		job.Address,
+		job.ServiceFee,
+		job.WorkDate,
+		job.AvailableSlots(),
+	)
+	return msg
+}
+func FormatPaymentInstructions(job *models.Job, cardNumber, cardHolderName string) string {
+	msg := fmt.Sprintf(`
+✅ <b>JOY BAND QILINDI!</b>
+
+Sizga 3 daqiqa vaqt berildi. Iltimos, quyidagi ma'lumotlarga to'lovni amalga oshiring va to'lov chekini yuboring.
+
+<b>To'lov ma'lumotlari:</b>
+💳 Karta: %s
+👤 Ism: %s
+
+<b>To'lov summasi:</b> %d so'm (Xizmat haqqi)
+
+⏰ Vaqt: 3 daqiqa
+
+To'lov chekini yuboring (screenshot):
+`, cardNumber, cardHolderName, job.ServiceFee)
+	return msg
 }

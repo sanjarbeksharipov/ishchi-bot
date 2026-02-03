@@ -13,6 +13,7 @@ type Config struct {
 	Bot      BotConfig
 	Database DatabaseConfig
 	App      AppConfig
+	Payment  PaymentConfig
 }
 
 // BotConfig contains Telegram bot specific configuration
@@ -42,6 +43,12 @@ type AppConfig struct {
 	LogLevel    string
 }
 
+// PaymentConfig contains payment specific configuration
+type PaymentConfig struct {
+	CardNumber     string
+	CardHolderName string
+}
+
 // Load reads configuration from environment variables
 func Load() (*Config, error) {
 	cfg := &Config{
@@ -65,6 +72,10 @@ func Load() (*Config, error) {
 		App: AppConfig{
 			Environment: getEnv("APP_ENV", "development"),
 			LogLevel:    getEnv("LOG_LEVEL", "info"),
+		},
+		Payment: PaymentConfig{
+			CardNumber:     getEnv("CARD_NUMBER", "8600 0000 0000 0000"),
+			CardHolderName: getEnv("CARD_HOLDER_NAME", "ADMIN NAME"),
 		},
 	}
 

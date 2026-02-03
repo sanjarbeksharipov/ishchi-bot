@@ -180,6 +180,44 @@ func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Jo
 	return nil
 }
 
+// UpdateAdminJobPost updates the admin job detail message
+func (s *SenderService) UpdateAdminJobPost(ctx context.Context, job *models.Job) error {
+	if job.AdminMessageID == 0 {
+		s.log.Error("No admin message to update", logger.Any("job_id", job.ID))
+		return nil
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	msg := &tele.Message{
+		ID:   int(job.AdminMessageID),
+		Chat: &tele.Chat{ID: job.CreatedByAdminID},
+	}
+
+	adminMsg := messages.FormatJobDetailAdmin(job)
+	adminKeyboard := keyboards.JobDetailKeyboard(job)
+
+	_, err := s.bot.Edit(msg, adminMsg, adminKeyboard, tele.ModeHTML)
+	if err != nil {
+		s.log.Error("Failed to update admin message",
+			logger.Error(err),
+			logger.Any("job_id", job.ID),
+			logger.Any("admin_message_id", job.AdminMessageID),
+		)
+		return fmt.Errorf("failed to update admin message: %w", err)
+	}
+
+	s.log.Info("Admin message updated successfully",
+		logger.Any("job_id", job.ID),
+		logger.Any("confirmed_slots", job.ConfirmedSlots),
+		logger.Any("required_workers", job.RequiredWorkers),
+		logger.Any("status", job.Status),
+	)
+
+	return nil
+}
+
 // ============ Queue Implementation (Future) ============
 
 // EnableQueue enables queue-based message sending

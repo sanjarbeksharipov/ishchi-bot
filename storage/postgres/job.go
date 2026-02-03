@@ -29,7 +29,7 @@ func NewJobRepo(db *pgxpool.Pool, log logger.LoggerI) storage.JobRepoI {
 }
 
 // Create creates a new job
-func (r *jobRepo) Create(ctx context.Context, job *models.Job) error {
+func (r *jobRepo) Create(ctx context.Context, job *models.Job) (*models.Job, error) {
 	query := `
 		INSERT INTO jobs (
 			order_number, salary, food, work_time, address, service_fee, buses,
@@ -59,10 +59,10 @@ func (r *jobRepo) Create(ctx context.Context, job *models.Job) error {
 
 	if err != nil {
 		r.log.Error("Failed to create job", logger.Error(err))
-		return fmt.Errorf("failed to create job: %w", err)
+		return nil, fmt.Errorf("failed to create job: %w", err)
 	}
 
-	return nil
+	return job, nil
 }
 
 // GetByID retrieves a job by ID
@@ -302,6 +302,25 @@ func (r *jobRepo) UpdateStatus(ctx context.Context, id int64, status models.JobS
 	_, err := r.db.Exec(ctx, query, id, status)
 	if err != nil {
 		r.log.Error("Failed to update job status", logger.Error(err))
+		return fmt.Errorf("failed to update job status: %w", err)
+	}
+	return nil
+}
+
+// UpdateStatusInTx updates only the job status within a transaction
+func (r *jobRepo) UpdateStatusInTx(ctx context.Context, tx any, id int64, status models.JobStatus) error {
+	query := `UPDATE jobs SET status = $2, updated_at = NOW() WHERE id = $1`
+
+	var err error
+	if tx != nil {
+		pgxTx := tx.(pgx.Tx)
+		_, err = pgxTx.Exec(ctx, query, id, status)
+	} else {
+		_, err = r.db.Exec(ctx, query, id, status)
+	}
+
+	if err != nil {
+		r.log.Error("Failed to update job status in transaction", logger.Error(err))
 		return fmt.Errorf("failed to update job status: %w", err)
 	}
 	return nil

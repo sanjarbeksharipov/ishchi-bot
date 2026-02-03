@@ -408,28 +408,42 @@ func (h *Handler) notifyUserPaymentApproved(booking *models.JobBooking) {
 		return
 	}
 
-	message := fmt.Sprintf(`✅ <b>TO'LOVINGIZ TASDIQLANDI!</b>
+	// Build full job details
+	var sb strings.Builder
+	sb.WriteString("✅ <b>TO'LOVINGIZ TASDIQLANDI!</b>\n\n")
+	sb.WriteString("🎉 Tabriklaymiz! Sizning to'lovingiz admin tomonidan tasdiqlandi.\n\n")
+	sb.WriteString("💼 <b>ISH MA'LUMOTLARI:</b>\n")
+	fmt.Fprintf(&sb, "📋 Tartib raqami: #%d\n", job.OrderNumber)
+	fmt.Fprintf(&sb, "📅 Ish kuni: %s\n", job.WorkDate)
+	fmt.Fprintf(&sb, "💰 Ish haqqi: %s\n", job.Salary)
+	fmt.Fprintf(&sb, "⏰ Ish vaqti: %s\n", job.WorkTime)
+	fmt.Fprintf(&sb, "📍 Manzil: %s\n", job.Address)
 
-🎉 Tabriklaymiz! Sizning to'lovingiz admin tomonidan tasdiqlandi.
+	if job.Food != "" {
+		fmt.Fprintf(&sb, "🍛 Ovqat: %s\n", job.Food)
+	} else {
+		sb.WriteString("🍛 Ovqat: Berilmaydi\n")
+	}
 
-💼 <b>Ish ma'lumotlari:</b>
-• Tartib raqami: #%d
-• Ish haqqi: %s
-• Ish kuni: %s
+	if job.Buses != "" {
+		fmt.Fprintf(&sb, "🚌 Avtobuslar: %s\n", job.Buses)
+	}
 
-📋 <b>Keyingi qadamlar:</b>
-1️⃣ Ishga tayyor bo'ling
-2️⃣ Belgilangan vaqtda kelib turing
-3️⃣ Ish haqqi ish tugagandan keyin to'lanadi
+	fmt.Fprintf(&sb, "💳 Xizmat haqi: %d so'm\n", job.ServiceFee)
 
-📞 <b>Savol bo'lsa:</b>
-Agar savollaringiz bo'lsa, ish beruvchi bilan bog'laning.
+	if job.AdditionalInfo != "" {
+		fmt.Fprintf(&sb, "📝 Qo'shimcha: %s\n", job.AdditionalInfo)
+	}
 
-✨ Omad tilaymiz!`,
-		job.OrderNumber,
-		job.Salary,
-		job.WorkDate,
-	)
+	sb.WriteString("\n📋 <b>KEYINGI QADAMLAR:</b>\n")
+	sb.WriteString("1️⃣ Ishga tayyor bo'ling\n")
+	sb.WriteString("2️⃣ Belgilangan vaqtda kelib turing\n")
+	sb.WriteString("3️⃣ Ish haqqi ish tugagandan keyin to'lanadi\n\n")
+	sb.WriteString("📞 <b>SAVOL BO'LSA:</b>\n")
+	sb.WriteString("Agar savollaringiz bo'lsa, ish beruvchi bilan bog'laning.\n\n")
+	sb.WriteString("✨ Omad tilaymiz!")
+
+	message := sb.String()
 
 	_, err = h.bot.Send(&tele.User{ID: booking.UserID}, message, tele.ModeHTML)
 	if err != nil {

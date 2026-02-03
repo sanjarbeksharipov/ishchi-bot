@@ -300,10 +300,30 @@ func (h *Handler) HandleUserMyJobs(c tele.Context) error {
 			statusText = "Tasdiqlangan"
 		}
 
-		fmt.Fprintf(&sb, "<b>Ish №%d</b>\n", job.OrderNumber)
-		fmt.Fprintf(&sb, "📅 Sana: %s\n", job.WorkDate)
-		fmt.Fprintf(&sb, "💰 Ish haqqi: %s\n", job.Salary)
+		fmt.Fprintf(&sb, "<b>━━━━━ ISH №%d ━━━━━</b>\n", job.OrderNumber)
 		fmt.Fprintf(&sb, "📊 Holat: %s %s\n\n", statusIcon, statusText)
+		fmt.Fprintf(&sb, "📅 Ish kuni: %s\n", job.WorkDate)
+		fmt.Fprintf(&sb, "💰 Ish haqqi: %s\n", job.Salary)
+		fmt.Fprintf(&sb, "⏰ Ish vaqti: %s\n", job.WorkTime)
+		fmt.Fprintf(&sb, "📍 Manzil: %s\n", job.Address)
+
+		if job.Food != "" {
+			fmt.Fprintf(&sb, "🍛 Ovqat: %s\n", job.Food)
+		} else {
+			sb.WriteString("🍛 Ovqat: Berilmaydi\n")
+		}
+
+		if job.Buses != "" {
+			fmt.Fprintf(&sb, "🚌 Avtobuslar: %s\n", job.Buses)
+		}
+
+		fmt.Fprintf(&sb, "💳 Xizmat haqi: %d so'm\n", job.ServiceFee)
+
+		if job.AdditionalInfo != "" {
+			fmt.Fprintf(&sb, "📝 Qo'shimcha: %s\n", job.AdditionalInfo)
+		}
+
+		sb.WriteString("\n")
 	}
 
 	return c.Send(sb.String(), tele.ModeHTML)

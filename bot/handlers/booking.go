@@ -7,6 +7,7 @@ import (
 
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/pkg/logger"
+	"telegram-bot-starter/pkg/messages"
 
 	tele "gopkg.in/telebot.v4"
 )
@@ -31,49 +32,14 @@ func (h *Handler) HandleJobBookingStart(c tele.Context, user *models.User, jobID
 	if job.IsFull() {
 		// Check if there are reserved slots that might expire
 		if job.ReservedSlots > 0 {
-			msg := fmt.Sprintf(`
-⏳ <b>Hozirda barcha joylar band</b>
-
-📊 Holat:
-• Jami joylar: %d
-• Band qilingan: %d (3 daqiqa vaqt bor)
-• Tasdiqlangan: %d
-
-💡 <b>Maslahat:</b>
-Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qoladi. Iltimos, biroz kutib qaytadan urinib ko'ring!
-
-⏰ Bir necha daqiqadan so'ng qaytadan tekshiring.
-`, job.RequiredWorkers, job.ReservedSlots, job.ConfirmedSlots)
+			msg := messages.FormatNoAvailableSlots(job)
 			return c.Send(msg, tele.ModeHTML)
 		}
 		return c.Send("❌ Bu ishga barcha joylar band.")
 	}
 
 	// Show job details with booking confirmation
-	msg := fmt.Sprintf(`
-<b>ISH HAQIDA MA'LUMOT</b>
-
-📋 <b>№:</b> %d
-💰 <b>Ish haqqi:</b> %s
-🍛 <b>Ovqat:</b> %s
-⏰ <b>Vaqt:</b> %s
-📍 <b>Manzil:</b> %s
-🌟 <b>Xizmat haqi:</b> %d so'm
-📅 <b>Ish kuni:</b> %s
-
-👥 <b>Bo'sh joylar:</b> %d
-
-Ishga yozilishni tasdiqlaysizmi?
-`,
-		job.OrderNumber,
-		job.Salary,
-		valueOrDefault(job.Food, "ko'rsatilmagan"),
-		job.WorkTime,
-		job.Address,
-		job.ServiceFee,
-		job.WorkDate,
-		job.AvailableSlots(),
-	)
+	msg := messages.FormatJobDetailUser(job)
 
 	// Create confirmation keyboard
 	menu := &tele.ReplyMarkup{}
@@ -217,19 +183,7 @@ func (h *Handler) HandleBookingConfirm(c tele.Context, jobID int64) error {
 			return c.Edit("❌ Kechirasiz, barcha joylar band bo'lib qoldi! 😔")
 		}
 		if errStr == "all slots reserved, try again in a few minutes" {
-			msg := fmt.Sprintf(`
-⏳ <b>Hozirda barcha joylar band</b>
-
-📊 Holat:
-• Jami joylar: %d
-• Band qilingan: %d (3 daqiqa vaqt bor)
-• Tasdiqlangan: %d
-
-💡 <b>Maslahat:</b>
-Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qoladi. Iltimos, biroz kutib qaytadan urinib ko'ring!
-
-⏰ Bir necha daqiqadan so'ng qaytadan tekshiring.
-`, job.RequiredWorkers, job.ReservedSlots, job.ConfirmedSlots)
+			msg := messages.FormatNoAvailableSlots(job)
 			return c.Edit(msg, tele.ModeHTML)
 		}
 
@@ -248,21 +202,7 @@ Ba'zi foydalanuvchilar to'lov qilmasalar, 3 daqiqadan so'ng joylar bo'shab qolad
 	}
 
 	// Success! Send payment instructions
-	msg := fmt.Sprintf(`
-✅ <b>JOY BAND QILINDI!</b>
-
-Sizga 3 daqiqa vaqt berildi. Iltimos, quyidagi ma'lumotlarga to'lovni amalga oshiring va to'lov chekini yuboring.
-
-<b>To'lov ma'lumotlari:</b>
-💳 Karta: 8600 1234 5678 9012
-👤 Ism: ADMIN NAME
-
-<b>To'lov summasi:</b> %d so'm (Xizmat haqi)
-
-⏰ Vaqt: 3 daqiqa
-
-To'lov chekini yuboring (screenshot):
-`, job.ServiceFee)
+	msg := messages.FormatPaymentInstructions(job, h.cfg.Payment.CardNumber, h.cfg.Payment.CardHolderName)
 
 	// Edit the message
 	if err := c.Edit(msg, tele.ModeHTML); err != nil {
@@ -291,12 +231,4 @@ To'lov chekini yuboring (screenshot):
 	}
 
 	return nil
-}
-
-// valueOrDefault returns the value if not empty, otherwise returns the default
-func valueOrDefault(value, defaultVal string) string {
-	if value == "" {
-		return defaultVal
-	}
-	return value
 }

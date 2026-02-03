@@ -66,12 +66,13 @@ type UserRepoI interface {
 // JobRepoI defines the interface for job data persistence
 type JobRepoI interface {
 	// Job CRUD operations
-	Create(ctx context.Context, job *models.Job) error
+	Create(ctx context.Context, job *models.Job) (*models.Job, error)
 	GetByID(ctx context.Context, id int64) (*models.Job, error)
 	GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.Job, error) // For row locking
 	GetAll(ctx context.Context, status *models.JobStatus) ([]*models.Job, error)
 	Update(ctx context.Context, job *models.Job) error
 	UpdateStatus(ctx context.Context, id int64, status models.JobStatus) error
+	UpdateStatusInTx(ctx context.Context, tx any, id int64, status models.JobStatus) error
 	Delete(ctx context.Context, id int64) error
 
 	// Channel message tracking

@@ -67,15 +67,15 @@ func (h *Handler) HandleJobList(c tele.Context) error {
 	}
 
 	if len(jobs) == 0 {
-		if err := c.Respond(); err != nil {
-			h.log.Error("Failed to respond to callback", logger.Error(err))
-		}
+		// if err := c.Respond(); err != nil {
+		// 	h.log.Error("Failed to respond to callback", logger.Error(err))
+		// }
 		return c.Send("📋 Hozircha ishlar yo'q.", keyboards.AdminMenuReplyKeyboard())
 	}
 
-	if err := c.Respond(); err != nil {
-		h.log.Error("Failed to respond to callback", logger.Error(err))
-	}
+	// if err := c.Respond(); err != nil {
+	// 	h.log.Error("Failed to respond to callback", logger.Error(err))
+	// }
 
 	return c.Send("📋 Ishlar ro'yxati:", keyboards.JobListKeyboard(jobs))
 }
@@ -437,7 +437,8 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 
 		// Save job to database
 		job.CreatedByAdminID = c.Sender().ID
-		if err := h.storage.Job().Create(ctx, job); err != nil {
+		newJob, err := h.storage.Job().Create(ctx, job)
+		if err != nil {
 			h.log.Error("Failed to create job", logger.Error(err))
 			return c.Send(messages.MsgError)
 		}
@@ -452,7 +453,17 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 
 		// Show job preview with publish option
 		msg := fmt.Sprintf("✅ Ish yaratildi!\n\n%s", messages.FormatJobDetailAdmin(job))
-		return c.Send(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+		adminMsg, err := c.Bot().Send(c.Sender(), msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+		if err != nil {
+			h.log.Error("Failed to send updated job detail", logger.Error(err))
+			return c.Send(messages.MsgError)
+		}
+
+		// Save new admin message ID
+		if err := h.storage.Job().UpdateAdminMessageID(ctx, newJob.ID, int64(adminMsg.ID)); err != nil {
+			h.log.Error("Failed to save admin message ID", logger.Error(err))
+		}
+
 	}
 
 	// Update temp job and state

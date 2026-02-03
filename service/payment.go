@@ -140,16 +140,16 @@ func (s *paymentService) ApprovePayment(ctx context.Context, bookingID, adminID 
 		return nil, fmt.Errorf("failed to move slot: %w", err)
 	}
 
-	// Get updated job to check if full
-	job, err := s.storage.Job().GetByID(ctx, booking.JobID)
+	// Get updated job within transaction to check if full
+	job, err := s.storage.Job().GetByIDForUpdate(ctx, tx, booking.JobID)
 	if err != nil {
 		s.log.Error("Failed to get job", logger.Error(err))
 		return nil, fmt.Errorf("failed to get job: %w", err)
 	}
 
-	// Check if job is now full and update status
+	// Check if job is now full and update status within transaction
 	if job.IsFull() && job.Status != models.JobStatusFull {
-		if err := s.storage.Job().UpdateStatus(ctx, job.ID, models.JobStatusFull); err != nil {
+		if err := s.storage.Job().UpdateStatusInTx(ctx, tx, job.ID, models.JobStatusFull); err != nil {
 			s.log.Error("Failed to update job status to FULL", logger.Error(err))
 			// Don't return error, just log it
 		} else {
@@ -169,9 +169,10 @@ func (s *paymentService) ApprovePayment(ctx context.Context, bookingID, adminID 
 		logger.Any("admin_id", adminID),
 	)
 
-	// Update channel message after successful commit
+	// Update channel and admin messages after successful commit
 	if s.manager != nil {
 		go s.manager.Sender().UpdateChannelJobPost(context.Background(), job)
+		go s.manager.Sender().UpdateAdminJobPost(context.Background(), job)
 	}
 
 	return booking, nil
