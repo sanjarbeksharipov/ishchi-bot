@@ -36,6 +36,7 @@ type Job struct {
 	// Status and metadata
 	Status           JobStatus `json:"status"`
 	ChannelMessageID int64     `json:"channel_message_id"`
+	AdminMessageID   int64     `json:"admin_message_id"` // Admin job detail message ID for single-message enforcement
 	CreatedByAdminID int64     `json:"created_by_admin_id"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`

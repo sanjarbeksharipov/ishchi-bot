@@ -77,6 +77,9 @@ type JobRepoI interface {
 	// Channel message tracking
 	UpdateChannelMessageID(ctx context.Context, id int64, messageID int64) error
 
+	// Admin message tracking (single-message enforcement)
+	UpdateAdminMessageID(ctx context.Context, id int64, messageID int64) error
+
 	// CRITICAL: Race-safe slot management
 	// IncrementReservedSlots atomically increments reserved_slots with validation
 	IncrementReservedSlots(ctx context.Context, tx any, jobID int64) error

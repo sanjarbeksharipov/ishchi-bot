@@ -81,6 +81,7 @@ func (h *Handler) HandleJobList(c tele.Context) error {
 }
 
 // HandleJobDetail shows job detail with edit options
+// Implements single-message enforcement: only one admin message per job
 func (h *Handler) HandleJobDetail(c tele.Context, jobID int64) error {
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
@@ -97,8 +98,23 @@ func (h *Handler) HandleJobDetail(c tele.Context, jobID int64) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
+	// Single-message enforcement: Delete previous admin message if exists
+	h.deleteAdminMessage(job)
+
+	// Send new admin message
 	msg := messages.FormatJobDetailAdmin(job)
-	return c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	sentMsg, err := c.Bot().Send(c.Sender(), msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	if err != nil {
+		h.log.Error("Failed to send job detail", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Save new admin message ID to database
+	if err := h.storage.Job().UpdateAdminMessageID(ctx, jobID, int64(sentMsg.ID)); err != nil {
+		h.log.Error("Failed to save admin message ID", logger.Error(err))
+	}
+
+	return nil
 }
 
 // HandleEditJobField starts editing a specific job field
@@ -174,6 +190,7 @@ func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) 
 }
 
 // HandleChangeJobStatus changes the job status
+// Implements single-message enforcement
 func (h *Handler) HandleChangeJobStatus(c tele.Context, jobID int64, status models.JobStatus) error {
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
@@ -536,9 +553,31 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 	// Clear editing job ID
 	h.clearEditingJobID(c.Sender().ID)
 
-	// Show updated job detail
+	// Delete the edit prompt message and user's text message to keep chat clean
+	if c.Message() != nil {
+		// Delete user's text input
+		if err := c.Delete(); err != nil {
+			h.log.Error("Failed to delete user message", logger.Error(err))
+		}
+	}
+
+	// Single-message enforcement: Delete previous admin message
+	h.deleteAdminMessage(job)
+
+	// Send new admin message with updated info and success notification
 	msg := fmt.Sprintf("✅ Yangilandi!\n\n%s", messages.FormatJobDetailAdmin(job))
-	return c.Send(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	adminMsg, err := c.Bot().Send(c.Sender(), msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	if err != nil {
+		h.log.Error("Failed to send updated job detail", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Save new admin message ID
+	if err := h.storage.Job().UpdateAdminMessageID(ctx, jobID, int64(adminMsg.ID)); err != nil {
+		h.log.Error("Failed to save admin message ID", logger.Error(err))
+	}
+
+	return nil
 }
 
 // HandleCancelJobCreation cancels the job creation flow
@@ -630,6 +669,33 @@ func getJobFieldValue(job *models.Job, field string) string {
 		return fmt.Sprintf("%d", job.ConfirmedSlots)
 	default:
 		return ""
+	}
+}
+
+// Helper to delete admin message (single-message enforcement)
+func (h *Handler) deleteAdminMessage(job *models.Job) {
+	ctx := context.Background()
+
+	// If no admin message ID exists, nothing to delete
+	if job.AdminMessageID == 0 {
+		return
+	}
+
+	// Try to delete the message
+	msgToDelete := &tele.Message{
+		ID:   int(job.AdminMessageID),
+		Chat: &tele.Chat{ID: job.CreatedByAdminID},
+	}
+
+	if err := h.bot.Delete(msgToDelete); err != nil {
+		// Message might already be deleted by user or not found
+		// This is not critical - log and continue
+		h.log.Error("Failed to delete admin message (might be already deleted)", logger.Error(err))
+	}
+
+	// Clear admin message ID from database
+	if err := h.storage.Job().UpdateAdminMessageID(ctx, job.ID, 0); err != nil {
+		h.log.Error("Failed to clear admin message ID", logger.Error(err))
 	}
 }
 
