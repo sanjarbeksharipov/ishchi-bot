@@ -1,14 +1,16 @@
--- Rollback migration - removes all schema changes
+-- ============================================
+-- Rollback Initial Database Schema
+-- ============================================
 
--- Drop trigger first
-DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+-- Drop tables in reverse order of creation (respecting foreign keys)
+DROP TABLE IF EXISTS blocked_users CASCADE;
+DROP TABLE IF EXISTS user_violations CASCADE;
+DROP TABLE IF EXISTS registered_users CASCADE;
+DROP TABLE IF EXISTS registration_drafts CASCADE;
+DROP TABLE IF EXISTS job_bookings CASCADE;
+DROP TABLE IF EXISTS jobs CASCADE;
+DROP SEQUENCE IF EXISTS job_order_number_seq CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
--- Drop function
-DROP FUNCTION IF EXISTS update_updated_at_column();
-
--- Drop indexes
-DROP INDEX IF EXISTS idx_users_state;
-DROP INDEX IF EXISTS idx_users_username;
-
--- Drop table
-DROP TABLE IF EXISTS users;
+-- Drop the function
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;

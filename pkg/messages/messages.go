@@ -55,6 +55,7 @@ Ishlarni boshqarish uchun quyidagi tugmalardan foydalaning:`
 	MsgEnterIshKuni          = "📅 Ish kunini kiriting:\n\nMasalan: Ertaga yoki 25-yanvar"
 	MsgEnterKerakliIshchilar = "👥 Kerakli ishchilar sonini kiriting:\n\nMasalan: 5"
 	MsgEnterConfirmedSlots   = "✅ Qabul qilingan ishchilar sonini kiriting:\n\nMasalan: 3\n\n⚠️ Qabul qilingan soni kerakli sondan oshmasligi kerak."
+	MsgEnterEmployerPhone    = "📞 Ish beruvchining telefon raqamini kiriting:\n\nMasalan: +998901234567 yoki 901234567\n\n⚠️ Bu raqam faqat to'lov tasdiqlangan foydalanuvchilar uchun ko'rinadi."
 
 	// Registration messages
 	MsgRegistrationWelcome = `👋 Xush kelibsiz!
@@ -204,6 +205,7 @@ func FormatJobDetailAdmin(job *models.Job) string {
 	sb.WriteString(fmt.Sprintf("📝 <b>Ish tavsifi:</b> %s\n", valueOrEmpty(job.AdditionalInfo)))
 	sb.WriteString(fmt.Sprintf("📅 <b>Ish kuni:</b> %s\n", job.WorkDate))
 	sb.WriteString(fmt.Sprintf("👥 <b>Ishchilar:</b> %d/%d\n", job.ConfirmedSlots, job.RequiredWorkers))
+	sb.WriteString(fmt.Sprintf("📞 <b>Ish beruvchi telefon:</b> %s\n", valueOrEmpty(job.EmployerPhone)))
 	sb.WriteString(fmt.Sprintf("\n<b>Status:</b> %s\n", job.Status.Display()))
 
 	if job.ChannelMessageID != 0 {

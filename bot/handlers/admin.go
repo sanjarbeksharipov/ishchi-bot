@@ -165,6 +165,9 @@ func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) 
 	case "confirmed":
 		state = models.StateEditingJobConfirmed
 		prompt = messages.MsgEnterConfirmedSlots
+	case "employer_phone":
+		state = models.StateEditingJobEmployerPhone
+		prompt = messages.MsgEnterEmployerPhone
 	default:
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri maydon"})
 	}
@@ -434,6 +437,11 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 			return c.Send("❌ Iltimos, 1 dan katta raqam kiriting.")
 		}
 		job.RequiredWorkers = kerakli
+		nextState = models.StateCreatingJobEmployerPhone
+		nextPrompt = messages.MsgEnterEmployerPhone
+
+	case models.StateCreatingJobEmployerPhone:
+		job.EmployerPhone = text
 
 		// Save job to database
 		job.CreatedByAdminID = c.Sender().ID
@@ -463,6 +471,8 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 		if err := h.storage.Job().UpdateAdminMessageID(ctx, newJob.ID, int64(adminMsg.ID)); err != nil {
 			h.log.Error("Failed to save admin message ID", logger.Error(err))
 		}
+
+		return nil
 
 	}
 
@@ -543,6 +553,8 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 			// If job was full but now has available slots, reopen it
 			job.Status = models.JobStatusActive
 		}
+	case models.StateEditingJobEmployerPhone:
+		job.EmployerPhone = text
 	}
 
 	// Update job in database
@@ -678,6 +690,8 @@ func getJobFieldValue(job *models.Job, field string) string {
 		return fmt.Sprintf("%d", job.RequiredWorkers)
 	case "confirmed":
 		return fmt.Sprintf("%d", job.ConfirmedSlots)
+	case "employer_phone":
+		return job.EmployerPhone
 	default:
 		return ""
 	}

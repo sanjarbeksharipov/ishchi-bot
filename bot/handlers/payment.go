@@ -435,12 +435,16 @@ func (h *Handler) notifyUserPaymentApproved(booking *models.JobBooking) {
 		fmt.Fprintf(&sb, "📝 Qo'shimcha: %s\n", job.AdditionalInfo)
 	}
 
-	sb.WriteString("\n📋 <b>KEYINGI QADAMLAR:</b>\n")
+	sb.WriteString("\n� <b>ISH BERUVCHI MA'LUMOTLARI:</b>\n")
+	if job.EmployerPhone != "" {
+		fmt.Fprintf(&sb, "📱 Telefon: <code>%s</code>\n", job.EmployerPhone)
+		sb.WriteString("(Zararuri savollar uchun ish beruvchi bilan bog'laning)\n")
+	}
+
+	sb.WriteString("\n�📋 <b>KEYINGI QADAMLAR:</b>\n")
 	sb.WriteString("1️⃣ Ishga tayyor bo'ling\n")
 	sb.WriteString("2️⃣ Belgilangan vaqtda kelib turing\n")
 	sb.WriteString("3️⃣ Ish haqqi ish tugagandan keyin to'lanadi\n\n")
-	sb.WriteString("📞 <b>SAVOL BO'LSA:</b>\n")
-	sb.WriteString("Agar savollaringiz bo'lsa, ish beruvchi bilan bog'laning.\n\n")
 	sb.WriteString("✨ Omad tilaymiz!")
 
 	message := sb.String()

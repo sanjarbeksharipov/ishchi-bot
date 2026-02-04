@@ -27,6 +27,7 @@ type Job struct {
 	Buses          string `json:"buses"`           // Avtobuslar
 	AdditionalInfo string `json:"additional_info"` // Qo'shimcha
 	WorkDate       string `json:"work_date"`       // Ish kuni
+	EmployerPhone  string `json:"employer_phone"`  // Ish beruvchining telefon raqami (faqat tasdiqlangan foydalanuvchilar uchun)
 
 	// Slot management (CRITICAL for race conditions)
 	RequiredWorkers int `json:"required_workers"` // Total slots needed

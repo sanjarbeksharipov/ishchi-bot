@@ -115,6 +115,7 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 	btnEditIshKuni := menu.Data("📅 Ish kuni", fmt.Sprintf("edit_job_%d_ish_kuni", job.ID))
 	btnEditKerakli := menu.Data("👥 Kerakli ishchilar", fmt.Sprintf("edit_job_%d_kerakli", job.ID))
 	btnEditConfirmed := menu.Data("✅ Qabul qilingan", fmt.Sprintf("edit_job_%d_confirmed", job.ID))
+	btnEditEmployerPhone := menu.Data("📞 Ish beruvchi tel", fmt.Sprintf("edit_job_%d_employer_phone", job.ID))
 
 	// Status buttons
 	btnStatusOpen := menu.Data("🟢 Ochiq", fmt.Sprintf("job_status_%d_open", job.ID))
@@ -128,6 +129,7 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 	rows = append(rows, menu.Row(btnEditXizmatHaqqi, btnEditAvtobuslar))
 	rows = append(rows, menu.Row(btnEditIshTavsifi, btnEditIshKuni))
 	rows = append(rows, menu.Row(btnEditKerakli, btnEditConfirmed))
+	rows = append(rows, menu.Row(btnEditEmployerPhone))
 	rows = append(rows, menu.Row(btnStatusOpen, btnStatusToldi, btnStatusClosed))
 
 	// Publish or delete message buttons
