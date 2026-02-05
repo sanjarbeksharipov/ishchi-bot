@@ -162,16 +162,16 @@ func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Jo
 
 	channelMsg := messages.FormatJobForChannel(job)
 
-	var err error
 	// Only show signup button if job is ACTIVE
+	var keyboard *tele.ReplyMarkup
 	if job.Status == models.JobStatusActive {
-		signupBtn := keyboards.JobSignupKeyboard(job.ID, s.cfg.Bot.Username)
-		_, err = s.bot.Edit(msg, channelMsg, signupBtn, tele.ModeHTML)
+		keyboard = keyboards.JobSignupKeyboard(job.ID, s.cfg.Bot.Username)
 	} else {
 		// Remove buttons for non-active jobs (FULL, COMPLETED, CANCELLED, DRAFT)
-		_, err = s.bot.Edit(msg, channelMsg, nil, tele.ModeHTML)
+		keyboard = &tele.ReplyMarkup{}
 	}
 
+	_, err := s.bot.Edit(msg, channelMsg, keyboard, tele.ModeHTML)
 	if err != nil {
 		s.log.Error("Failed to update channel message",
 			logger.Error(err),

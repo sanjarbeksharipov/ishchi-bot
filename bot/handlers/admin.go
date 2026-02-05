@@ -695,16 +695,16 @@ func (h *Handler) updateChannelMessage(job *models.Job) {
 	channelMsg := messages.FormatJobForChannel(job)
 
 	// Only show signup button if job is ACTIVE
+	var keyboard *tele.ReplyMarkup
 	if job.Status == models.JobStatusActive {
-		signupBtn := keyboards.JobSignupKeyboard(job.ID, h.cfg.Bot.Username)
-		if _, err := h.bot.Edit(msg, channelMsg, signupBtn, tele.ModeHTML); err != nil {
-			h.log.Error("Failed to update channel message", logger.Error(err))
-		}
+		keyboard = keyboards.JobSignupKeyboard(job.ID, h.cfg.Bot.Username)
 	} else {
 		// Remove buttons for non-active jobs (FULL, COMPLETED, CANCELLED, DRAFT)
-		if _, err := h.bot.Edit(msg, channelMsg, nil, tele.ModeHTML); err != nil {
-			h.log.Error("Failed to update channel message", logger.Error(err))
-		}
+		keyboard = &tele.ReplyMarkup{}
+	}
+
+	if _, err := h.bot.Edit(msg, channelMsg, keyboard, tele.ModeHTML); err != nil {
+		h.log.Error("Failed to update channel message", logger.Error(err))
 	}
 }
 
