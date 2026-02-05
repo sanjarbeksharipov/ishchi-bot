@@ -14,6 +14,7 @@ import (
 	"telegram-bot-starter/service"
 	"telegram-bot-starter/storage/postgres"
 
+	"github.com/google/martian/log"
 	"github.com/joho/godotenv"
 	tele "gopkg.in/telebot.v4"
 )
@@ -21,7 +22,7 @@ import (
 func main() {
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
-		panic("Failed to load .env file: " + err.Error())
+		log.Error("Failed to load .env file: " + err.Error())
 	}
 
 	// Load configuration
