@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -25,7 +24,7 @@ type Store struct {
 // NewPostgres creates a new PostgreSQL storage instance
 func NewPostgres(ctx context.Context, cfg *config.Config, log logger.LoggerI) (storage.StorageI, error) {
 	dsn := cfg.Database.DSN()
-	log.Info(fmt.Sprintf("Connecting to database: %s:%d/%s", cfg.Database.Host, cfg.Database.Port, cfg.Database.DBName))
+	log.Info("Connecting to database")
 
 	parseConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {

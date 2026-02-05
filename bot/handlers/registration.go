@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -74,7 +75,12 @@ func (h *Handler) HandleRegistrationStart(c tele.Context) error {
 // showPublicOffer displays the public offer and accept/decline buttons
 func (h *Handler) showPublicOffer(c tele.Context) error {
 	// Load public offer text
-	offerPath := filepath.Join(".", "docs", "public_offer.txt")
+	absolutePath, err := os.Getwd()
+	if err != nil {
+		h.log.Error("Failed to get working directory", logger.Error(err))
+		return h.services.Sender().Reply(c, messages.MsgError)
+	}
+	offerPath := filepath.Join(absolutePath, "docs", "public_offer.txt")
 	summary, err := h.services.Registration().LoadPublicOffer(offerPath)
 	if err != nil {
 		h.log.Error("Failed to load public offer", logger.Error(err))
