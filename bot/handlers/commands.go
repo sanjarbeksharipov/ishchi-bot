@@ -218,6 +218,40 @@ Sabr qilganingiz uchun rahmat! 🙏`
 	return nil
 }
 
+// HandleLocation handles location messages (for job location from admin)
+func (h *Handler) HandleLocation(c tele.Context) error {
+	location := c.Message().Location
+	if location == nil {
+		return nil
+	}
+
+	ctx := context.Background()
+	user, err := h.storage.User().GetByID(ctx, c.Sender().ID)
+	if err != nil {
+		return c.Send("❌ Xatolik yuz berdi.")
+	}
+
+	// Only handle location during job creation or editing
+	if user.State != models.StateCreatingJobLocation && user.State != models.StateEditingJobLocation {
+		return c.Send("❌ Hozirda joylashuv kutilmayapti.")
+	}
+
+	// Format location as "lat,lng"
+	locationStr := fmt.Sprintf("%f,%f", location.Lat, location.Lng)
+
+	// Handle job creation
+	if user.State == models.StateCreatingJobLocation {
+		return h.handleJobCreationLocationInput(c, user, locationStr)
+	}
+
+	// Handle job editing
+	if user.State == models.StateEditingJobLocation {
+		return h.handleJobEditingLocationInput(c, user, locationStr)
+	}
+
+	return nil
+}
+
 // HandleUserProfile displays the user's profile
 func (h *Handler) HandleUserProfile(c tele.Context) error {
 	ctx := context.Background()

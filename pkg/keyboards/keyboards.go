@@ -109,6 +109,7 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 	btnEditOvqat := menu.Data("🍛 Ovqat", fmt.Sprintf("edit_job_%d_ovqat", job.ID))
 	btnEditVaqt := menu.Data("⏰ Vaqt", fmt.Sprintf("edit_job_%d_vaqt", job.ID))
 	btnEditManzil := menu.Data("📍 Manzil", fmt.Sprintf("edit_job_%d_manzil", job.ID))
+	btnEditLocation := menu.Data("📌 Joylashuv", fmt.Sprintf("edit_job_%d_location", job.ID))
 	btnEditXizmatHaqqi := menu.Data("🌟 Xizmat haqqi", fmt.Sprintf("edit_job_%d_xizmat_haqqi", job.ID))
 	btnEditAvtobuslar := menu.Data("🚌 Avtobuslar", fmt.Sprintf("edit_job_%d_avtobuslar", job.ID))
 	btnEditIshTavsifi := menu.Data("📝 Ish tavsifi", fmt.Sprintf("edit_job_%d_ish_tavsifi", job.ID))
@@ -126,10 +127,10 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 	var rows []tele.Row
 	rows = append(rows, menu.Row(btnEditIshHaqqi, btnEditOvqat))
 	rows = append(rows, menu.Row(btnEditVaqt, btnEditManzil))
-	rows = append(rows, menu.Row(btnEditXizmatHaqqi, btnEditAvtobuslar))
-	rows = append(rows, menu.Row(btnEditIshTavsifi, btnEditIshKuni))
-	rows = append(rows, menu.Row(btnEditKerakli, btnEditConfirmed))
-	rows = append(rows, menu.Row(btnEditEmployerPhone))
+	rows = append(rows, menu.Row(btnEditLocation, btnEditXizmatHaqqi))
+	rows = append(rows, menu.Row(btnEditAvtobuslar, btnEditIshTavsifi))
+	rows = append(rows, menu.Row(btnEditIshKuni, btnEditKerakli))
+	rows = append(rows, menu.Row(btnEditConfirmed, btnEditEmployerPhone))
 	rows = append(rows, menu.Row(btnStatusOpen, btnStatusToldi, btnStatusClosed))
 
 	// Publish or delete message buttons

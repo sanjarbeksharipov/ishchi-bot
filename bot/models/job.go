@@ -23,6 +23,7 @@ type Job struct {
 	Food           string `json:"food"`            // Ovqat
 	WorkTime       string `json:"work_time"`       // Vaqt
 	Address        string `json:"address"`         // Manzil
+	Location       string `json:"location"`        // Aniq manzil/joylashuv (faqat to'lov tasdiqlangandan keyin)
 	ServiceFee     int    `json:"service_fee"`     // Xizmat haqqi
 	Buses          string `json:"buses"`           // Avtobuslar
 	AdditionalInfo string `json:"additional_info"` // Qo'shimcha

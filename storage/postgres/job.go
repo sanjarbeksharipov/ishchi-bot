@@ -32,10 +32,10 @@ func NewJobRepo(db *pgxpool.Pool, log logger.LoggerI) storage.JobRepoI {
 func (r *jobRepo) Create(ctx context.Context, job *models.Job) (*models.Job, error) {
 	query := `
 		INSERT INTO jobs (
-			order_number, salary, food, work_time, address, service_fee, buses,
+			order_number, salary, food, work_time, address, location, service_fee, buses,
 			additional_info, work_date, status, required_workers, reserved_slots, 
 			confirmed_slots, channel_message_id, admin_message_id, created_by_admin_id, employer_phone
-		) VALUES (nextval('job_order_number_seq'), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+		) VALUES (nextval('job_order_number_seq'), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING id, order_number, created_at, updated_at
 	`
 
@@ -44,6 +44,7 @@ func (r *jobRepo) Create(ctx context.Context, job *models.Job) (*models.Job, err
 		job.Food,
 		job.WorkTime,
 		job.Address,
+		job.Location,
 		job.ServiceFee,
 		job.Buses,
 		job.AdditionalInfo,
@@ -69,7 +70,7 @@ func (r *jobRepo) Create(ctx context.Context, job *models.Job) (*models.Job, err
 // GetByID retrieves a job by ID
 func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 	query := `
-		SELECT id, order_number, salary, food, work_time, address, service_fee,
+		SELECT id, order_number, salary, food, work_time, address, location, service_fee,
 			buses, additional_info, work_date, status, required_workers,
 			reserved_slots, confirmed_slots, channel_message_id, admin_message_id,
 			created_by_admin_id, employer_phone, created_at, updated_at
@@ -78,7 +79,7 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 	`
 
 	job := &models.Job{}
-	var food, buses, additionalInfo, employerPhone sql.NullString
+	var food, buses, additionalInfo, employerPhone, location sql.NullString
 	var channelMessageID, adminMessageID sql.NullInt64
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
@@ -88,6 +89,7 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 		&food,
 		&job.WorkTime,
 		&job.Address,
+		&location,
 		&job.ServiceFee,
 		&buses,
 		&additionalInfo,
@@ -122,6 +124,9 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 	if additionalInfo.Valid {
 		job.AdditionalInfo = additionalInfo.String
 	}
+	if location.Valid {
+		job.Location = location.String
+	}
 	if channelMessageID.Valid {
 		job.ChannelMessageID = channelMessageID.Int64
 	}
@@ -138,7 +143,7 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 // GetByIDForUpdate retrieves a job with row lock (FOR UPDATE)
 func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.Job, error) {
 	query := `
-		SELECT id, order_number, salary, food, work_time, address, service_fee,
+		SELECT id, order_number, salary, food, work_time, address, location, service_fee,
 			buses, additional_info, work_date, status, required_workers,
 			reserved_slots, confirmed_slots, channel_message_id, admin_message_id,
 			created_by_admin_id, employer_phone, created_at, updated_at
@@ -148,7 +153,7 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 	`
 
 	job := &models.Job{}
-	var food, buses, additionalInfo, employerPhone sql.NullString
+	var food, buses, additionalInfo, employerPhone, location sql.NullString
 	var channelMessageID, adminMessageID sql.NullInt64
 
 	var err error
@@ -156,7 +161,7 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 		pgxTx := tx.(pgx.Tx)
 		err = pgxTx.QueryRow(ctx, query, id).Scan(
 			&job.ID, &job.OrderNumber, &job.Salary, &food,
-			&job.WorkTime, &job.Address, &job.ServiceFee, &buses,
+			&job.WorkTime, &job.Address, &location, &job.ServiceFee, &buses,
 			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
 			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID, &adminMessageID,
 			&job.CreatedByAdminID, &employerPhone, &job.CreatedAt, &job.UpdatedAt,
@@ -164,7 +169,7 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 	} else {
 		err = r.db.QueryRow(ctx, query, id).Scan(
 			&job.ID, &job.OrderNumber, &job.Salary, &food,
-			&job.WorkTime, &job.Address, &job.ServiceFee, &buses,
+			&job.WorkTime, &job.Address, &location, &job.ServiceFee, &buses,
 			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
 			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID, &adminMessageID,
 			&job.CreatedByAdminID, &employerPhone, &job.CreatedAt, &job.UpdatedAt,
@@ -188,6 +193,9 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 	if additionalInfo.Valid {
 		job.AdditionalInfo = additionalInfo.String
 	}
+	if location.Valid {
+		job.Location = location.String
+	}
 	if channelMessageID.Valid {
 		job.ChannelMessageID = channelMessageID.Int64
 	}
@@ -204,7 +212,7 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 // GetAll retrieves all jobs with optional status filter
 func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*models.Job, error) {
 	query := `
-		SELECT id, order_number, salary, food, work_time, address, service_fee,
+		SELECT id, order_number, salary, food, work_time, address, location, service_fee,
 			buses, additional_info, work_date, status, required_workers,
 			reserved_slots, confirmed_slots, channel_message_id, admin_message_id,
 			created_by_admin_id, employer_phone, created_at, updated_at
@@ -229,12 +237,12 @@ func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*mode
 	var jobs []*models.Job
 	for rows.Next() {
 		job := &models.Job{}
-		var food, buses, additionalInfo, employerPhone sql.NullString
+		var food, buses, additionalInfo, employerPhone, location sql.NullString
 		var channelMessageID, adminMessageID sql.NullInt64
 
 		err := rows.Scan(
 			&job.ID, &job.OrderNumber, &job.Salary, &food,
-			&job.WorkTime, &job.Address, &job.ServiceFee, &buses,
+			&job.WorkTime, &job.Address, &location, &job.ServiceFee, &buses,
 			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
 			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID, &adminMessageID,
 			&job.CreatedByAdminID, &employerPhone, &job.CreatedAt, &job.UpdatedAt,
@@ -253,6 +261,9 @@ func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*mode
 		}
 		if additionalInfo.Valid {
 			job.AdditionalInfo = additionalInfo.String
+		}
+		if location.Valid {
+			job.Location = location.String
 		}
 		if channelMessageID.Valid {
 			job.ChannelMessageID = channelMessageID.Int64
@@ -274,10 +285,10 @@ func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*mode
 func (r *jobRepo) Update(ctx context.Context, job *models.Job) error {
 	query := `
 		UPDATE jobs
-		SET salary = $2, food = $3, work_time = $4, address = $5, service_fee = $6,
-			buses = $7, additional_info = $8, work_date = $9, status = $10,
-			required_workers = $11, reserved_slots = $12, confirmed_slots = $13,
-			channel_message_id = $14, admin_message_id = $15, employer_phone = $16, updated_at = NOW()
+		SET salary = $2, food = $3, work_time = $4, address = $5, location = $6, service_fee = $7,
+			buses = $8, additional_info = $9, work_date = $10, status = $11,
+			required_workers = $12, reserved_slots = $13, confirmed_slots = $14,
+			channel_message_id = $15, admin_message_id = $16, employer_phone = $17, updated_at = NOW()
 		WHERE id = $1
 	`
 
@@ -287,6 +298,7 @@ func (r *jobRepo) Update(ctx context.Context, job *models.Job) error {
 		toNullString(job.Food),
 		job.WorkTime,
 		job.Address,
+		toNullString(job.Location),
 		job.ServiceFee,
 		toNullString(job.Buses),
 		toNullString(job.AdditionalInfo),

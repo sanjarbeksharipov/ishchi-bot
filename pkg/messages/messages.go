@@ -49,6 +49,7 @@ Ishlarni boshqarish uchun quyidagi tugmalardan foydalaning:`
 	MsgEnterOvqat            = "🍛 Ovqat haqida ma'lumot kiriting:\n\nMasalan: Tushlik bilan yoki kiritilmagan"
 	MsgEnterVaqt             = "⏰ Ish vaqtini kiriting:\n\nMasalan: 10:30 dan - kamida 5/6 soat ish"
 	MsgEnterManzil           = "📍 Manzilni kiriting:\n\nMasalan: Yunusobod Amir Temur xiyoboniga yaqin"
+	MsgEnterLocation         = "📌 Aniq joylashuvni yuboring (faqat to'lov tasdiqlangan foydalanuvchilar uchun):\n\n📍 Telegram orqali joylashuvni (location) yuboring.\n\n⚠️ Matnli xabar emas, balki Telegram location funksiyasidan foydalaning."
 	MsgEnterXizmatHaqqi      = "🌟 Xizmat haqqini kiriting (faqat raqam):\n\nMasalan: 9990"
 	MsgEnterAvtobuslar       = "🚌 Avtobuslar haqida ma'lumot kiriting:\n\nMasalan: 45, 67, 89 avtobuslar"
 	MsgEnterIshTavsifi       = "📝 Ish tavsifi va talablarni kiriting:\n\nMasalan: Ish yengil, 3-4 soatlik. Kiyim: Qora kiyim talab qilinadi"
@@ -200,6 +201,7 @@ func FormatJobDetailAdmin(job *models.Job) string {
 	sb.WriteString(fmt.Sprintf("🍛 <b>Ovqat:</b> %s\n", valueOrEmpty(job.Food)))
 	sb.WriteString(fmt.Sprintf("⏰ <b>Vaqt:</b> %s\n", job.WorkTime))
 	sb.WriteString(fmt.Sprintf("📍 <b>Manzil:</b> %s\n", job.Address))
+	sb.WriteString(fmt.Sprintf("📌 <b>Aniq joylashuv:</b> %s\n", valueOrEmpty(job.Location)))
 	sb.WriteString(fmt.Sprintf("🌟 <b>Xizmat haqqi:</b> %d so'm\n", job.ServiceFee))
 	sb.WriteString(fmt.Sprintf("🚌 <b>Avtobuslar:</b> %s\n", valueOrEmpty(job.Buses)))
 	sb.WriteString(fmt.Sprintf("📝 <b>Ish tavsifi:</b> %s\n", valueOrEmpty(job.AdditionalInfo)))

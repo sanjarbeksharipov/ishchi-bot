@@ -152,6 +152,9 @@ func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) 
 	case "manzil":
 		state = models.StateEditingJobManzil
 		prompt = messages.MsgEnterManzil
+	case "location":
+		state = models.StateEditingJobLocation
+		prompt = messages.MsgEnterLocation
 	case "xizmat_haqqi":
 		state = models.StateEditingJobXizmatHaqqi
 		prompt = messages.MsgEnterXizmatHaqqi
@@ -187,6 +190,36 @@ func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) 
 
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
+	}
+
+	// Special handling for location field - send as Telegram location
+	if state == models.StateEditingJobLocation && job.Location != "" {
+		// Parse and send current location
+		parts := strings.Split(job.Location, ",")
+		if len(parts) == 2 {
+			lat, err1 := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+			lng, err2 := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+
+			if err1 == nil && err2 == nil {
+				// Send prompt first
+				c.Send(prompt, keyboards.CancelEditKeyboard(job.ID))
+
+				// Send current location
+				location := &tele.Location{
+					Lat: float32(lat),
+					Lng: float32(lng),
+				}
+
+				_, err := h.bot.Send(c.Sender(), location)
+				if err != nil {
+					h.log.Error("Failed to send current location", logger.Error(err))
+				} else {
+					return c.Send("📌 <b>Joriy qiymat yuqorida ko'rsatilgan</b>", tele.ModeHTML)
+				}
+			}
+		}
+		// Fallback if parsing fails
+		return c.Send(prompt+"\n\nJoriy qiymat: "+job.Location, keyboards.CancelEditKeyboard(job.ID))
 	}
 
 	// Use special keyboard with skip button for buses field
@@ -416,6 +449,14 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 
 	case models.StateCreatingJobManzil:
 		job.Address = text
+		nextState = models.StateCreatingJobLocation
+		nextPrompt = messages.MsgEnterLocation
+		// Location will be handled by HandleLocation, not text input
+
+	case models.StateCreatingJobLocation:
+		// This state is handled by HandleLocation, not text
+		// But if user sends text, we'll accept it as fallback
+		job.Location = text
 		nextState = models.StateCreatingJobXizmatHaqqi
 		nextPrompt = messages.MsgEnterXizmatHaqqi
 
@@ -538,6 +579,8 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 		job.WorkTime = text
 	case models.StateEditingJobManzil:
 		job.Address = text
+	case models.StateEditingJobLocation:
+		job.Location = text
 	case models.StateEditingJobXizmatHaqqi:
 		xizmatHaqqi, err := strconv.Atoi(text)
 		if err != nil {
@@ -719,6 +762,8 @@ func getJobFieldValue(job *models.Job, field string) string {
 		return job.WorkTime
 	case "manzil":
 		return job.Address
+	case "location":
+		return job.Location
 	case "xizmat_haqqi":
 		return fmt.Sprintf("%d", job.ServiceFee)
 	case "avtobuslar":
@@ -1001,6 +1046,95 @@ func (h *Handler) deleteAllAdminMessages(jobID int64) {
 				logger.Any("job_id", jobID))
 		}
 	}
+}
+
+// handleJobCreationLocationInput handles location input during job creation
+func (h *Handler) handleJobCreationLocationInput(c tele.Context, user *models.User, locationStr string) error {
+	ctx := context.Background()
+	job := h.getTempJob(c.Sender().ID)
+	if job == nil {
+		job = &models.Job{Status: models.JobStatusDraft, RequiredWorkers: 1}
+	}
+
+	// Store location
+	job.Location = locationStr
+
+	// Update state to next step
+	if err := h.storage.User().UpdateState(ctx, c.Sender().ID, models.StateCreatingJobXizmatHaqqi); err != nil {
+		h.log.Error("Failed to update user state", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Update temp job
+	h.setTempJob(c.Sender().ID, job)
+
+	return c.Send(messages.MsgEnterXizmatHaqqi, keyboards.CancelKeyboard())
+}
+
+// handleJobEditingLocationInput handles location input during job editing
+func (h *Handler) handleJobEditingLocationInput(c tele.Context, user *models.User, locationStr string) error {
+	ctx := context.Background()
+	jobID := h.getEditingJobID(c.Sender().ID)
+	if jobID == 0 {
+		return c.Send(messages.MsgError)
+	}
+
+	job, err := h.storage.Job().GetByID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get job", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Update location
+	job.Location = locationStr
+
+	// Update job in database
+	if err := h.storage.Job().Update(ctx, job); err != nil {
+		h.log.Error("Failed to update job", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Update channel message if exists
+	if job.ChannelMessageID != 0 {
+		h.updateChannelMessage(job)
+	}
+
+	// Update ALL other admin messages (excluding current admin)
+	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
+
+	// Reset user state
+	if err := h.storage.User().UpdateState(ctx, c.Sender().ID, models.StateIdle); err != nil {
+		h.log.Error("Failed to update user state", logger.Error(err))
+	}
+
+	// Clear temp job
+	h.clearEditingJobID(c.Sender().ID)
+
+	// Show updated job detail
+	msg := fmt.Sprintf("✅ Yangilandi!\n\n%s", messages.FormatJobDetailAdmin(job))
+
+	// Try to edit current admin's message
+	_, err = h.bot.Edit(c.Message(), msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	if err != nil {
+		// If edit fails, send new message
+		adminMsg, err := c.Bot().Send(c.Sender(), msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+		if err != nil {
+			h.log.Error("Failed to send updated job detail", logger.Error(err))
+			return c.Send(messages.MsgError)
+		}
+
+		// Save new admin message ID
+		adminMessage := &models.AdminJobMessage{
+			JobID:     job.ID,
+			AdminID:   c.Sender().ID,
+			MessageID: int64(adminMsg.ID),
+		}
+		if err := h.storage.AdminMessage().Upsert(ctx, adminMessage); err != nil {
+			h.log.Error("Failed to save admin message ID", logger.Error(err))
+		}
+	}
+
+	return nil
 }
 
 // SetConfig sets the config for admin handlers

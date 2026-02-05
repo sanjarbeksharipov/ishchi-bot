@@ -453,6 +453,34 @@ func (h *Handler) notifyUserPaymentApproved(booking *models.JobBooking) {
 	if err != nil {
 		h.log.Error("Failed to notify user", logger.Error(err))
 	}
+
+	// Send location as a separate message if available
+	if job.Location != "" {
+		// Parse location string (format: "lat,lng")
+		parts := strings.Split(job.Location, ",")
+		if len(parts) == 2 {
+			lat, err1 := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+			lng, err2 := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+
+			if err1 == nil && err2 == nil {
+				location := &tele.Location{
+					Lat: float32(lat),
+					Lng: float32(lng),
+				}
+
+				_, err = h.bot.Send(&tele.User{ID: booking.UserID}, location)
+				if err != nil {
+					h.log.Error("Failed to send location", logger.Error(err))
+				} else {
+					// Send explanation message after location
+					_, err = h.bot.Send(&tele.User{ID: booking.UserID}, "📌 <b>Ishga borish uchun aniq manzil yuqorida ko'rsatilgan</b>", tele.ModeHTML)
+					if err != nil {
+						h.log.Error("Failed to send location explanation", logger.Error(err))
+					}
+				}
+			}
+		}
+	}
 }
 
 // notifyUserPaymentRejected sends notification to user about rejected payment

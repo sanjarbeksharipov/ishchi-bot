@@ -36,6 +36,9 @@ func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI
 
 	// Register photo handler (for payment proofs)
 	bot.Handle(tele.OnPhoto, handler.HandlePhoto)
+
+	// Register location handler (for job locations)
+	bot.Handle(tele.OnLocation, handler.HandleLocation)
 }
 
 func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
