@@ -128,6 +128,11 @@ func (s *Store) Booking() storage.BookingRepoI {
 	return NewBookingRepo(s.db, s.logger)
 }
 
+// AdminMessage returns the admin message repository
+func (s *Store) AdminMessage() storage.AdminMessageRepoI {
+	return NewAdminMessageRepo(s.db, s.logger)
+}
+
 // Transaction returns the transaction manager
 func (s *Store) Transaction() storage.TransactionI {
 	return NewTransactionManager(s.db, s.logger)

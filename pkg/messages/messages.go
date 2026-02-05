@@ -235,7 +235,7 @@ func FormatNoAvailableSlots(job *models.Job) string {
 Ayrim foydalanuvchilar to'lovni o'z vaqtida amalga oshirmasliklari mumkin. Bunday holda, band qilingan joylar <b>3 daqiqa ichida</b> qayta ochiladi.
 
 ⏰ Bir necha daqiqadan so'ng qaytadan urinib ko'ring!
-`, job.RequiredWorkers, job.ReservedSlots, job.ConfirmedSlots)
+`, job.RequiredWorkers, job.ConfirmedSlots, job.ReservedSlots)
 	return msg
 }
 

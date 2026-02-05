@@ -31,6 +31,9 @@ type StorageI interface {
 	// Registration returns the registration repository
 	Registration() RegistrationRepoI
 
+	// AdminMessage returns the admin message repository
+	AdminMessage() AdminMessageRepoI
+
 	// Transaction support
 	Transaction() TransactionI
 }
@@ -160,4 +163,22 @@ type RegistrationRepoI interface {
 
 	// CompleteRegistration moves a draft to registered_users table
 	CompleteRegistration(ctx context.Context, userID int64) error
+}
+
+// AdminMessageRepoI defines the interface for admin job message persistence
+type AdminMessageRepoI interface {
+	// Upsert creates or updates an admin message for a job
+	Upsert(ctx context.Context, adminMsg *models.AdminJobMessage) error
+
+	// Get retrieves an admin message by job and admin ID
+	Get(ctx context.Context, jobID, adminID int64) (*models.AdminJobMessage, error)
+
+	// GetAllByJobID retrieves all admin messages for a job
+	GetAllByJobID(ctx context.Context, jobID int64) ([]*models.AdminJobMessage, error)
+
+	// Delete deletes an admin message
+	Delete(ctx context.Context, jobID, adminID int64) error
+
+	// DeleteAllByJobID deletes all admin messages for a job
+	DeleteAllByJobID(ctx context.Context, jobID int64) error
 }

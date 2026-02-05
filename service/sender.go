@@ -10,6 +10,7 @@ import (
 	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
 	"telegram-bot-starter/pkg/messages"
+	"telegram-bot-starter/storage"
 
 	tele "gopkg.in/telebot.v4"
 )
@@ -38,6 +39,7 @@ type SenderService struct {
 	log     logger.LoggerI
 	bot     *tele.Bot
 	service ServiceManagerI
+	storage storage.StorageI
 	mu      sync.Mutex
 
 	// Queue settings (for future implementation)
@@ -46,11 +48,12 @@ type SenderService struct {
 }
 
 // NewSenderService creates a new sender service
-func NewSenderService(cfg config.Config, log logger.LoggerI, bot *tele.Bot, service ServiceManagerI) *SenderService {
+func NewSenderService(cfg config.Config, log logger.LoggerI, bot *tele.Bot, storage storage.StorageI, service ServiceManagerI) *SenderService {
 	return &SenderService{
 		cfg:      cfg,
 		log:      log,
 		bot:      bot,
+		storage:  storage,
 		service:  service,
 		useQueue: false, // Will be enabled when queue is implemented
 	}
@@ -180,39 +183,63 @@ func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Jo
 	return nil
 }
 
-// UpdateAdminJobPost updates the admin job detail message
+// UpdateAdminJobPost updates all admin job detail messages (broadcasts to all admins)
 func (s *SenderService) UpdateAdminJobPost(ctx context.Context, job *models.Job) error {
-	if job.AdminMessageID == 0 {
-		s.log.Error("No admin message to update", logger.Any("job_id", job.ID))
+	// Get all admin messages for this job
+	adminMessages, err := s.storage.AdminMessage().GetAllByJobID(ctx, job.ID)
+	if err != nil {
+		s.log.Error("Failed to get admin messages",
+			logger.Error(err),
+			logger.Any("job_id", job.ID))
+		return fmt.Errorf("failed to get admin messages: %w", err)
+	}
+
+	if len(adminMessages) == 0 {
+		s.log.Debug("No admin messages to update", logger.Any("job_id", job.ID))
 		return nil
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	msg := &tele.Message{
-		ID:   int(job.AdminMessageID),
-		Chat: &tele.Chat{ID: job.CreatedByAdminID},
-	}
-
 	adminMsg := messages.FormatJobDetailAdmin(job)
 	adminKeyboard := keyboards.JobDetailKeyboard(job)
 
-	_, err := s.bot.Edit(msg, adminMsg, adminKeyboard, tele.ModeHTML)
-	if err != nil {
-		s.log.Error("Failed to update admin message",
-			logger.Error(err),
+	// Update each admin's message
+	for _, adminMessage := range adminMessages {
+		msg := &tele.Message{
+			ID:   int(adminMessage.MessageID),
+			Chat: &tele.Chat{ID: adminMessage.AdminID},
+		}
+
+		_, err := s.bot.Edit(msg, adminMsg, adminKeyboard, tele.ModeHTML)
+		if err != nil {
+			s.log.Error("Failed to update admin message",
+				logger.Error(err),
+				logger.Any("job_id", job.ID),
+				logger.Any("admin_id", adminMessage.AdminID),
+				logger.Any("message_id", adminMessage.MessageID),
+			)
+			// If message not found, remove from database
+			if err.Error() == "telegram: message not found (400)" ||
+				err.Error() == "telegram: message to edit not found (400)" {
+				s.storage.AdminMessage().Delete(ctx, job.ID, adminMessage.AdminID)
+			}
+			continue
+		}
+
+		s.log.Debug("Admin message updated successfully",
 			logger.Any("job_id", job.ID),
-			logger.Any("admin_message_id", job.AdminMessageID),
+			logger.Any("admin_id", adminMessage.AdminID),
 		)
-		return fmt.Errorf("failed to update admin message: %w", err)
 	}
 
-	s.log.Info("Admin message updated successfully",
+	s.log.Info("All admin messages updated successfully",
 		logger.Any("job_id", job.ID),
 		logger.Any("confirmed_slots", job.ConfirmedSlots),
 		logger.Any("required_workers", job.RequiredWorkers),
 		logger.Any("status", job.Status),
+		logger.Any("admins_notified", len(adminMessages)),
 	)
 
 	return nil

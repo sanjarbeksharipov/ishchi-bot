@@ -81,7 +81,7 @@ func (h *Handler) HandleJobList(c tele.Context) error {
 }
 
 // HandleJobDetail shows job detail with edit options
-// Implements single-message enforcement: only one admin message per job
+// Implements single-message per admin: each admin has their own independent message
 func (h *Handler) HandleJobDetail(c tele.Context, jobID int64) error {
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
@@ -98,8 +98,8 @@ func (h *Handler) HandleJobDetail(c tele.Context, jobID int64) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Single-message enforcement: Delete previous admin message if exists
-	h.deleteAdminMessage(job)
+	// Single-message enforcement per admin: Delete this admin's previous message if exists
+	h.deleteAdminMessageForAdmin(job.ID, c.Sender().ID)
 
 	// Send new admin message
 	msg := messages.FormatJobDetailAdmin(job)
@@ -110,7 +110,12 @@ func (h *Handler) HandleJobDetail(c tele.Context, jobID int64) error {
 	}
 
 	// Save new admin message ID to database
-	if err := h.storage.Job().UpdateAdminMessageID(ctx, jobID, int64(sentMsg.ID)); err != nil {
+	adminMsg := &models.AdminJobMessage{
+		JobID:     jobID,
+		AdminID:   c.Sender().ID,
+		MessageID: int64(sentMsg.ID),
+	}
+	if err := h.storage.AdminMessage().Upsert(ctx, adminMsg); err != nil {
 		h.log.Error("Failed to save admin message ID", logger.Error(err))
 	}
 
@@ -223,7 +228,10 @@ func (h *Handler) HandleChangeJobStatus(c tele.Context, jobID int64, status mode
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Show updated job detail
+	// Update ALL admin messages (broadcasts to all admins)
+	h.updateAllAdminMessages(job)
+
+	// Show updated job detail to current admin
 	msg := messages.FormatJobDetailAdmin(job)
 	return c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
 }
@@ -271,7 +279,10 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobID int64) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Update job detail view
+	// Update ALL admin messages (broadcast to all admins)
+	h.updateAllAdminMessages(job)
+
+	// Update current admin's message view
 	detailMsg := messages.FormatJobDetailAdmin(job)
 	return c.Edit(detailMsg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
 }
@@ -312,7 +323,10 @@ func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobID int64) error 
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Show updated job detail
+	// Update ALL admin messages (broadcast channel message deletion to all admins)
+	h.updateAllAdminMessages(job)
+
+	// Show updated job detail to current admin
 	msg := messages.FormatJobDetailAdmin(job)
 	return c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
 }
@@ -340,7 +354,10 @@ func (h *Handler) HandleDeleteJob(c tele.Context, jobID int64) error {
 		}
 	}
 
-	// Delete from database
+	// Delete ALL admin messages from Telegram chats
+	h.deleteAllAdminMessages(jobID)
+
+	// Delete from database (will cascade delete admin_job_messages)
 	if err := h.storage.Job().Delete(ctx, jobID); err != nil {
 		h.log.Error("Failed to delete job", logger.Error(err))
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Xatolik yuz berdi"})
@@ -467,10 +484,18 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 			return c.Send(messages.MsgError)
 		}
 
-		// Save new admin message ID
-		if err := h.storage.Job().UpdateAdminMessageID(ctx, newJob.ID, int64(adminMsg.ID)); err != nil {
+		// Save new admin message ID using new system
+		adminMessage := &models.AdminJobMessage{
+			JobID:     newJob.ID,
+			AdminID:   c.Sender().ID,
+			MessageID: int64(adminMsg.ID),
+		}
+		if err := h.storage.AdminMessage().Upsert(ctx, adminMessage); err != nil {
 			h.log.Error("Failed to save admin message ID", logger.Error(err))
 		}
+
+		// Notify all other admins about the new job
+		go h.notifyOtherAdminsNewJob(newJob, c.Sender().ID)
 
 		return nil
 
@@ -568,6 +593,9 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 		h.updateChannelMessage(job)
 	}
 
+	// Update ALL other admin messages (excluding current admin)
+	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
+
 	// Reset user state
 	if err := h.storage.User().UpdateState(ctx, c.Sender().ID, models.StateIdle); err != nil {
 		h.log.Error("Failed to update user state", logger.Error(err))
@@ -584,8 +612,8 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 		}
 	}
 
-	// Single-message enforcement: Delete previous admin message
-	h.deleteAdminMessage(job)
+	// Single-message enforcement per admin: Delete this admin's previous message
+	h.deleteAdminMessageForAdmin(job.ID, c.Sender().ID)
 
 	// Send new admin message with updated info and success notification
 	msg := fmt.Sprintf("✅ Yangilandi!\n\n%s", messages.FormatJobDetailAdmin(job))
@@ -595,8 +623,13 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 		return c.Send(messages.MsgError)
 	}
 
-	// Save new admin message ID
-	if err := h.storage.Job().UpdateAdminMessageID(ctx, jobID, int64(adminMsg.ID)); err != nil {
+	// Save new admin message ID using new system
+	adminMessage := &models.AdminJobMessage{
+		JobID:     jobID,
+		AdminID:   c.Sender().ID,
+		MessageID: int64(adminMsg.ID),
+	}
+	if err := h.storage.AdminMessage().Upsert(ctx, adminMessage); err != nil {
 		h.log.Error("Failed to save admin message ID", logger.Error(err))
 	}
 
@@ -792,19 +825,21 @@ func (h *Handler) HandleViewJobBookings(c tele.Context, jobID int64) error {
 	return c.Edit(sb.String(), menu, tele.ModeHTML)
 }
 
-// Helper to delete admin message (single-message enforcement)
-func (h *Handler) deleteAdminMessage(job *models.Job) {
+// Helper to delete admin message for a specific admin (single-message per admin enforcement)
+func (h *Handler) deleteAdminMessageForAdmin(jobID, adminID int64) {
 	ctx := context.Background()
 
-	// If no admin message ID exists, nothing to delete
-	if job.AdminMessageID == 0 {
+	// Get the admin's message for this job
+	adminMsg, err := h.storage.AdminMessage().Get(ctx, jobID, adminID)
+	if err != nil {
+		// No message exists, nothing to delete
 		return
 	}
 
 	// Try to delete the message
 	msgToDelete := &tele.Message{
-		ID:   int(job.AdminMessageID),
-		Chat: &tele.Chat{ID: job.CreatedByAdminID},
+		ID:   int(adminMsg.MessageID),
+		Chat: &tele.Chat{ID: adminID},
 	}
 
 	if err := h.bot.Delete(msgToDelete); err != nil {
@@ -813,9 +848,150 @@ func (h *Handler) deleteAdminMessage(job *models.Job) {
 		h.log.Error("Failed to delete admin message (might be already deleted)", logger.Error(err))
 	}
 
-	// Clear admin message ID from database
-	if err := h.storage.Job().UpdateAdminMessageID(ctx, job.ID, 0); err != nil {
-		h.log.Error("Failed to clear admin message ID", logger.Error(err))
+	// Clear admin message from database
+	if err := h.storage.AdminMessage().Delete(ctx, jobID, adminID); err != nil {
+		h.log.Error("Failed to clear admin message", logger.Error(err))
+	}
+}
+
+// Helper to update all admin messages for a job (broadcasts job updates)
+func (h *Handler) updateAllAdminMessages(job *models.Job) {
+	ctx := context.Background()
+
+	// Get all admin messages for this job
+	adminMessages, err := h.storage.AdminMessage().GetAllByJobID(ctx, job.ID)
+	if err != nil {
+		h.log.Error("Failed to get admin messages", logger.Error(err))
+		return
+	}
+
+	// Update each admin's message
+	for _, adminMsg := range adminMessages {
+		msgToEdit := &tele.Message{
+			ID:   int(adminMsg.MessageID),
+			Chat: &tele.Chat{ID: adminMsg.AdminID},
+		}
+
+		msg := messages.FormatJobDetailAdmin(job)
+		_, err := h.bot.Edit(msgToEdit, msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+		if err != nil {
+			h.log.Error("Failed to update admin message",
+				logger.Error(err),
+				logger.Any("admin_id", adminMsg.AdminID),
+				logger.Any("job_id", job.ID))
+			// If message not found, remove from database
+			if err.Error() == "telegram: message not found (400)" ||
+				err.Error() == "telegram: message to edit not found (400)" {
+				h.storage.AdminMessage().Delete(ctx, job.ID, adminMsg.AdminID)
+			}
+		}
+	}
+}
+
+// Helper to update other admin messages (excluding current admin)
+func (h *Handler) updateOtherAdminMessages(jobID, currentAdminID int64) {
+	ctx := context.Background()
+
+	// Get the updated job
+	job, err := h.storage.Job().GetByID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get job for update", logger.Error(err))
+		return
+	}
+
+	// Get all admin messages for this job
+	adminMessages, err := h.storage.AdminMessage().GetAllByJobID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get admin messages", logger.Error(err))
+		return
+	}
+
+	// Update each admin's message (except current admin)
+	for _, adminMsg := range adminMessages {
+		if adminMsg.AdminID == currentAdminID {
+			continue // Skip current admin, they already got their updated message
+		}
+
+		msgToEdit := &tele.Message{
+			ID:   int(adminMsg.MessageID),
+			Chat: &tele.Chat{ID: adminMsg.AdminID},
+		}
+
+		msg := messages.FormatJobDetailAdmin(job)
+		_, err := h.bot.Edit(msgToEdit, msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+		if err != nil {
+			h.log.Error("Failed to update other admin message",
+				logger.Error(err),
+				logger.Any("admin_id", adminMsg.AdminID),
+				logger.Any("job_id", jobID))
+			// If message not found, remove from database
+			if err.Error() == "telegram: message not found (400)" ||
+				err.Error() == "telegram: message to edit not found (400)" {
+				h.storage.AdminMessage().Delete(ctx, jobID, adminMsg.AdminID)
+			}
+		}
+	}
+}
+
+// Helper to notify other admins about a new job
+func (h *Handler) notifyOtherAdminsNewJob(job *models.Job, creatorAdminID int64) {
+	ctx := context.Background()
+
+	// Notify all other admins
+	for _, adminID := range h.cfg.Bot.AdminIDs {
+		if adminID == creatorAdminID {
+			continue // Skip the admin who created the job
+		}
+
+		// Send job detail to other admin
+		msg := fmt.Sprintf("🆕 Yangi ish yaratildi!\n\n%s", messages.FormatJobDetailAdmin(job))
+		chat := &tele.Chat{ID: adminID}
+		sentMsg, err := h.bot.Send(chat, msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+		if err != nil {
+			h.log.Error("Failed to notify other admin",
+				logger.Error(err),
+				logger.Any("admin_id", adminID),
+				logger.Any("job_id", job.ID))
+			continue
+		}
+
+		// Save admin message
+		adminMessage := &models.AdminJobMessage{
+			JobID:     job.ID,
+			AdminID:   adminID,
+			MessageID: int64(sentMsg.ID),
+		}
+		if err := h.storage.AdminMessage().Upsert(ctx, adminMessage); err != nil {
+			h.log.Error("Failed to save admin message for other admin", logger.Error(err))
+		}
+	}
+}
+
+// Helper to delete all admin messages for a job (used when deleting job)
+func (h *Handler) deleteAllAdminMessages(jobID int64) {
+	ctx := context.Background()
+
+	// Get all admin messages for this job
+	adminMessages, err := h.storage.AdminMessage().GetAllByJobID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get admin messages for deletion", logger.Error(err))
+		return
+	}
+
+	// Delete each admin's Telegram message
+	for _, adminMsg := range adminMessages {
+		msgToDelete := &tele.Message{
+			ID:   int(adminMsg.MessageID),
+			Chat: &tele.Chat{ID: adminMsg.AdminID},
+		}
+
+		if err := h.bot.Delete(msgToDelete); err != nil {
+			// Message might already be deleted by user or not found - not critical
+			h.log.Error("Failed to delete admin message during job deletion",
+				logger.Error(err),
+				logger.Any("admin_id", adminMsg.AdminID),
+				logger.Any("job_id", jobID))
+		}
 	}
 }
 

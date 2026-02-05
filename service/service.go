@@ -29,7 +29,7 @@ func NewServiceManager(cfg config.Config, log logger.LoggerI, storage storage.St
 	services := &ServiceManager{}
 
 	services.registrationService = NewRegistrationService(cfg, log, storage, services)
-	services.senderService = NewSenderService(cfg, log, bot, services)
+	services.senderService = NewSenderService(cfg, log, bot, storage, services)
 	services.bookingService = NewBookingService(cfg, log, storage, services)
 	services.paymentService = NewPaymentService(cfg, log, storage, services)
 

@@ -39,6 +39,8 @@ COPY --from=builder /app/main .
 
 # Copy migrations
 COPY --from=builder /app/migrations ./migrations
+# Copy docs
+COPY --from=builder /app/docs ./docs
 
 # Change ownership
 RUN chown -R appuser:appuser /app
