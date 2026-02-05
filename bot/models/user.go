@@ -68,6 +68,12 @@ const (
 	StateEditingJobKerakli       UserState = "editing_job_kerakli"
 	StateEditingJobConfirmed     UserState = "editing_job_confirmed"
 	StateEditingJobEmployerPhone UserState = "editing_job_employer_phone"
+
+	// Profile editing states
+	StateEditingProfileFullName   UserState = "editing_profile_full_name"
+	StateEditingProfilePhone      UserState = "editing_profile_phone"
+	StateEditingProfileAge        UserState = "editing_profile_age"
+	StateEditingProfileBodyParams UserState = "editing_profile_body_params"
 )
 
 // NewUser creates a new User instance

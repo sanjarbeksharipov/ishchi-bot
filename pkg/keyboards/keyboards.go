@@ -333,3 +333,41 @@ func ReplyCancelKeyboard() *tele.ReplyMarkup {
 
 	return menu
 }
+
+// ProfileEditKeyboard returns keyboard for profile editing
+func ProfileEditKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	btnEditFullName := menu.Data("📝 F.I.SH o'zgartirish", "edit_profile_full_name")
+	btnEditPhone := menu.Data("📱 Telefon o'zgartirish", "edit_profile_phone")
+	btnEditAge := menu.Data("🎂 Yosh o'zgartirish", "edit_profile_age")
+	btnEditBodyParams := menu.Data("📏 Vazn/Bo'y o'zgartirish", "edit_profile_body_params")
+	btnBack := menu.Data("⬅️ Orqaga", "back")
+
+	menu.Inline(
+		menu.Row(btnEditFullName),
+		menu.Row(btnEditPhone),
+		menu.Row(btnEditAge, btnEditBodyParams),
+		menu.Row(btnBack),
+	)
+
+	return menu
+}
+
+// RequestPhoneKeyboard returns keyboard to request phone number
+func RequestPhoneKeyboard() *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{
+		ResizeKeyboard:  true,
+		OneTimeKeyboard: true,
+	}
+
+	btnPhone := menu.Contact("📱 Telefon raqamni yuborish")
+	btnCancel := menu.Text("❌ Bekor qilish")
+
+	menu.Reply(
+		menu.Row(btnPhone),
+		menu.Row(btnCancel),
+	)
+
+	return menu
+}

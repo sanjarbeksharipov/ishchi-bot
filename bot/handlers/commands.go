@@ -10,6 +10,7 @@ import (
 	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
 	"telegram-bot-starter/pkg/messages"
+	"telegram-bot-starter/pkg/validation"
 
 	tele "gopkg.in/telebot.v4"
 )
@@ -99,6 +100,12 @@ func (h *Handler) HandleText(c tele.Context) error {
 		return h.HandleAdminTextInput(c, user)
 	}
 
+	// Check if user is editing their profile
+	isEditingProfile := strings.HasPrefix(string(user.State), "editing_profile_")
+	if isEditingProfile {
+		return h.HandleProfileEditInput(c, user)
+	}
+
 	// Handle admin menu reply buttons
 	if h.IsAdmin(sender.ID) {
 		switch text {
@@ -152,6 +159,69 @@ func (h *Handler) HandleContact(c tele.Context) error {
 	// Check if user is in registration phone state
 	if user.State == models.UserState(models.RegStatePhone) {
 		return h.HandleRegistrationContact(c)
+	}
+
+	// Check if user is editing profile phone
+	if user.State == models.StateEditingProfilePhone {
+		contact := c.Message().Contact
+		if contact == nil {
+			return c.Send("❌ Iltimos, telefon raqamingizni yuboring.")
+		}
+
+		// Verify it's the user's own phone
+		if contact.UserID != sender.ID {
+			return c.Send("❌ Iltimos, o'z telefon raqamingizni yuboring.")
+		}
+
+		phone := contact.PhoneNumber
+		if !strings.HasPrefix(phone, "+") {
+			phone = "+" + phone
+		}
+
+		// Get registered user
+		regUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, sender.ID)
+		if err != nil {
+			h.log.Error("Failed to get registered user", logger.Error(err))
+			return c.Send(messages.MsgError)
+		}
+
+		// Update phone
+		regUser.Phone = phone
+
+		// Update registered user in database
+		if err := h.storage.Registration().UpdateRegisteredUser(ctx, regUser); err != nil {
+			h.log.Error("Failed to update registered user", logger.Error(err))
+			return c.Send(messages.MsgError)
+		}
+
+		// Reset user state
+		if err := h.storage.User().UpdateState(ctx, sender.ID, models.StateIdle); err != nil {
+			h.log.Error("Failed to update user state", logger.Error(err))
+		}
+
+		// Show updated profile
+		msg := fmt.Sprintf(`✅ <b>PROFIL YANGILANDI!</b>
+
+👤 <b>SIZNING PROFILINGIZ</b>
+
+📝 <b>F.I.SH:</b> %s
+📱 <b>Telefon:</b> %s
+🎂 <b>Yosh:</b> %d
+⚖️ <b>Vazn:</b> %d kg
+📏 <b>Bo'y:</b> %d sm
+
+✅ <b>Holat:</b> Faol
+📅 <b>Ro'yxatdan o'tgan sana:</b> %s
+`,
+			regUser.FullName,
+			regUser.Phone,
+			regUser.Age,
+			regUser.Weight,
+			regUser.Height,
+			regUser.CreatedAt.Format("02.01.2006"),
+		)
+
+		return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
 	}
 
 	return nil
@@ -282,7 +352,7 @@ func (h *Handler) HandleUserProfile(c tele.Context) error {
 		regUser.CreatedAt.Format("02.01.2006"),
 	)
 
-	return c.Send(msg, tele.ModeHTML)
+	return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
 }
 
 // HandleUserMyJobs displays the user's bookings
@@ -361,4 +431,130 @@ func (h *Handler) HandleUserMyJobs(c tele.Context) error {
 	}
 
 	return c.Send(sb.String(), tele.ModeHTML)
+}
+
+// HandleEditProfileField starts editing a profile field
+func (h *Handler) HandleEditProfileField(c tele.Context, field string) error {
+	ctx := context.Background()
+	userID := c.Sender().ID
+
+	// Check if user is registered
+	regUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, userID)
+	if err != nil {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Siz hali ro'yxatdan o'tmagansiz."})
+	}
+
+	var state models.UserState
+	var prompt string
+	var currentValue string
+
+	switch field {
+	case "full_name":
+		state = models.StateEditingProfileFullName
+		prompt = messages.MsgEnterFullName
+		currentValue = regUser.FullName
+	case "phone":
+		state = models.StateEditingProfilePhone
+		prompt = messages.MsgEnterPhone
+		currentValue = regUser.Phone
+	case "age":
+		state = models.StateEditingProfileAge
+		prompt = messages.MsgEnterAge
+		currentValue = fmt.Sprintf("%d", regUser.Age)
+	case "body_params":
+		state = models.StateEditingProfileBodyParams
+		prompt = messages.MsgEnterBodyParams
+		currentValue = fmt.Sprintf("%d kg, %d sm", regUser.Weight, regUser.Height)
+	default:
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri maydon"})
+	}
+
+	// Update user state
+	if err := h.storage.User().UpdateState(ctx, userID, state); err != nil {
+		h.log.Error("Failed to update user state", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	if err := c.Respond(); err != nil {
+		h.log.Error("Failed to respond to callback", logger.Error(err))
+	}
+
+	// Send prompt with current value
+	if field == "phone" {
+		// Use special keyboard for phone
+		return c.Send(prompt+"\n\nJoriy qiymat: "+currentValue, keyboards.RequestPhoneKeyboard())
+	}
+
+	return c.Send(prompt+"\n\nJoriy qiymat: "+currentValue, keyboards.ReplyCancelKeyboard())
+}
+
+// HandleProfileEditInput handles text input during profile editing
+func (h *Handler) HandleProfileEditInput(c tele.Context, user *models.User) error {
+	ctx := context.Background()
+	text := strings.TrimSpace(c.Text())
+
+	// Get registered user
+	regUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, user.ID)
+	if err != nil {
+		h.log.Error("Failed to get registered user", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	switch user.State {
+	case models.StateEditingProfileFullName:
+		if err := validation.ValidateFullName(text); err != nil {
+			return c.Send(err.Error())
+		}
+		regUser.FullName = text
+
+	case models.StateEditingProfileAge:
+		age, err := validation.ValidateAge(text)
+		if err != nil {
+			return c.Send(err.Error())
+		}
+		regUser.Age = age
+
+	case models.StateEditingProfileBodyParams:
+		weight, height, err := validation.ParseBodyParams(text)
+		if err != nil {
+			return c.Send(err.Error())
+		}
+		regUser.Weight = weight
+		regUser.Height = height
+	}
+
+	// Update registered user in database
+	if err := h.storage.Registration().UpdateRegisteredUser(ctx, regUser); err != nil {
+		h.log.Error("Failed to update registered user", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	// Reset user state
+	if err := h.storage.User().UpdateState(ctx, user.ID, models.StateIdle); err != nil {
+		h.log.Error("Failed to update user state", logger.Error(err))
+	}
+
+	// Show updated profile
+	msg := fmt.Sprintf(`✅ <b>PROFIL YANGILANDI!</b>
+
+👤 <b>SIZNING PROFILINGIZ</b>
+
+📝 <b>F.I.SH:</b> %s
+📱 <b>Telefon:</b> %s
+🎂 <b>Yosh:</b> %d
+⚖️ <b>Vazn:</b> %d kg
+📏 <b>Bo'y:</b> %d sm
+
+✅ <b>Holat:</b> Faol
+📅 <b>Ro'yxatdan o'tgan sana:</b> %s
+`,
+		regUser.FullName,
+		regUser.Phone,
+		regUser.Age,
+		regUser.Weight,
+		regUser.Height,
+		regUser.CreatedAt.Format("02.01.2006"),
+	)
+
+	return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
 }

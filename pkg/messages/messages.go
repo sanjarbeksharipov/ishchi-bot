@@ -14,14 +14,27 @@ const (
 
 I'm here to help you. Use /help to see available commands.`
 
-	MsgHelp = `📖 Available Commands:
+	MsgHelp = `📖 <b>YORDAM</b>
 
-/start - Start the bot
-/help - Show this help message
-/about - About this bot
-/settings - Bot settings
+<b>Bot haqida:</b>
+Bu bot orqali siz kunlik ish topishingiz va ish uchun yozilishingiz mumkin.
 
-Feel free to send me any message!`
+<b>Qanday ishlaydi?</b>
+1️⃣ Avval ro'yxatdan o'ting
+2️⃣ Kanalimizdan ish e'lonlarini ko'ring
+3️⃣ Yoqqan ishga yoziling
+4️⃣ To'lov qiling
+5️⃣ Admin tasdiqlashi kutilsin
+6️⃣ Ish ma'lumotlarini oling
+
+<b>Buyruqlar:</b>
+/start - Botni ishga tushirish
+/help - Yordam
+
+<b>Profil:</b>
+Profilingizni ko'rish va tahrirlash uchun "👤 Profil" tugmasini bosing.
+
+❓ Savollar bo'lsa @admin bilan bog'laning.`
 
 	MsgAbout = `ℹ️ About This Bot
 

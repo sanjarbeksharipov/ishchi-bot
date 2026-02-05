@@ -102,6 +102,15 @@ func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
 		return handler.HandleUserMyJobs(c)
 	case "user_profile":
 		return handler.HandleUserProfile(c)
+	// Profile editing callbacks
+	case "edit_profile_full_name":
+		return handler.HandleEditProfileField(c, "full_name")
+	case "edit_profile_phone":
+		return handler.HandleEditProfileField(c, "phone")
+	case "edit_profile_age":
+		return handler.HandleEditProfileField(c, "age")
+	case "edit_profile_body_params":
+		return handler.HandleEditProfileField(c, "body_params")
 	default:
 		// Handle admin callbacks with job IDs
 		if after, ok := strings.CutPrefix(data, "job_detail_"); ok {
