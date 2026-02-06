@@ -128,9 +128,9 @@ func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
 			}
 		}
 
-		if strings.HasPrefix(data, "job_status_") {
+		if after, ok := strings.CutPrefix(data, "job_status_"); ok {
 			// Format: job_status_{id}_{status}
-			parts := strings.Split(strings.TrimPrefix(data, "job_status_"), "_")
+			parts := strings.Split(after, "_")
 			if len(parts) >= 2 {
 				jobID, _ := strconv.ParseInt(parts[0], 10, 64)
 				statusStr := parts[1]

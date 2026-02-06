@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"context"
+	"strings"
+	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
 	"telegram-bot-starter/pkg/messages"
@@ -34,6 +37,21 @@ func (h *Handler) HandleSettingsCallback(c tele.Context) error {
 
 // HandleBackCallback handles the back button callback
 func (h *Handler) HandleBackCallback(c tele.Context) error {
+	ctx := context.Background()
+	userID := c.Sender().ID
+
+	// Get user to check state
+	user, err := h.storage.User().GetByID(ctx, userID)
+	if err == nil {
+		// Reset profile editing states if user is in one
+		isEditingProfile := strings.HasPrefix(string(user.State), "editing_profile_")
+		if isEditingProfile {
+			if err := h.storage.User().UpdateState(ctx, userID, models.StateIdle); err != nil {
+				h.log.Error("Failed to reset user state", logger.Error(err))
+			}
+		}
+	}
+
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}

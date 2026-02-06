@@ -47,10 +47,33 @@ func main() {
 	defer store.CloseDB()
 	log.Info("Storage layer initialized")
 
-	// Create bot instance
-	botSettings := tele.Settings{
-		Token:  cfg.Bot.Token,
-		Poller: &tele.LongPoller{Timeout: cfg.Bot.Poller},
+	// Create bot instance with appropriate poller based on mode
+	var botSettings tele.Settings
+
+	if cfg.Bot.Mode == "webhook" {
+		// Webhook mode for production
+		log.Info("Starting bot in WEBHOOK mode")
+
+		if cfg.Bot.WebhookURL == "" {
+			log.Fatal("BOT_WEBHOOK_URL is required when BOT_MODE=webhook")
+		}
+
+		botSettings = tele.Settings{
+			Token: cfg.Bot.Token,
+			Poller: &tele.Webhook{
+				Listen:   cfg.Bot.WebhookListen,
+				Endpoint: &tele.WebhookEndpoint{PublicURL: cfg.Bot.WebhookURL},
+			},
+		}
+		log.Info(fmt.Sprintf("Webhook configured: %s (listening on %s)", cfg.Bot.WebhookURL, cfg.Bot.WebhookListen))
+	} else {
+		// Long polling mode for local development
+		log.Info("Starting bot in LONG POLLING mode")
+		botSettings = tele.Settings{
+			Token:  cfg.Bot.Token,
+			Poller: &tele.LongPoller{Timeout: cfg.Bot.Poller},
+		}
+		log.Info(fmt.Sprintf("Long polling configured with timeout: %s", cfg.Bot.Poller))
 	}
 
 	telegramBot, err := tele.NewBot(botSettings)

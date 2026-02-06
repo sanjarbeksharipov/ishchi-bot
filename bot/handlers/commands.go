@@ -83,6 +83,12 @@ func (h *Handler) HandleText(c tele.Context) error {
 
 	// Handle cancel button from reply keyboard
 	if text == "❌ Bekor qilish" {
+		// Check if user is in profile editing flow
+		isEditingProfile := strings.HasPrefix(string(user.State), "editing_profile_")
+		if isEditingProfile {
+			return h.HandleCancelProfileEdit(c)
+		}
+		// Otherwise, it's registration cancellation
 		return h.HandleCancelRegistration(c)
 	}
 
@@ -507,6 +513,18 @@ func (h *Handler) HandleProfileEditInput(c tele.Context, user *models.User) erro
 		}
 		regUser.FullName = text
 
+	case models.StateEditingProfilePhone:
+		// Support manual phone entry (in addition to contact button)
+		phone := text
+		// Add + prefix if not present
+		if !strings.HasPrefix(phone, "+") {
+			phone = "+" + phone
+		}
+		if err := validation.ValidatePhone(phone); err != nil {
+			return c.Send(err.Error())
+		}
+		regUser.Phone = phone
+
 	case models.StateEditingProfileAge:
 		age, err := validation.ValidateAge(text)
 		if err != nil {
@@ -536,6 +554,46 @@ func (h *Handler) HandleProfileEditInput(c tele.Context, user *models.User) erro
 
 	// Show updated profile
 	msg := fmt.Sprintf(`✅ <b>PROFIL YANGILANDI!</b>
+
+👤 <b>SIZNING PROFILINGIZ</b>
+
+📝 <b>F.I.SH:</b> %s
+📱 <b>Telefon:</b> %s
+🎂 <b>Yosh:</b> %d
+⚖️ <b>Vazn:</b> %d kg
+📏 <b>Bo'y:</b> %d sm
+
+✅ <b>Holat:</b> Faol
+📅 <b>Ro'yxatdan o'tgan sana:</b> %s
+`,
+		regUser.FullName,
+		regUser.Phone,
+		regUser.Age,
+		regUser.Weight,
+		regUser.Height,
+		regUser.CreatedAt.Format("02.01.2006"),
+	)
+
+	return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
+}
+
+// HandleCancelProfileEdit handles canceling profile edit
+func (h *Handler) HandleCancelProfileEdit(c tele.Context) error {
+	ctx := context.Background()
+	userID := c.Sender().ID
+
+	// Reset user state
+	if err := h.storage.User().UpdateState(ctx, userID, models.StateIdle); err != nil {
+		h.log.Error("Failed to update user state", logger.Error(err))
+	}
+
+	// Get registered user to show profile
+	regUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, userID)
+	if err != nil {
+		return c.Send("❌ Bekor qilindi.", keyboards.RemoveReplyKeyboard())
+	}
+
+	msg := fmt.Sprintf(`❌ <b>Tahrirlash bekor qilindi.</b>
 
 👤 <b>SIZNING PROFILINGIZ</b>
 
