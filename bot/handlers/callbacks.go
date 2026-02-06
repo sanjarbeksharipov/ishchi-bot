@@ -16,7 +16,7 @@ func (h *Handler) HandleHelpCallback(c tele.Context) error {
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
-	return c.Edit(messages.MsgHelp, keyboards.BackKeyboard())
+	return c.Edit(messages.MsgHelp, tele.ModeHTML)
 }
 
 // HandleAboutCallback handles the about button callback
@@ -24,7 +24,7 @@ func (h *Handler) HandleAboutCallback(c tele.Context) error {
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
-	return c.Edit(messages.MsgAbout, keyboards.BackKeyboard())
+	return c.Edit(messages.MsgAbout, keyboards.BackKeyboard(), tele.ModeHTML)
 }
 
 // HandleSettingsCallback handles the settings button callback
@@ -32,7 +32,7 @@ func (h *Handler) HandleSettingsCallback(c tele.Context) error {
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
-	return c.Edit(messages.MsgSettings, keyboards.BackKeyboard())
+	return c.Edit(messages.MsgSettings, keyboards.BackKeyboard(), tele.ModeHTML)
 }
 
 // HandleBackCallback handles the back button callback
@@ -55,7 +55,7 @@ func (h *Handler) HandleBackCallback(c tele.Context) error {
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
-	return c.Edit(messages.MsgWelcome, keyboards.MainMenuKeyboard())
+	return c.Edit(messages.MsgWelcome, keyboards.MainMenuKeyboard(), tele.ModeHTML)
 }
 
 // HandleConfirmYesCallback handles confirmation yes callback
@@ -63,7 +63,7 @@ func (h *Handler) HandleConfirmYesCallback(c tele.Context) error {
 	if err := c.Respond(&tele.CallbackResponse{Text: "✅ Confirmed!"}); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
-	return c.Edit("Action confirmed!", keyboards.BackKeyboard())
+	return c.Edit("Action confirmed!", keyboards.BackKeyboard(), tele.ModeHTML)
 }
 
 // HandleConfirmNoCallback handles confirmation no callback
@@ -71,5 +71,5 @@ func (h *Handler) HandleConfirmNoCallback(c tele.Context) error {
 	if err := c.Respond(&tele.CallbackResponse{Text: "❌ Cancelled"}); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
-	return c.Edit("Action cancelled.", keyboards.BackKeyboard())
+	return c.Edit("Action cancelled.", keyboards.BackKeyboard(), tele.ModeHTML)
 }

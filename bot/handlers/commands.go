@@ -55,17 +55,17 @@ func (h *Handler) HandleStart(c tele.Context) error {
 
 // HandleHelp handles the /help command
 func (h *Handler) HandleHelp(c tele.Context) error {
-	return c.Send(messages.MsgHelp, keyboards.BackKeyboard())
+	return c.Send(messages.MsgHelp, tele.ModeHTML)
 }
 
 // HandleAbout handles the /about command
 func (h *Handler) HandleAbout(c tele.Context) error {
-	return c.Send(messages.MsgAbout, keyboards.BackKeyboard())
+	return c.Send(messages.MsgAbout, keyboards.BackKeyboard(), tele.ModeHTML)
 }
 
 // HandleSettings handles the /settings command
 func (h *Handler) HandleSettings(c tele.Context) error {
-	return c.Send(messages.MsgSettings, keyboards.BackKeyboard())
+	return c.Send(messages.MsgSettings, keyboards.BackKeyboard(), tele.ModeHTML)
 }
 
 // HandleText handles regular text messages
@@ -131,6 +131,17 @@ func (h *Handler) HandleText(c tele.Context) error {
 	case "❓ Yordam":
 		// Check if we have a specific help message for users, otherwise generic
 		return h.HandleHelp(c)
+	// Profile edit buttons
+	case "👤 Ism familiya":
+		return h.HandleEditProfileField(c, "full_name")
+	case "📞 Telefon raqami":
+		return h.HandleEditProfileField(c, "phone")
+	case "🎂 Yosh":
+		return h.HandleEditProfileField(c, "age")
+	case "📏 Vazn va Bo'y":
+		return h.HandleEditProfileField(c, "body_params")
+	case "🏠 Asosiy menyu":
+		return h.HandleBackToMainMenu(c)
 	}
 
 	// Default: check user state
@@ -206,28 +217,28 @@ func (h *Handler) HandleContact(c tele.Context) error {
 		}
 
 		// Show updated profile
-		msg := fmt.Sprintf(`✅ <b>PROFIL YANGILANDI!</b>
+		msg := fmt.Sprintf(`✅ <b>MA'LUMOT YANGILANDI!</b>
 
-👤 <b>SIZNING PROFILINGIZ</b>
+👤 <b>Mening ma'lumotlarim:</b>
 
-📝 <b>F.I.SH:</b> %s
-📱 <b>Telefon:</b> %s
+👤 <b>Ism familiya:</b> %s
+📞 <b>Telefon:</b> %s
 🎂 <b>Yosh:</b> %d
 ⚖️ <b>Vazn:</b> %d kg
 📏 <b>Bo'y:</b> %d sm
-
-✅ <b>Holat:</b> Faol
-📅 <b>Ro'yxatdan o'tgan sana:</b> %s
 `,
 			regUser.FullName,
 			regUser.Phone,
 			regUser.Age,
 			regUser.Weight,
 			regUser.Height,
-			regUser.CreatedAt.Format("02.01.2006"),
 		)
 
-		return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
+		if err := c.Send(msg, tele.ModeHTML); err != nil {
+			return err
+		}
+
+		return c.Send(messages.MsgSelectEditField, keyboards.ProfileEditKeyboard())
 	}
 
 	return nil
@@ -339,26 +350,48 @@ func (h *Handler) HandleUserProfile(c tele.Context) error {
 		return c.Send("❌ Siz hali ro'yxatdan o'tmagansiz. /start buyrug'ini bosing.")
 	}
 
-	msg := fmt.Sprintf(`👤 <b>SIZNING PROFILINGIZ</b>
+	msg := fmt.Sprintf(`👤 <b>Mening ma'lumotlarim:</b>
 
-📝 <b>F.I.SH:</b> %s
-📱 <b>Telefon:</b> %s
+👤 <b>Ism familiya:</b> %s
+📞 <b>Telefon:</b> %s
 🎂 <b>Yosh:</b> %d
 ⚖️ <b>Vazn:</b> %d kg
-📏 <b>Bo'y:</b> %d sm
-
-✅ <b>Holat:</b> Faol
-📅 <b>Ro'yxatdan o'tgan sana:</b> %s
-`,
+📏 <b>Bo'y:</b> %d sm`,
 		regUser.FullName,
 		regUser.Phone,
 		regUser.Age,
 		regUser.Weight,
 		regUser.Height,
-		regUser.CreatedAt.Format("02.01.2006"),
 	)
 
-	return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
+	// First send profile, then in separate message show the edit prompt with keyboard
+	if err := c.Send(msg, tele.ModeHTML); err != nil {
+		return err
+	}
+
+	return c.Send(messages.MsgSelectEditField, keyboards.ProfileEditKeyboard())
+}
+
+// HandleBackToMainMenu handles returning to main menu from profile edit
+func (h *Handler) HandleBackToMainMenu(c tele.Context) error {
+	ctx := context.Background()
+	userID := c.Sender().ID
+
+	// Reset user state to idle
+	if err := h.storage.User().UpdateState(ctx, userID, models.StateIdle); err != nil {
+		h.log.Error("Failed to update user state", logger.Error(err))
+	}
+
+	// Get registered user
+	regUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, userID)
+	if err != nil {
+		return c.Send("❌ Xatolik yuz berdi.", keyboards.UserMainMenuReplyKeyboard())
+	}
+
+	msg := fmt.Sprintf(`👋 %s
+
+Asosiy menyudasiz. Quyidagi tugmalardan foydalaning:`, regUser.FullName)
+	return c.Send(msg, keyboards.UserMainMenuReplyKeyboard())
 }
 
 // HandleUserMyJobs displays the user's bookings
@@ -481,10 +514,6 @@ func (h *Handler) HandleEditProfileField(c tele.Context, field string) error {
 		return c.Send(messages.MsgError)
 	}
 
-	if err := c.Respond(); err != nil {
-		h.log.Error("Failed to respond to callback", logger.Error(err))
-	}
-
 	// Send prompt with current value
 	if field == "phone" {
 		// Use special keyboard for phone
@@ -553,28 +582,28 @@ func (h *Handler) HandleProfileEditInput(c tele.Context, user *models.User) erro
 	}
 
 	// Show updated profile
-	msg := fmt.Sprintf(`✅ <b>PROFIL YANGILANDI!</b>
+	msg := fmt.Sprintf(`✅ <b>MA'LUMOT YANGILANDI!</b>
 
-👤 <b>SIZNING PROFILINGIZ</b>
+👤 <b>Mening ma'lumotlarim:</b>
 
-📝 <b>F.I.SH:</b> %s
-📱 <b>Telefon:</b> %s
+👤 <b>Ism familiya:</b> %s
+📞 <b>Telefon:</b> %s
 🎂 <b>Yosh:</b> %d
 ⚖️ <b>Vazn:</b> %d kg
 📏 <b>Bo'y:</b> %d sm
-
-✅ <b>Holat:</b> Faol
-📅 <b>Ro'yxatdan o'tgan sana:</b> %s
 `,
 		regUser.FullName,
 		regUser.Phone,
 		regUser.Age,
 		regUser.Weight,
 		regUser.Height,
-		regUser.CreatedAt.Format("02.01.2006"),
 	)
 
-	return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
+	if err := c.Send(msg, tele.ModeHTML); err != nil {
+		return err
+	}
+
+	return c.Send(messages.MsgSelectEditField, keyboards.ProfileEditKeyboard())
 }
 
 // HandleCancelProfileEdit handles canceling profile edit
@@ -593,26 +622,26 @@ func (h *Handler) HandleCancelProfileEdit(c tele.Context) error {
 		return c.Send("❌ Bekor qilindi.", keyboards.RemoveReplyKeyboard())
 	}
 
-	msg := fmt.Sprintf(`❌ <b>Tahrirlash bekor qilindi.</b>
+	msg := fmt.Sprintf(`❌ <b>Bekor qilindi.</b>
 
-👤 <b>SIZNING PROFILINGIZ</b>
+👤 <b>Mening ma'lumotlarim:</b>
 
-📝 <b>F.I.SH:</b> %s
-📱 <b>Telefon:</b> %s
+👤 <b>Ism familiya:</b> %s
+📞 <b>Telefon:</b> %s
 🎂 <b>Yosh:</b> %d
 ⚖️ <b>Vazn:</b> %d kg
 📏 <b>Bo'y:</b> %d sm
-
-✅ <b>Holat:</b> Faol
-📅 <b>Ro'yxatdan o'tgan sana:</b> %s
 `,
 		regUser.FullName,
 		regUser.Phone,
 		regUser.Age,
 		regUser.Weight,
 		regUser.Height,
-		regUser.CreatedAt.Format("02.01.2006"),
 	)
 
-	return c.Send(msg, keyboards.ProfileEditKeyboard(), tele.ModeHTML)
+	if err := c.Send(msg, tele.ModeHTML); err != nil {
+		return err
+	}
+
+	return c.Send(messages.MsgSelectEditField, keyboards.ProfileEditKeyboard())
 }

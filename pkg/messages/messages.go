@@ -34,7 +34,7 @@ Bu bot orqali siz kunlik ish topishingiz va ish uchun yozilishingiz mumkin.
 <b>Profil:</b>
 Profilingizni ko'rish va tahrirlash uchun "👤 Profil" tugmasini bosing.
 
-❓ Savollar bo'lsa @admin bilan bog'laning.`
+❓ Savollar bo'lsa @ArzonBepul bilan bog'laning.`
 
 	MsgAbout = `ℹ️ About This Bot
 

@@ -336,19 +336,21 @@ func ReplyCancelKeyboard() *tele.ReplyMarkup {
 
 // ProfileEditKeyboard returns keyboard for profile editing
 func ProfileEditKeyboard() *tele.ReplyMarkup {
-	menu := &tele.ReplyMarkup{}
+	menu := &tele.ReplyMarkup{
+		ResizeKeyboard: true,
+	}
 
-	btnEditFullName := menu.Data("📝 F.I.SH o'zgartirish", "edit_profile_full_name")
-	btnEditPhone := menu.Data("📱 Telefon o'zgartirish", "edit_profile_phone")
-	btnEditAge := menu.Data("🎂 Yosh o'zgartirish", "edit_profile_age")
-	btnEditBodyParams := menu.Data("📏 Vazn/Bo'y o'zgartirish", "edit_profile_body_params")
-	btnBack := menu.Data("⬅️ Orqaga", "back")
+	btnEditFullName := menu.Text("👤 Ism familiya")
+	btnEditPhone := menu.Text("📞 Telefon raqami")
+	btnEditAge := menu.Text("🎂 Yosh")
+	btnEditBodyParams := menu.Text("📏 Vazn va Bo'y")
+	btnMainMenu := menu.Text("🏠 Asosiy menyu")
 
-	menu.Inline(
+	menu.Reply(
 		menu.Row(btnEditFullName),
 		menu.Row(btnEditPhone),
 		menu.Row(btnEditAge, btnEditBodyParams),
-		menu.Row(btnBack),
+		menu.Row(btnMainMenu),
 	)
 
 	return menu
