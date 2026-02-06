@@ -347,8 +347,7 @@ func ProfileEditKeyboard() *tele.ReplyMarkup {
 	btnMainMenu := menu.Text("🏠 Asosiy menyu")
 
 	menu.Reply(
-		menu.Row(btnEditFullName),
-		menu.Row(btnEditPhone),
+		menu.Row(btnEditFullName, btnEditPhone),
 		menu.Row(btnEditAge, btnEditBodyParams),
 		menu.Row(btnMainMenu),
 	)
