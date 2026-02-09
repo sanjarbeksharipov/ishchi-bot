@@ -163,6 +163,15 @@ type RegistrationRepoI interface {
 
 	// CompleteRegistration moves a draft to registered_users table
 	CompleteRegistration(ctx context.Context, userID int64) error
+
+	// GetAllRegistered retrieves all registered users
+	GetAllRegistered(ctx context.Context) ([]*models.RegisteredUser, error)
+
+	// GetRegisteredUsersPaginated retrieves registered users with pagination
+	GetRegisteredUsersPaginated(ctx context.Context, limit, offset int) ([]*models.RegisteredUser, error)
+
+	// GetTotalRegisteredCount returns the total count of registered users
+	GetTotalRegisteredCount(ctx context.Context) (int, error)
 }
 
 // AdminMessageRepoI defines the interface for admin job message persistence

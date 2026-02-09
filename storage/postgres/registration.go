@@ -380,3 +380,126 @@ func (r *registrationRepo) CompleteRegistration(ctx context.Context, userID int6
 
 	return nil
 }
+
+// GetAllRegistered retrieves all registered users ordered by creation date (newest first)
+func (r *registrationRepo) GetAllRegistered(ctx context.Context) ([]*models.RegisteredUser, error) {
+	query := `
+		SELECT id, user_id, full_name, phone, age, weight, height, passport_photo_id, is_active, created_at, updated_at
+		FROM registered_users
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		r.log.Error("Failed to get all registered users: " + err.Error())
+		return nil, fmt.Errorf("failed to get all registered users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []*models.RegisteredUser
+
+	for rows.Next() {
+		var user models.RegisteredUser
+		var passportPhotoID *string
+
+		err := rows.Scan(
+			&user.ID,
+			&user.UserID,
+			&user.FullName,
+			&user.Phone,
+			&user.Age,
+			&user.Weight,
+			&user.Height,
+			&passportPhotoID,
+			&user.IsActive,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			r.log.Error("Failed to scan registered user: " + err.Error())
+			return nil, fmt.Errorf("failed to scan registered user: %w", err)
+		}
+
+		if passportPhotoID != nil {
+			user.PassportPhotoID = *passportPhotoID
+		}
+
+		users = append(users, &user)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Error("Error iterating registered users: " + err.Error())
+		return nil, fmt.Errorf("error iterating registered users: %w", err)
+	}
+
+	return users, nil
+}
+
+// GetRegisteredUsersPaginated retrieves registered users with pagination
+func (r *registrationRepo) GetRegisteredUsersPaginated(ctx context.Context, limit, offset int) ([]*models.RegisteredUser, error) {
+	query := `
+		SELECT id, user_id, full_name, phone, age, weight, height, passport_photo_id, is_active, created_at, updated_at
+		FROM registered_users
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
+	`
+
+	rows, err := r.db.Query(ctx, query, limit, offset)
+	if err != nil {
+		r.log.Error("Failed to get paginated registered users: " + err.Error())
+		return nil, fmt.Errorf("failed to get paginated registered users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []*models.RegisteredUser
+
+	for rows.Next() {
+		var user models.RegisteredUser
+		var passportPhotoID *string
+
+		err := rows.Scan(
+			&user.ID,
+			&user.UserID,
+			&user.FullName,
+			&user.Phone,
+			&user.Age,
+			&user.Weight,
+			&user.Height,
+			&passportPhotoID,
+			&user.IsActive,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			r.log.Error("Failed to scan registered user: " + err.Error())
+			return nil, fmt.Errorf("failed to scan registered user: %w", err)
+		}
+
+		if passportPhotoID != nil {
+			user.PassportPhotoID = *passportPhotoID
+		}
+
+		users = append(users, &user)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Error("Error iterating registered users: " + err.Error())
+		return nil, fmt.Errorf("error iterating registered users: %w", err)
+	}
+
+	return users, nil
+}
+
+// GetTotalRegisteredCount returns the total count of registered users
+func (r *registrationRepo) GetTotalRegisteredCount(ctx context.Context) (int, error) {
+	query := `SELECT COUNT(*) FROM registered_users`
+
+	var count int
+	err := r.db.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		r.log.Error("Failed to get total registered count: " + err.Error())
+		return 0, fmt.Errorf("failed to get total registered count: %w", err)
+	}
+
+	return count, nil
+}

@@ -38,6 +38,36 @@ func ConfirmationKeyboard() *tele.ReplyMarkup {
 	return menu
 }
 
+// UsersPaginationKeyboard returns pagination keyboard for users list
+func UsersPaginationKeyboard(currentPage, totalPages int) *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	var buttons []tele.Btn
+
+	// Previous button
+	if currentPage > 1 {
+		btnPrev := menu.Data("⬅️ Oldingi", fmt.Sprintf("users_page_%d", currentPage-1))
+		buttons = append(buttons, btnPrev)
+	}
+
+	// Page indicator (non-clickable)
+	btnPage := menu.Data(fmt.Sprintf("%d/%d", currentPage, totalPages), "users_page_current")
+	buttons = append(buttons, btnPage)
+
+	// Next button
+	if currentPage < totalPages {
+		btnNext := menu.Data("Keyingi ➡️", fmt.Sprintf("users_page_%d", currentPage+1))
+		buttons = append(buttons, btnNext)
+	}
+
+	menu.Inline(
+		menu.Row(buttons...),
+		menu.Row(menu.Data("⬅️ Admin panel", "admin_menu")),
+	)
+
+	return menu
+}
+
 // BackKeyboard returns a simple back button keyboard
 func BackKeyboard() *tele.ReplyMarkup {
 	menu := &tele.ReplyMarkup{}
@@ -65,10 +95,12 @@ func AdminMenuReplyKeyboard() *tele.ReplyMarkup {
 
 	btnCreateJob := menu.Text("➕ Ish yaratish")
 	btnJobList := menu.Text("📋 Ishlar ro'yxati")
+	btnUsersList := menu.Text("👥 Foydalanuvchilar")
 
 	menu.Reply(
 		menu.Row(btnCreateJob),
 		menu.Row(btnJobList),
+		menu.Row(btnUsersList),
 	)
 
 	return menu

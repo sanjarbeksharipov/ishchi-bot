@@ -1137,6 +1137,103 @@ func (h *Handler) handleJobEditingLocationInput(c tele.Context, user *models.Use
 	return nil
 }
 
+// HandleRegisteredUsersList shows list of all registered users with pagination (admin only)
+func (h *Handler) HandleRegisteredUsersList(c tele.Context) error {
+	return h.showUsersListPage(c, 1, false)
+}
+
+// HandleUsersListPage shows a specific page of registered users
+func (h *Handler) HandleUsersListPage(c tele.Context, page int) error {
+	return h.showUsersListPage(c, page, true)
+}
+
+// showUsersListPage displays users list with pagination
+func (h *Handler) showUsersListPage(c tele.Context, page int, isCallback bool) error {
+	if !h.IsAdmin(c.Sender().ID) {
+		if isCallback {
+			return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
+		}
+		return c.Send("❌ Sizda admin huquqi yo'q.")
+	}
+
+	ctx := context.Background()
+
+	// Get total count
+	totalCount, err := h.storage.Registration().GetTotalRegisteredCount(ctx)
+	if err != nil {
+		h.log.Error("Failed to get total registered count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	if totalCount == 0 {
+		if isCallback {
+			if err := c.Respond(); err != nil {
+				h.log.Error("Failed to respond to callback", logger.Error(err))
+			}
+			return c.Edit("👥 Hozircha ro'yxatdan o'tgan foydalanuvchilar yo'q.")
+		}
+		return c.Send("👥 Hozircha ro'yxatdan o'tgan foydalanuvchilar yo'q.", keyboards.AdminMenuReplyKeyboard())
+	}
+
+	// Pagination settings
+	const usersPerPage = 15
+	totalPages := (totalCount + usersPerPage - 1) / usersPerPage
+
+	// Validate page number
+	if page < 1 {
+		page = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+
+	offset := (page - 1) * usersPerPage
+
+	// Get paginated users
+	users, err := h.storage.Registration().GetRegisteredUsersPaginated(ctx, usersPerPage, offset)
+	if err != nil {
+		h.log.Error("Failed to get registered users", logger.Error(err))
+		if isCallback {
+			if err := c.Respond(); err != nil {
+				h.log.Error("Failed to respond to callback", logger.Error(err))
+			}
+		}
+		return c.Send(messages.MsgError)
+	}
+
+	// Format user list
+	var msg strings.Builder
+	msg.WriteString("👥 <b>RO'YXATDAN O'TGANLAR</b>\n\n")
+	msg.WriteString(fmt.Sprintf("📊 <b>Jami:</b> %d ta foydalanuvchi\n", totalCount))
+	msg.WriteString(fmt.Sprintf("📄 <b>Sahifa:</b> %d/%d\n\n", page, totalPages))
+
+	for i, user := range users {
+		status := "🟢"
+		if !user.IsActive {
+			status = "🔴"
+		}
+
+		userIndex := offset + i + 1
+		msg.WriteString(fmt.Sprintf("<b>%d. %s %s</b>\n", userIndex, status, user.FullName))
+		msg.WriteString(fmt.Sprintf("   📞 %s\n", user.Phone))
+		msg.WriteString(fmt.Sprintf("   👤 Yosh: %d | Vazn: %d kg | Bo'y: %d sm\n", user.Age, user.Weight, user.Height))
+		msg.WriteString(fmt.Sprintf("   🆔 User ID: <code>%d</code>\n", user.UserID))
+		msg.WriteString(fmt.Sprintf("   📅 %s\n\n", user.CreatedAt.Format("02.01.2006 15:04")))
+	}
+
+	// Create pagination keyboard
+	keyboard := keyboards.UsersPaginationKeyboard(page, totalPages)
+
+	if isCallback {
+		if err := c.Respond(); err != nil {
+			h.log.Error("Failed to respond to callback", logger.Error(err))
+		}
+		return c.Edit(msg.String(), keyboard, tele.ModeHTML)
+	}
+
+	return c.Send(msg.String(), keyboard, tele.ModeHTML)
+}
+
 // SetConfig sets the config for admin handlers
 func (h *Handler) SetConfig(cfg *config.Config) {
 	h.cfg = cfg

@@ -192,6 +192,17 @@ func handleCallBacks(c tele.Context, handler *handlers.Handler) error {
 			return handler.HandleBlockUser(c)
 		}
 
+		// Handle users list pagination
+		if strings.HasPrefix(data, "users_page_") {
+			pageStr := strings.TrimPrefix(data, "users_page_")
+			if pageStr == "current" {
+				// Non-clickable page indicator
+				return c.Respond(&tele.CallbackResponse{})
+			}
+			page, _ := strconv.Atoi(pageStr)
+			return handler.HandleUsersListPage(c, page)
+		}
+
 		fmt.Println(data)
 		return c.Respond(&tele.CallbackResponse{Text: "Unknown action"})
 	}
