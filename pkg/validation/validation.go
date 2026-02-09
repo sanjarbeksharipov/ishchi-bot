@@ -203,6 +203,21 @@ func ParseBodyParams(input string) (weight int, height int, err *ValidationError
 	return weight, height, nil
 }
 
+// isValidOperatorCode checks if the operator code is valid for Uzbekistan
+// Valid codes: 93, 94, 55, 97, 88, 90, 91, 98, 95, 99, 77, 33, 20
+func isValidOperatorCode(code string) bool {
+	validCodes := map[string]bool{
+		"93": true, "94": true, "55": true, // UCELL
+		"97": true, "88": true, // MobiUz
+		"90": true, "91": true, // BEELINE
+		"98": true,                         // PERFECTUM MOBILE
+		"95": true, "99": true, "77": true, // UZMOBILE
+		"33": true, // Humans
+		"20": true, // OQ
+	}
+	return validCodes[code]
+}
+
 // ValidatePhone validates phone number format
 // Accepts formats: +998991234567 or 991234567
 func ValidatePhone(phone string) *ValidationError {
@@ -233,7 +248,7 @@ func ValidatePhone(phone string) *ValidationError {
 	// Check valid formats:
 	// 1. +998XXXXXXXXX (13 digits total with country code)
 	// 2. 998XXXXXXXXX (12 digits)
-	// 3. 9XXXXXXXXX (9 digits, starts with 9)
+	// 3. XXXXXXXXX (9 digits)
 
 	if hasPlus {
 		// Format: +998XXXXXXXXX
@@ -243,9 +258,12 @@ func ValidatePhone(phone string) *ValidationError {
 		if !strings.HasPrefix(phoneDigits, "998") {
 			return NewValidationError("phone", "❌ Telefon raqam 998 bilan boshlanishi kerak!")
 		}
-		// Check operator code (second part after 998 should start with 9)
-		if len(phoneDigits) > 3 && phoneDigits[3] != '9' {
-			return NewValidationError("phone", "❌ Noto'g'ri operator kodi! To'g'ri format: +998991234567")
+		// Check operator code (2 digits after 998)
+		if len(phoneDigits) >= 5 {
+			operatorCode := phoneDigits[3:5]
+			if !isValidOperatorCode(operatorCode) {
+				return NewValidationError("phone", "❌ Noto'g'ri operator kodi! Masalan: +998901234567, +998931234567")
+			}
 		}
 	} else {
 		// Format without +
@@ -254,13 +272,18 @@ func ValidatePhone(phone string) *ValidationError {
 			if !strings.HasPrefix(phoneDigits, "998") {
 				return NewValidationError("phone", "❌ Telefon raqam 998 bilan boshlanishi kerak!")
 			}
-			if phoneDigits[3] != '9' {
-				return NewValidationError("phone", "❌ Noto'g'ri operator kodi! To'g'ri format: 998991234567")
+			// Check operator code (2 digits after 998)
+			if len(phoneDigits) >= 5 {
+				operatorCode := phoneDigits[3:5]
+				if !isValidOperatorCode(operatorCode) {
+					return NewValidationError("phone", "❌ Noto'g'ri operator kodi! Masalan: 998901234567, 998931234567")
+				}
 			}
 		} else if len(phoneDigits) == 9 {
-			// 9XXXXXXXXX format
-			if phoneDigits[0] != '9' {
-				return NewValidationError("phone", "❌ Telefon raqam 9 bilan boshlanishi kerak! To'g'ri format: 991234567")
+			// XXXXXXXXX format (without country code)
+			operatorCode := phoneDigits[0:2]
+			if !isValidOperatorCode(operatorCode) {
+				return NewValidationError("phone", "❌ Noto'g'ri operator kodi! Masalan: 901234567, 931234567")
 			}
 		} else {
 			return NewValidationError("phone", "❌ Noto'g'ri format! To'g'ri format: +998991234567 yoki 991234567")
@@ -326,7 +349,7 @@ func NormalizePhone(phone string) string {
 
 	// Normalize to +998XXXXXXXXX format
 	if len(phoneDigits) == 9 {
-		// 9XXXXXXXXX -> +998XXXXXXXXX
+		// XXXXXXXXX (9 digits) -> +998XXXXXXXXX
 		return "+998" + phoneDigits
 	} else if len(phoneDigits) == 12 && strings.HasPrefix(phoneDigits, "998") {
 		// 998XXXXXXXXX -> +998XXXXXXXXX
