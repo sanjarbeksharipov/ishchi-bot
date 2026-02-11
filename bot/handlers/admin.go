@@ -308,6 +308,30 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobID int64) error {
 
 	job.ChannelMessageID = int64(sentMsg.ID)
 
+	// Send location as a reply to the channel message if it exists
+	if job.Location != "" {
+		parts := strings.SplitN(job.Location, ",", 2)
+		if len(parts) == 2 {
+			lat, errLat := strconv.ParseFloat(strings.TrimSpace(parts[0]), 32)
+			lng, errLng := strconv.ParseFloat(strings.TrimSpace(parts[1]), 32)
+			if errLat == nil && errLng == nil {
+				location := &tele.Location{
+					Lat: float32(lat),
+					Lng: float32(lng),
+				}
+				_, err := h.bot.Send(channelID, location, &tele.SendOptions{
+					ReplyTo: sentMsg,
+				})
+				if err != nil {
+					h.log.Error("Failed to send location to channel",
+						logger.Error(err),
+						logger.Any("job_id", job.ID),
+					)
+				}
+			}
+		}
+	}
+
 	if err := c.Respond(&tele.CallbackResponse{Text: "✅ Kanalga yuborildi!"}); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
