@@ -30,6 +30,9 @@ type BotConfig struct {
 	WebhookURL    string // Public URL for webhook (e.g., https://example.com/webhook)
 	WebhookListen string // Listen address for webhook server (e.g., :8443)
 	WebhookPort   int    // Port for webhook server
+	// Rate limiter configuration
+	RateLimitMaxRequests int           // Max requests per window (default: 30)
+	RateLimitWindow      time.Duration // Sliding window duration (default: 60s)
 }
 
 // DatabaseConfig contains database configuration
@@ -58,17 +61,19 @@ type PaymentConfig struct {
 func Load() (*Config, error) {
 	cfg := &Config{
 		Bot: BotConfig{
-			Token:         getEnv("BOT_TOKEN", ""),
-			Verbose:       getEnvAsBool("BOT_VERBOSE", false),
-			Poller:        getEnvAsDuration("BOT_POLLER", 10*time.Second),
-			ChannelID:     getEnvAsInt64("BOT_CHANNEL_ID", 0),
-			AdminIDs:      getEnvAsInt64Slice("BOT_ADMIN_IDS", nil),
-			AdminGroupID:  getEnvAsInt64("BOT_ADMIN_GROUP_ID", 0),
-			Username:      getEnv("BOT_USERNAME", ""),
-			Mode:          getEnv("BOT_MODE", "polling"),
-			WebhookURL:    getEnv("BOT_WEBHOOK_URL", ""),
-			WebhookListen: getEnv("BOT_WEBHOOK_LISTEN", ":8443"),
-			WebhookPort:   getEnvAsInt("BOT_WEBHOOK_PORT", 8443),
+			Token:                getEnv("BOT_TOKEN", ""),
+			Verbose:              getEnvAsBool("BOT_VERBOSE", false),
+			Poller:               getEnvAsDuration("BOT_POLLER", 10*time.Second),
+			ChannelID:            getEnvAsInt64("BOT_CHANNEL_ID", 0),
+			AdminIDs:             getEnvAsInt64Slice("BOT_ADMIN_IDS", nil),
+			AdminGroupID:         getEnvAsInt64("BOT_ADMIN_GROUP_ID", 0),
+			Username:             getEnv("BOT_USERNAME", ""),
+			Mode:                 getEnv("BOT_MODE", "polling"),
+			WebhookURL:           getEnv("BOT_WEBHOOK_URL", ""),
+			WebhookListen:        getEnv("BOT_WEBHOOK_LISTEN", ":8443"),
+			WebhookPort:          getEnvAsInt("BOT_WEBHOOK_PORT", 8443),
+			RateLimitMaxRequests: getEnvAsInt("BOT_RATE_LIMIT_MAX", 30),
+			RateLimitWindow:      getEnvAsDuration("BOT_RATE_LIMIT_WINDOW", 60*time.Second),
 		},
 		Database: DatabaseConfig{
 			Host:           getEnv("DB_HOST", "localhost"),

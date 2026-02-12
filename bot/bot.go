@@ -5,16 +5,22 @@ import (
 	"strconv"
 	"strings"
 	"telegram-bot-starter/bot/handlers"
+	"telegram-bot-starter/bot/middleware"
 	"telegram-bot-starter/bot/models"
+	"telegram-bot-starter/config"
 	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
 
 	tele "gopkg.in/telebot.v4"
 )
 
-func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI) {
+func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI, cfg *config.Config) *middleware.RateLimiter {
 	// Apply middleware
 	// bot.Use(middleware.LoggingMiddleware(log))
+
+	// Apply rate limiter middleware
+	rateLimiter := middleware.NewRateLimiter(cfg, log)
+	bot.Use(rateLimiter.Middleware())
 
 	// Register command handlers
 	bot.Handle("/start", handler.HandleStart)
@@ -39,6 +45,8 @@ func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI
 
 	// Register location handler (for job locations)
 	bot.Handle(tele.OnLocation, handler.HandleLocation)
+
+	return rateLimiter
 }
 
 func handleCallBacks(c tele.Context, handler *handlers.Handler) error {

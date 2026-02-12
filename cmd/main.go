@@ -92,8 +92,8 @@ func main() {
 	}
 	handler := handlers.NewHandler(params)
 
-	// Set up routes
-	bot.RegisterRoutes(telegramBot, handler, log)
+	// Set up routes (includes rate limiter middleware)
+	rateLimiter := bot.RegisterRoutes(telegramBot, handler, log, cfg)
 	// Initialize and start expiry worker
 	expiryWorker := service.NewExpiryWorker(store, log, telegramBot)
 	go expiryWorker.Start()
@@ -114,6 +114,9 @@ func main() {
 
 	// Stop expiry worker
 	expiryWorker.Stop()
+
+	// Stop rate limiter cleanup goroutine
+	rateLimiter.Stop()
 
 	// Create a context with timeout for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
