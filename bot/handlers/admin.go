@@ -82,7 +82,13 @@ func (h *Handler) HandleJobList(c tele.Context) error {
 
 // HandleJobDetail shows job detail with edit options
 // Implements single-message per admin: each admin has their own independent message
-func (h *Handler) HandleJobDetail(c tele.Context, jobID int64) error {
+func (h *Handler) HandleJobDetail(c tele.Context, jobIDStr string) error {
+	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", jobIDStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
 	}
@@ -123,7 +129,20 @@ func (h *Handler) HandleJobDetail(c tele.Context, jobID int64) error {
 }
 
 // HandleEditJobField starts editing a specific job field
-func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) error {
+func (h *Handler) HandleEditJobField(c tele.Context, params string) error {
+	parts := strings.Split(params, "_")
+	if len(parts) < 2 {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri parametrlar"})
+	}
+
+	jobID, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", parts[0]))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
+	field := strings.Join(parts[1:], "_")
+
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
 	}
@@ -232,9 +251,32 @@ func (h *Handler) HandleEditJobField(c tele.Context, jobID int64, field string) 
 
 // HandleChangeJobStatus changes the job status
 // Implements single-message enforcement
-func (h *Handler) HandleChangeJobStatus(c tele.Context, jobID int64, status models.JobStatus) error {
+func (h *Handler) HandleChangeJobStatus(c tele.Context, params string) error {
+
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
+	}
+	// Format: job_status_{id}_{status}
+	parts := strings.Split(params, "_")
+	if len(parts) != 2 {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri parametrlar"})
+	}
+
+	jobID, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", parts[0]))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
+	statusStr := parts[1]
+	var status models.JobStatus
+	switch statusStr {
+	case "open":
+		status = models.JobStatusActive
+	case "toldi":
+		status = models.JobStatusFull
+	case "closed":
+		status = models.JobStatusCompleted
 	}
 
 	ctx := context.Background()
@@ -270,7 +312,13 @@ func (h *Handler) HandleChangeJobStatus(c tele.Context, jobID int64, status mode
 }
 
 // HandlePublishJob publishes the job to the channel (only if not yet published)
-func (h *Handler) HandlePublishJob(c tele.Context, jobID int64) error {
+func (h *Handler) HandlePublishJob(c tele.Context, jobIDStr string) error {
+	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", jobIDStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
 	}
@@ -345,7 +393,13 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobID int64) error {
 }
 
 // HandleDeleteChannelMessage deletes the channel message only (keeps job in DB)
-func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobID int64) error {
+func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobIDStr string) error {
+	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", jobIDStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
 	}
@@ -389,7 +443,13 @@ func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobID int64) error 
 }
 
 // HandleDeleteJob deletes the entire job from database (and channel message if exists)
-func (h *Handler) HandleDeleteJob(c tele.Context, jobID int64) error {
+func (h *Handler) HandleDeleteJob(c tele.Context, jobIDStr string) error {
+	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", jobIDStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
 	}
@@ -808,7 +868,13 @@ func getJobFieldValue(job *models.Job, field string) string {
 }
 
 // HandleViewJobBookings shows all users who booked a specific job
-func (h *Handler) HandleViewJobBookings(c tele.Context, jobID int64) error {
+func (h *Handler) HandleViewJobBookings(c tele.Context, jobIDStr string) error {
+	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", jobIDStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
 	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Sizda admin huquqi yo'q."})
 	}
@@ -1167,7 +1233,17 @@ func (h *Handler) HandleRegisteredUsersList(c tele.Context) error {
 }
 
 // HandleUsersListPage shows a specific page of registered users
-func (h *Handler) HandleUsersListPage(c tele.Context, page int) error {
+func (h *Handler) HandleUsersListPage(c tele.Context, pageStr string) error {
+	if pageStr == "current" {
+		return c.Respond(&tele.CallbackResponse{})
+	}
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		h.log.Error("Invalid page in callback", logger.Error(err), logger.Any("page_str", pageStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri sahifa"})
+	}
+
 	return h.showUsersListPage(c, page, true)
 }
 

@@ -140,7 +140,7 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 }
 
 // HandleApprovePayment handles admin approval of payment
-func (h *Handler) HandleApprovePayment(c tele.Context) error {
+func (h *Handler) HandleApprovePayment(c tele.Context, params string) error {
 	ctx := context.Background()
 
 	// Check if user is admin
@@ -151,18 +151,8 @@ func (h *Handler) HandleApprovePayment(c tele.Context) error {
 		})
 	}
 
-	// Get booking ID from callback data
-	callbackData := strings.TrimSpace(c.Callback().Data)
-	callbackDataSl := strings.Split(callbackData, "_")
-	if len(callbackDataSl) != 3 {
-		return c.Respond(&tele.CallbackResponse{
-			Text:      "❌ Noto'g'ri booking ID.",
-			ShowAlert: true,
-		})
-	}
-
-	bookingIDStr := callbackDataSl[2]
-	bookingID, err := strconv.ParseInt(bookingIDStr, 10, 64)
+	// Get booking ID from callback data (format: approve_payment_bookingID)
+	bookingID, err := strconv.ParseInt(params, 10, 64)
 	if err != nil {
 		h.log.Error("Failed to parse booking ID", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri booking ID.", ShowAlert: true})
@@ -218,7 +208,7 @@ func (h *Handler) HandleApprovePayment(c tele.Context) error {
 }
 
 // HandleRejectPayment handles admin rejection of payment
-func (h *Handler) HandleRejectPayment(c tele.Context) error {
+func (h *Handler) HandleRejectPayment(c tele.Context, params string) error {
 	ctx := context.Background()
 
 	// Check if user is admin
@@ -229,17 +219,8 @@ func (h *Handler) HandleRejectPayment(c tele.Context) error {
 		})
 	}
 
-	// Get booking ID from callback data
-	callbackData := strings.TrimSpace(c.Callback().Data)
-	callbackDataSl := strings.Split(callbackData, "_")
-	if len(callbackDataSl) != 3 {
-		return c.Respond(&tele.CallbackResponse{
-			Text:      "❌ Noto'g'ri booking ID.",
-			ShowAlert: true,
-		})
-	}
-	bookingIDStr := callbackDataSl[2]
-	bookingID, err := strconv.ParseInt(bookingIDStr, 10, 64)
+	// Get booking ID from callback data (format: reject_payment_bookingID)
+	bookingID, err := strconv.ParseInt(params, 10, 64)
 	if err != nil {
 		h.log.Error("Failed to parse booking ID", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
 		return c.Respond(&tele.CallbackResponse{
@@ -300,7 +281,7 @@ func (h *Handler) HandleRejectPayment(c tele.Context) error {
 }
 
 // HandleBlockUser handles blocking a user
-func (h *Handler) HandleBlockUser(c tele.Context) error {
+func (h *Handler) HandleBlockUser(c tele.Context, params string) error {
 	ctx := context.Background()
 
 	// Check if user is admin
@@ -311,33 +292,21 @@ func (h *Handler) HandleBlockUser(c tele.Context) error {
 		})
 	}
 	// Get booking ID,user ID from callback data : block_user_userID_bookingID
-	callbackData := strings.TrimSpace(c.Callback().Data)
-	callbackDataSl := strings.Split(callbackData, "_")
-	if len(callbackDataSl) != 4 {
-		return c.Respond(&tele.CallbackResponse{
-			Text:      "❌ Noto'g'ri booking ID.",
-			ShowAlert: true,
-		})
+	callbackDataSl := strings.Split(params, "_")
+	if len(callbackDataSl) != 2 {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri booking ID.", ShowAlert: true})
 	}
 
-	userIDStr := callbackDataSl[2]
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	userID, err := strconv.ParseInt(callbackDataSl[0], 10, 64)
 	if err != nil {
 		h.log.Error("Failed to parse user ID", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
-		return c.Respond(&tele.CallbackResponse{
-			Text:      "❌ Noto'g'ri user ID.",
-			ShowAlert: true,
-		})
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri user ID.", ShowAlert: true})
 	}
 
-	bookingIDStr := callbackDataSl[3]
-	bookingID, err := strconv.ParseInt(bookingIDStr, 10, 64)
+	bookingID, err := strconv.ParseInt(callbackDataSl[1], 10, 64)
 	if err != nil {
 		h.log.Error("Failed to parse booking ID", logger.Error(err), logger.Any("callback_data", c.Callback().Data))
-		return c.Respond(&tele.CallbackResponse{
-			Text:      "❌ Noto'g'ri booking ID.",
-			ShowAlert: true,
-		})
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri booking ID.", ShowAlert: true})
 	}
 
 	// Block user and reject payment through service

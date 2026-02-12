@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"telegram-bot-starter/bot/models"
@@ -98,7 +99,13 @@ Davom etamizmi?
 }
 
 // HandleStartRegistrationForJob starts the registration process and saves the job ID
-func (h *Handler) HandleStartRegistrationForJob(c tele.Context, jobID int64) error {
+func (h *Handler) HandleStartRegistrationForJob(c tele.Context, jobIDStr string) error {
+	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", jobIDStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
 	ctx := context.Background()
 	userID := c.Sender().ID
 
@@ -129,7 +136,13 @@ func (h *Handler) HandleStartRegistrationForJob(c tele.Context, jobID int64) err
 }
 
 // HandleBookingConfirm handles the booking confirmation with atomic slot reservation
-func (h *Handler) HandleBookingConfirm(c tele.Context, jobID int64) error {
+func (h *Handler) HandleBookingConfirm(c tele.Context, jobIDStr string) error {
+	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
+	if err != nil {
+		h.log.Error("Invalid job ID in callback", logger.Error(err), logger.Any("job_id_str", jobIDStr))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri ish ID"})
+	}
+
 	ctx := context.Background()
 	userID := c.Sender().ID
 
