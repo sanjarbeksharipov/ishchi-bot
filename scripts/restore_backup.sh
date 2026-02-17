@@ -4,8 +4,8 @@
 
 BACKUP_DIR="/home/adminuser/backups/ishchi-bot"
 CONTAINER_NAME="ishchi-bot-postgres"
-DB_NAME="${DB_NAME:-telegram_bot}"
-DB_USER="${DB_USER:-postgres}"
+DB_NAME="${DB_NAME}"
+DB_USER="${DB_USER}"
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <backup_file>"
