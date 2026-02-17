@@ -5,8 +5,8 @@
 
 # Configuration
 BACKUP_DIR="/home/adminuser/backups/ishchi-bot"
-DB_NAME="${DB_NAME:-telegram_bot}"
-DB_USER="${DB_USER:-postgres}"
+DB_NAME="${DB_NAME}"
+DB_USER="${DB_USER}"
 DB_HOST="localhost"
 DB_PORT="5432"
 CONTAINER_NAME="ishchi-bot-postgres"
