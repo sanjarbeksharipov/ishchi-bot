@@ -57,4 +57,4 @@ deps:
 	go mod download
 	go mod tidy
 docker-up:
-	docker-compose up -d --no-deps --build bot
+	docker compose up -d --no-deps --build bot
