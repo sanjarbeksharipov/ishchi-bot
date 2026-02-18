@@ -35,7 +35,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8483:8483"  # Expose webhook port for Telegram
+      - "8483:8483"  # Expose webhook port for Telegram
     environment:
       # Bot Configuration
       BOT_TOKEN: ${BOT_TOKEN}
@@ -106,9 +106,9 @@ services:
     container_name: ishchi-bot-grafana
     restart: unless-stopped
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Grafana password not set in .env file}
-      GF_SERVER_ROOT_URL: ${GRAFANA_URL:-http://localhost:3000}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_SERVER_ROOT_URL: ${GRAFANA_URL}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_USERS_ALLOW_ORG_CREATE: "false"
       GF_AUTH_ANONYMOUS_ENABLED: "false"
@@ -119,7 +119,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+      - "${GRAFANA_PORT}:3000"
     depends_on:
       - loki
     networks:
