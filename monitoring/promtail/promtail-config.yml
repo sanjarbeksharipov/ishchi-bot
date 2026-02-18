@@ -10,16 +10,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  # Scrape Docker container logs
-  - job_name: docker
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: ishchi-bot
-          __path__: /var/log/containers/*.log
-
-  # Scrape Docker container logs via Docker socket
+  # Discover and scrape Docker container logs via Docker socket
   - job_name: containers
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
