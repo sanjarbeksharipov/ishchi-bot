@@ -37,7 +37,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - ${BOT_WEBHOOK_PORT}:${BOT_WEBHOOK_PORT}
+      - "8483:8483"  # Expose webhook port for Telegram
     environment:
       # Bot Configuration
       BOT_TOKEN: ${BOT_TOKEN}
