@@ -95,7 +95,7 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 		job.Food,
 		job.ServiceFee,
 		booking.ID,
-		time.Now().Format("02.01.2006 15:04"),
+		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
 	)
 
 	// Create photo message
@@ -193,7 +193,7 @@ func (h *Handler) HandleApprovePayment(c tele.Context, params string) error {
 
 	updatedCaption := c.Message().Caption + fmt.Sprintf("\n\n✅ <b>TASDIQLANDI</b>\n👤 Admin: @%s\n⏰ Vaqt: %s",
 		adminUsername,
-		time.Now().Format("02.01.2006 15:04"),
+		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
 	)
 
 	// Edit photo caption and remove keyboard
@@ -265,7 +265,7 @@ func (h *Handler) HandleRejectPayment(c tele.Context, params string) error {
 
 	updatedCaption := c.Message().Caption + fmt.Sprintf("\n\n❌ <b>RAD ETILDI</b>\n👤 Admin: @%s\n⏰ Vaqt: %s\n💬 Sabab: %s",
 		adminUsername,
-		time.Now().Format("02.01.2006 15:04"),
+		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
 		booking.RejectionReason,
 	)
 
@@ -346,7 +346,7 @@ func (h *Handler) HandleBlockUser(c tele.Context, params string) error {
 
 	updatedCaption := c.Message().Caption + fmt.Sprintf("\n\n🚫 <b>FOYDALANUVCHI BLOKLANDI</b>\n👤 Admin: @%s\n⏰ Vaqt: %s",
 		adminUsername,
-		time.Now().Format("02.01.2006 15:04"),
+		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
 	)
 
 	// Edit photo caption and remove keyboard

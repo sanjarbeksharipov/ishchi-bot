@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/config"
@@ -1332,7 +1333,7 @@ func (h *Handler) showUsersListPage(c tele.Context, page int, isCallback bool) e
 		msg.WriteString(fmt.Sprintf("   📞 %s\n", user.Phone))
 		msg.WriteString(fmt.Sprintf("   👤 Yosh: %d | Vazn: %d kg | Bo'y: %d sm\n", user.Age, user.Weight, user.Height))
 		msg.WriteString(fmt.Sprintf("   🆔 User ID: <code>%d</code>\n", user.UserID))
-		msg.WriteString(fmt.Sprintf("   📅 %s\n\n", user.CreatedAt.Format("02.01.2006 15:04")))
+		msg.WriteString(fmt.Sprintf("   📅 %s\n\n", user.CreatedAt.Add(5*time.Hour).Format("02.01.2006 15:04")))
 	}
 
 	// Create pagination keyboard
