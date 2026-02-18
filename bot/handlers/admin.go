@@ -540,7 +540,12 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 	case models.StateCreatingJobLocation:
 		// This state is handled by HandleLocation, not text
 		// But if user sends text, we'll accept it as fallback
-		job.Location = text
+		// Allow skipping location field
+		if text == "Skip" || text == "skip" || text == "-" {
+			job.Location = ""
+		} else {
+			job.Location = text
+		}
 		nextState = models.StateCreatingJobXizmatHaqqi
 		nextPrompt = messages.MsgEnterXizmatHaqqi
 
@@ -633,8 +638,8 @@ func (h *Handler) handleJobCreationInput(c tele.Context, user *models.User, text
 		return c.Send(messages.MsgError)
 	}
 
-	// Use special keyboard with skip button for buses field
-	if nextState == models.StateCreatingJobAvtobuslar {
+	// Use skip button for optional fields (location, buses)
+	if nextState == models.StateCreatingJobLocation || nextState == models.StateCreatingJobAvtobuslar {
 		return c.Send(nextPrompt, keyboards.CancelOrSkipKeyboard())
 	}
 
@@ -794,9 +799,18 @@ func (h *Handler) HandleSkipField(c tele.Context) error {
 		return c.Send(messages.MsgError)
 	}
 
-	// Only handle skip for buses field during job creation
+	// Handle skip for location field during job creation
+	if user.State == models.StateCreatingJobLocation {
+		return h.handleJobCreationLocationInput(c, user, "")
+	}
+
+	// Handle skip for location field during editing
+	if user.State == models.StateEditingJobLocation {
+		return h.handleJobEditingLocationInput(c, user, "")
+	}
+
+	// Handle skip for buses field during job creation
 	if user.State == models.StateCreatingJobAvtobuslar {
-		// Use empty string for buses and continue to next field
 		return h.handleJobCreationInput(c, user, "Skip")
 	}
 
