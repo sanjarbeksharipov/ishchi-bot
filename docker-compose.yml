@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -37,7 +35,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "8483:8483"  # Expose webhook port for Telegram
+      - "127.0.0.1:8483:8483"  # Expose webhook port for Telegram
     environment:
       # Bot Configuration
       BOT_TOKEN: ${BOT_TOKEN}
@@ -129,15 +127,15 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
+    name: ishchi-bot-postgres-data
   loki_data:
-    driver: local
-  grafana_data:
-    driver: local
+    name: ishchi-bot-loki-data
   promtail_positions:
-    driver: local
-  
+    name: ishchi-bot-promtail-positions
+  grafana_data:
+    name: ishchi-bot-grafana-data
 
 networks:
   bot-network:
+    name: ishchi-bot-network
     driver: bridge
