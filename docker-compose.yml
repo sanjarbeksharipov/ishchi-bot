@@ -13,10 +13,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
       - bot-network
 
@@ -30,27 +31,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      # Bot Configuration
-      BOT_TOKEN: ${BOT_TOKEN}
-      BOT_VERBOSE: ${BOT_VERBOSE:-false}
-      BOT_POLLER: ${BOT_POLLER:-10s}
-      BOT_CHANNEL_ID: ${BOT_CHANNEL_ID}
-      BOT_ADMIN_IDS: ${BOT_ADMIN_IDS}
-      BOT_ADMIN_GROUP_ID: ${BOT_ADMIN_GROUP_ID}
-      BOT_USERNAME: ${BOT_USERNAME}
-      
-      # Database Configuration
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      DB_MAX_CONNECTIONS: ${DB_MAX_CONNECTIONS:-25}
-      
-      # App Configuration
-      APP_ENV: ${APP_ENV:-production}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+    env_file:
+      - .env
     volumes:
       - ./logs:/app/logs
     networks:
@@ -59,6 +41,7 @@ services:
 volumes:
   postgres_data:
     driver: local
+  
 
 networks:
   bot-network:
