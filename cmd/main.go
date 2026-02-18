@@ -55,8 +55,8 @@ func main() {
 		botSettings = tele.Settings{
 			Token: cfg.Bot.Token,
 			Poller: &tele.Webhook{
-				Listen:   fmt.Sprintf(":%d", cfg.Bot.WebhookPort),
-				Endpoint: &tele.WebhookEndpoint{PublicURL: cfg.Bot.WebhookURL},
+				IgnoreSetWebhook: true,
+				Endpoint:         &tele.WebhookEndpoint{PublicURL: cfg.Bot.WebhookURL},
 			},
 		}
 		log.Info(fmt.Sprintf("Webhook configured: %s (listening on %d)", cfg.Bot.WebhookURL, cfg.Bot.WebhookPort))
