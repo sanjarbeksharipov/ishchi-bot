@@ -63,13 +63,22 @@ func newZapLogger(namespace, level string) *zap.Logger {
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	})
 
-	core := zapcore.NewTee(
-		// Console output (colored, using existing encoder)
-		zapcore.NewCore(logging.NewEncoder(4, isTTY), logStdErrorWriter, highPriority),
-		zapcore.NewCore(logging.NewEncoder(4, isTTY), logStdInfoWriter, lowPriority),
-		// File output (JSON format)
-		zapcore.NewCore(fileEncoder, fileWriter, allLevels),
-	)
+	var core zapcore.Core
+	if isTTY {
+		// Local development: colored text to console, JSON to file
+		core = zapcore.NewTee(
+			zapcore.NewCore(logging.NewEncoder(4, true), logStdErrorWriter, highPriority),
+			zapcore.NewCore(logging.NewEncoder(4, true), logStdInfoWriter, lowPriority),
+			zapcore.NewCore(fileEncoder, fileWriter, allLevels),
+		)
+	} else {
+		// Docker/production: JSON to console (for Promtail/Loki), JSON to file
+		core = zapcore.NewTee(
+			zapcore.NewCore(fileEncoder, logStdErrorWriter, highPriority),
+			zapcore.NewCore(fileEncoder, logStdInfoWriter, lowPriority),
+			zapcore.NewCore(fileEncoder, fileWriter, allLevels),
+		)
+	}
 
 	logger := zap.New(
 		core,
