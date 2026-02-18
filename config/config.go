@@ -28,10 +28,9 @@ type BotConfig struct {
 	AdminGroupID int64 // Admin group for payment approvals
 	Username     string
 	// Webhook configuration
-	Mode          string // "webhook" or "polling"
-	WebhookURL    string // Public URL for webhook (e.g., https://example.com/webhook)
-	WebhookListen string // Listen address for webhook server (e.g., :8443)
-	WebhookPort   int    // Port for webhook server
+	Mode        string // "webhook" or "polling"
+	WebhookURL  string // Public URL for webhook (e.g., https://example.com/webhook)
+	WebhookPort int    // Port for webhook server
 	// Rate limiter configuration
 	RateLimitMaxRequests int           // Max requests per window (default: 30)
 	RateLimitWindow      time.Duration // Sliding window duration (default: 60s)
@@ -80,7 +79,6 @@ func Load() (*Config, error) {
 			Username:             getEnv("BOT_USERNAME", ""),
 			Mode:                 getEnv("BOT_MODE", "polling"),
 			WebhookURL:           getEnv("BOT_WEBHOOK_URL", ""),
-			WebhookListen:        getEnv("BOT_WEBHOOK_LISTEN", ":8443"),
 			WebhookPort:          getEnvAsInt("BOT_WEBHOOK_PORT", 8443),
 			RateLimitMaxRequests: getEnvAsInt("BOT_RATE_LIMIT_MAX", 30),
 			RateLimitWindow:      getEnvAsDuration("BOT_RATE_LIMIT_WINDOW", 60*time.Second),

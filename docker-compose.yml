@@ -36,6 +36,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    ports:
+      - ${BOT_WEBHOOK_PORT}:${BOT_WEBHOOK_PORT}
     environment:
       # Bot Configuration
       BOT_TOKEN: ${BOT_TOKEN}
@@ -47,10 +49,9 @@ services:
       BOT_USERNAME: ${BOT_USERNAME}
       
       # Bot Mode Configuration
-      BOT_MODE: ${BOT_MODE:-polling}
-      BOT_WEBHOOK_URL: ${BOT_WEBHOOK_URL:-}
-      BOT_WEBHOOK_LISTEN: ${BOT_WEBHOOK_LISTEN:-:8443}
-      BOT_WEBHOOK_PORT: ${BOT_WEBHOOK_PORT:-8443}
+      BOT_MODE: ${BOT_MODE}
+      BOT_WEBHOOK_URL: ${BOT_WEBHOOK_URL}
+      BOT_WEBHOOK_PORT: ${BOT_WEBHOOK_PORT}
       
       # Database Configuration
       DB_HOST: postgres

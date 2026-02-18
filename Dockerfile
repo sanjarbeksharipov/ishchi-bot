@@ -48,8 +48,5 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
-# Expose port (if needed for health checks)
-EXPOSE 8080
-
 # Run the application
 CMD ["./main"]

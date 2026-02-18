@@ -55,11 +55,11 @@ func main() {
 		botSettings = tele.Settings{
 			Token: cfg.Bot.Token,
 			Poller: &tele.Webhook{
-				Listen:   cfg.Bot.WebhookListen,
+				Listen:   fmt.Sprintf(":%d", cfg.Bot.WebhookPort),
 				Endpoint: &tele.WebhookEndpoint{PublicURL: cfg.Bot.WebhookURL},
 			},
 		}
-		log.Info(fmt.Sprintf("Webhook configured: %s (listening on %s)", cfg.Bot.WebhookURL, cfg.Bot.WebhookListen))
+		log.Info(fmt.Sprintf("Webhook configured: %s (listening on %d)", cfg.Bot.WebhookURL, cfg.Bot.WebhookPort))
 	} else {
 		// Long polling mode for local development
 		log.Info("Starting bot in LONG POLLING mode")
