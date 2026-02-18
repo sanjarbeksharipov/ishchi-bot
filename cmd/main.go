@@ -56,6 +56,7 @@ func main() {
 			Token: cfg.Bot.Token,
 			Poller: &tele.Webhook{
 				IgnoreSetWebhook: true,
+				Listen:           fmt.Sprintf(":%d", cfg.Bot.WebhookPort),
 				Endpoint:         &tele.WebhookEndpoint{PublicURL: cfg.Bot.WebhookURL},
 			},
 		}
