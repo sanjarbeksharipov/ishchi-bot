@@ -1,0 +1,53 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Scrape Docker container logs
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ishchi-bot
+          __path__: /var/log/containers/*.log
+
+  # Scrape Docker container logs via Docker socket
+  - job_name: containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+    pipeline_stages:
+      # Try to parse JSON logs (from zap logger)
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            caller: caller
+            time: time
+      - labels:
+          level:
+      - timestamp:
+          source: time
+          format: "2006-01-02T15:04:05.000Z0700"
+          fallback_formats:
+            - "2006-01-02T15:04:05.000Z"
+            - RFC3339
