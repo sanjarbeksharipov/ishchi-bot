@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"telegram-bot-starter/bot/models"
+	"telegram-bot-starter/pkg/helper"
 	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
 	"telegram-bot-starter/pkg/messages"
@@ -462,7 +463,7 @@ func (h *Handler) HandleUserMyJobs(c tele.Context) error {
 			fmt.Fprintf(&sb, "🚌 Avtobuslar: %s\n", job.Buses)
 		}
 
-		fmt.Fprintf(&sb, "💳 Xizmat haqi: %d so'm\n", job.ServiceFee)
+		fmt.Fprintf(&sb, "💳 Xizmat haqi: %s so'm\n", helper.FormatMoney(job.ServiceFee))
 
 		if job.AdditionalInfo != "" {
 			fmt.Fprintf(&sb, "📝 Qo'shimcha: %s\n", job.AdditionalInfo)

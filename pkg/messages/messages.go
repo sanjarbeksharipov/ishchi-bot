@@ -176,7 +176,7 @@ func FormatJobForChannel(job *models.Job) string {
 	}
 
 	// Money matters
-	fmt.Fprintf(&sb, "💳Xizmat haqqi: %d so'm\n", job.ServiceFee)
+	fmt.Fprintf(&sb, "💳Xizmat haqqi: %s so'm\n", helper.FormatMoney(job.ServiceFee))
 	if job.AdditionalInfo != "" {
 		fmt.Fprintf(&sb, "📝Batafsil: %s \n\n", job.AdditionalInfo)
 	}
@@ -215,7 +215,7 @@ func FormatJobDetailAdmin(job *models.Job) string {
 	sb.WriteString(fmt.Sprintf("⏰ <b>Vaqt:</b> %s\n", job.WorkTime))
 	sb.WriteString(fmt.Sprintf("📍 <b>Manzil:</b> %s\n", job.Address))
 	sb.WriteString(fmt.Sprintf("📌 <b>Aniq joylashuv:</b> %s\n", valueOrEmpty(job.Location)))
-	sb.WriteString(fmt.Sprintf("🌟 <b>Xizmat haqqi:</b> %d so'm\n", job.ServiceFee))
+	sb.WriteString(fmt.Sprintf("🌟 <b>Xizmat haqqi:</b> %s so'm\n", helper.FormatMoney(job.ServiceFee)))
 	sb.WriteString(fmt.Sprintf("🚌 <b>Avtobuslar:</b> %s\n", valueOrEmpty(job.Buses)))
 	sb.WriteString(fmt.Sprintf("📝 <b>Ish tavsifi:</b> %s\n", valueOrEmpty(job.AdditionalInfo)))
 	sb.WriteString(fmt.Sprintf("📅 <b>Ish kuni:</b> %s\n", job.WorkDate))
@@ -263,7 +263,7 @@ func FormatJobDetailUser(job *models.Job) string {
 🍛 <b>Ovqat:</b> %s
 ⏰ <b>Vaqt:</b> %s
 📍 <b>Manzil:</b> %s
-🌟 <b>Xizmat haqqi:</b> %d so'm
+🌟 <b>Xizmat haqqi:</b> %s so'm
 📅 <b>Ish kuni:</b> %s
 
 👥 <b>Bo'sh joylar:</b> %d
@@ -275,7 +275,7 @@ Ishga yozilishni tasdiqlaysizmi?
 		helper.ValueOrDefault(job.Food, "ko'rsatilmagan"),
 		job.WorkTime,
 		job.Address,
-		job.ServiceFee,
+		helper.FormatMoney(job.ServiceFee),
 		job.WorkDate,
 		job.AvailableSlots(),
 	)
@@ -288,14 +288,14 @@ func FormatPaymentInstructions(job *models.Job, cardNumber, cardHolderName strin
 Sizga 3 daqiqa vaqt berildi. Iltimos, quyidagi ma'lumotlarga to'lovni amalga oshiring va to'lov chekini yuboring.
 
 <b>To'lov ma'lumotlari:</b>
-💳 Karta: %s
+💳 Karta: <code>%s</code>
 👤 Ism: %s
 
-<b>To'lov summasi:</b> %d so'm (Xizmat haqqi)
+<b>To'lov summasi:</b> %s so'm (Xizmat haqqi)
 
 ⏰ Vaqt: 3 daqiqa
 
 To'lov chekini yuboring (screenshot):
-`, cardNumber, cardHolderName, job.ServiceFee)
+`, cardNumber, cardHolderName, helper.FormatMoney(job.ServiceFee))
 	return msg
 }
