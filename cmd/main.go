@@ -15,16 +15,10 @@ import (
 	"telegram-bot-starter/service"
 	"telegram-bot-starter/storage/postgres"
 
-	"github.com/joho/godotenv"
 	tele "gopkg.in/telebot.v4"
 )
 
 func main() {
-	// Load .env file
-	if err := godotenv.Load(); err != nil {
-		fmt.Printf("Failed to load .env file: %v\n", err)
-	}
-
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {

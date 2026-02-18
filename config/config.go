@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 // Config holds all application configuration
@@ -59,6 +61,14 @@ type PaymentConfig struct {
 
 // Load reads configuration from environment variables
 func Load() (*Config, error) {
+
+	if err := godotenv.Load("/app/.env"); err != nil {
+		if err := godotenv.Load(".env"); err != nil {
+			fmt.Println("No .env file found")
+		}
+		fmt.Println("No /app/.env file found")
+	}
+
 	cfg := &Config{
 		Bot: BotConfig{
 			Token:                getEnv("BOT_TOKEN", ""),

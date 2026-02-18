@@ -41,6 +41,8 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/migrations ./migrations
 # Copy docs
 COPY --from=builder /app/docs ./docs
+# Copy environment file if exists
+COPY --from=builder /app/.env ./
 
 # Change ownership
 RUN chown -R appuser:appuser /app
