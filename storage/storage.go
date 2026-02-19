@@ -58,12 +58,16 @@ type UserRepoI interface {
 	// GetOrCreateUser gets a user by ID or creates a new one if not found
 	GetOrCreateUser(ctx context.Context, id int64, username, firstName, lastName string) (*models.User, error)
 
+	// GetTotalCount returns the total number of users
+	GetTotalCount(ctx context.Context) (int, error)
+
 	// Blocking and violations
 	AddViolation(ctx context.Context, tx any, violation *models.UserViolation) error
 	GetViolationCount(ctx context.Context, tx any, userID int64) (int, error)
 	BlockUser(ctx context.Context, tx any, block *models.BlockedUser) error
 	GetBlockStatus(ctx context.Context, userID int64) (*models.BlockedUser, error)
 	UnblockUser(ctx context.Context, userID int64) error
+	GetBlockedCount(ctx context.Context) (int, error)
 }
 
 // JobRepoI defines the interface for job data persistence
@@ -96,6 +100,12 @@ type JobRepoI interface {
 
 	// GetAvailableSlots returns how many slots are available
 	GetAvailableSlots(ctx context.Context, jobID int64) (int, error)
+
+	// GetTotalCount returns the total number of jobs
+	GetTotalCount(ctx context.Context) (int, error)
+
+	// GetCountByStatus returns the number of jobs with a given status
+	GetCountByStatus(ctx context.Context, status models.JobStatus) (int, error)
 }
 
 // BookingRepoI defines the interface for job booking persistence
@@ -121,6 +131,12 @@ type BookingRepoI interface {
 	MarkAsExpired(ctx context.Context, tx any, bookingID int64) error
 	MarkAsConfirmed(ctx context.Context, tx any, bookingID int64, adminID int64) error
 	MarkAsRejected(ctx context.Context, tx any, bookingID int64, adminID int64, reason string) error
+
+	// GetTotalCount returns the total number of bookings
+	GetTotalCount(ctx context.Context) (int, error)
+
+	// GetCountByStatus returns the number of bookings with a given status
+	GetCountByStatus(ctx context.Context, status models.BookingStatus) (int, error)
 }
 
 // TransactionI defines transaction interface

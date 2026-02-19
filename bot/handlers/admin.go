@@ -10,6 +10,7 @@ import (
 
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/config"
+	"telegram-bot-starter/pkg/helper"
 	"telegram-bot-starter/pkg/keyboards"
 	"telegram-bot-starter/pkg/logger"
 	"telegram-bot-starter/pkg/messages"
@@ -52,6 +53,115 @@ func (h *Handler) HandleCreateJob(c tele.Context) error {
 	})
 
 	return c.Send(messages.MsgEnterIshHaqqi, keyboards.CancelKeyboard())
+}
+
+// HandleAdminStatistics shows statistics for admin
+func (h *Handler) HandleAdminStatistics(c tele.Context) error {
+	if !h.IsAdmin(c.Sender().ID) {
+		return c.Send("❌ Sizda admin huquqi yo'q.")
+	}
+
+	ctx := context.Background()
+
+	// Gather all stats
+	totalUsers, err := h.storage.User().GetTotalCount(ctx)
+	if err != nil {
+		h.log.Error("Failed to get total user count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	registeredUsers, err := h.storage.Registration().GetTotalRegisteredCount(ctx)
+	if err != nil {
+		h.log.Error("Failed to get registered user count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	blockedUsers, err := h.storage.User().GetBlockedCount(ctx)
+	if err != nil {
+		h.log.Error("Failed to get blocked user count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	totalJobs, err := h.storage.Job().GetTotalCount(ctx)
+	if err != nil {
+		h.log.Error("Failed to get total job count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	activeJobs, err := h.storage.Job().GetCountByStatus(ctx, models.JobStatusActive)
+	if err != nil {
+		h.log.Error("Failed to get active job count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	fullJobs, err := h.storage.Job().GetCountByStatus(ctx, models.JobStatusFull)
+	if err != nil {
+		h.log.Error("Failed to get full job count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	completedJobs, err := h.storage.Job().GetCountByStatus(ctx, models.JobStatusCompleted)
+	if err != nil {
+		h.log.Error("Failed to get completed job count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	totalBookings, err := h.storage.Booking().GetTotalCount(ctx)
+	if err != nil {
+		h.log.Error("Failed to get total booking count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	confirmedBookings, err := h.storage.Booking().GetCountByStatus(ctx, models.BookingStatusConfirmed)
+	if err != nil {
+		h.log.Error("Failed to get confirmed booking count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	pendingBookings, err := h.storage.Booking().GetCountByStatus(ctx, models.BookingStatusPaymentSubmitted)
+	if err != nil {
+		h.log.Error("Failed to get pending booking count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	rejectedBookings, err := h.storage.Booking().GetCountByStatus(ctx, models.BookingStatusRejected)
+	if err != nil {
+		h.log.Error("Failed to get rejected booking count", logger.Error(err))
+		return c.Send(messages.MsgError)
+	}
+
+	msg := fmt.Sprintf(`📊 <b>STATISTIKA</b>
+
+👥 <b>Foydalanuvchilar:</b>
+• Jami botga kirganlar: <b>%s</b>
+• Ro'yxatdan o'tganlar: <b>%s</b>
+• Bloklangan: <b>%s</b>
+
+💼 <b>Ishlar:</b>
+• Jami: <b>%s</b>
+• Faol: <b>%s</b>
+• To'lgan: <b>%s</b>
+• Yakunlangan: <b>%s</b>
+
+📋 <b>Bookinglar:</b>
+• Jami: <b>%s</b>
+• Tasdiqlangan: <b>%s</b>
+• To'lov kutilmoqda: <b>%s</b>
+• Rad etilgan: <b>%s</b>`,
+		helper.FormatMoney(totalUsers),
+		helper.FormatMoney(registeredUsers),
+		helper.FormatMoney(blockedUsers),
+		helper.FormatMoney(totalJobs),
+		helper.FormatMoney(activeJobs),
+		helper.FormatMoney(fullJobs),
+		helper.FormatMoney(completedJobs),
+		helper.FormatMoney(totalBookings),
+		helper.FormatMoney(confirmedBookings),
+		helper.FormatMoney(pendingBookings),
+		helper.FormatMoney(rejectedBookings),
+	)
+
+	return c.Send(msg, tele.ModeHTML)
 }
 
 // HandleJobList shows the list of jobs

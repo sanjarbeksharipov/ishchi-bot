@@ -310,3 +310,25 @@ func (r *userRepo) UnblockUser(ctx context.Context, userID int64) error {
 
 	return nil
 }
+
+// GetTotalCount returns the total number of users
+func (r *userRepo) GetTotalCount(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&count)
+	if err != nil {
+		r.log.Error("Failed to get total user count: " + err.Error())
+		return 0, fmt.Errorf("failed to get total user count: %w", err)
+	}
+	return count, nil
+}
+
+// GetBlockedCount returns the total number of blocked users
+func (r *userRepo) GetBlockedCount(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM blocked_users`).Scan(&count)
+	if err != nil {
+		r.log.Error("Failed to get blocked user count: " + err.Error())
+		return 0, fmt.Errorf("failed to get blocked user count: %w", err)
+	}
+	return count, nil
+}

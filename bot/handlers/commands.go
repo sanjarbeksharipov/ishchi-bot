@@ -122,6 +122,8 @@ func (h *Handler) HandleText(c tele.Context) error {
 			return h.HandleJobList(c)
 		case "👥 Foydalanuvchilar":
 			return h.HandleRegisteredUsersList(c)
+		case "📊 Statistika":
+			return h.HandleAdminStatistics(c)
 		}
 	}
 

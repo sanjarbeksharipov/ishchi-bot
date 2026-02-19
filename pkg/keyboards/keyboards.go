@@ -96,11 +96,12 @@ func AdminMenuReplyKeyboard() *tele.ReplyMarkup {
 	btnCreateJob := menu.Text("➕ Ish yaratish")
 	btnJobList := menu.Text("📋 Ishlar ro'yxati")
 	btnUsersList := menu.Text("👥 Foydalanuvchilar")
+	btnStats := menu.Text("📊 Statistika")
 
 	menu.Reply(
 		menu.Row(btnCreateJob),
 		menu.Row(btnJobList),
-		menu.Row(btnUsersList),
+		menu.Row(btnUsersList, btnStats),
 	)
 
 	return menu

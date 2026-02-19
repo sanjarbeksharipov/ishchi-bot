@@ -671,3 +671,25 @@ func toNullTime(t *time.Time) sql.NullTime {
 	}
 	return sql.NullTime{Time: *t, Valid: true}
 }
+
+// GetTotalCount returns the total number of bookings
+func (r *bookingRepo) GetTotalCount(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM job_bookings`).Scan(&count)
+	if err != nil {
+		r.log.Error("Failed to get total booking count: " + err.Error())
+		return 0, fmt.Errorf("failed to get total booking count: %w", err)
+	}
+	return count, nil
+}
+
+// GetCountByStatus returns the number of bookings with a given status
+func (r *bookingRepo) GetCountByStatus(ctx context.Context, status models.BookingStatus) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM job_bookings WHERE status = $1`, status).Scan(&count)
+	if err != nil {
+		r.log.Error("Failed to get booking count by status: " + err.Error())
+		return 0, fmt.Errorf("failed to get booking count by status: %w", err)
+	}
+	return count, nil
+}

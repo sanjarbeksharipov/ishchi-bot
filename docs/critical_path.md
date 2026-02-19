@@ -11,8 +11,8 @@ Critical path
 
  CURRENT PLAN
 1. Testing Backup ✅ 
-2. Testing bots full functionality
-3. Convert to wehbook mode
+2. Testing bots full functionality✅
+3. Convert to wehbook mode✅
 
 
  FUTURE PLAN

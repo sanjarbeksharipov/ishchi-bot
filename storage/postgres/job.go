@@ -486,3 +486,25 @@ func (r *jobRepo) GetAvailableSlots(ctx context.Context, jobID int64) (int, erro
 
 	return available, nil
 }
+
+// GetTotalCount returns the total number of jobs
+func (r *jobRepo) GetTotalCount(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM jobs`).Scan(&count)
+	if err != nil {
+		r.log.Error("Failed to get total job count: " + err.Error())
+		return 0, fmt.Errorf("failed to get total job count: %w", err)
+	}
+	return count, nil
+}
+
+// GetCountByStatus returns the number of jobs with a given status
+func (r *jobRepo) GetCountByStatus(ctx context.Context, status models.JobStatus) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM jobs WHERE status = $1`, status).Scan(&count)
+	if err != nil {
+		r.log.Error("Failed to get job count by status: " + err.Error())
+		return 0, fmt.Errorf("failed to get job count by status: %w", err)
+	}
+	return count, nil
+}
