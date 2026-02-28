@@ -96,9 +96,15 @@ func (j *Job) AvailableSlots() int {
 	return available
 }
 
-// IsFull checks if the job has no available slots
+// IsFull checks if the job has no available slots (reserved OR confirmed)
 func (j *Job) IsFull() bool {
 	return j.AvailableSlots() <= 0
+}
+
+// IsCompletelyFull checks if all required workers have confirmed payments.
+// Unlike IsFull(), this ignores reserved-but-not-paid slots.
+func (j *Job) IsCompletelyFull() bool {
+	return j.ConfirmedSlots >= j.RequiredWorkers
 }
 
 // IsActive checks if the job is accepting bookings

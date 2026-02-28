@@ -148,7 +148,7 @@ func (s *paymentService) ApprovePayment(ctx context.Context, bookingID, adminID 
 	}
 
 	// Check if job is now full and update status within transaction
-	if job.IsFull() && job.Status != models.JobStatusFull {
+	if job.IsCompletelyFull() && job.Status != models.JobStatusFull {
 		if err := s.storage.Job().UpdateStatusInTx(ctx, tx, job.ID, models.JobStatusFull); err != nil {
 			s.log.Error("Failed to update job status to FULL", logger.Error(err))
 			// Don't return error, just log it
