@@ -11,7 +11,9 @@ import (
 
 func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI, cfg *config.Config) *middleware.RateLimiter {
 	// Apply middleware
-	// bot.Use(middleware.LoggingMiddleware(log))
+	// Recovery middleware MUST be first — it catches panics from all subsequent handlers/middleware.
+	// Without it, a panic kills the polling goroutine silently (container stays up, bot stops responding).
+	bot.Use(middleware.RecoveryMiddleware(log))
 
 	// Apply rate limiter middleware
 	rateLimiter := middleware.NewRateLimiter(cfg, log)
