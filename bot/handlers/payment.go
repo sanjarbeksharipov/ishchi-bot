@@ -172,7 +172,7 @@ func (h *Handler) HandleApprovePayment(c tele.Context, params string) error {
 		}
 		if strings.HasPrefix(err.Error(), "payment already processed") {
 			return c.Respond(&tele.CallbackResponse{
-				Text:      fmt.Sprintf("⚠️ Bu to'lov allaqachon qayta ishlangan: %s", booking.Status),
+				Text:      "⚠️ Bu to'lov allaqachon qayta ishlangan.",
 				ShowAlert: true,
 			})
 		}
@@ -244,7 +244,7 @@ func (h *Handler) HandleRejectPayment(c tele.Context, params string) error {
 		}
 		if strings.HasPrefix(err.Error(), "payment already processed") {
 			return c.Respond(&tele.CallbackResponse{
-				Text:      fmt.Sprintf("⚠️ Bu to'lov allaqachon qayta ishlangan: %s", booking.Status),
+				Text:      "⚠️ Bu to'lov allaqachon qayta ishlangan.",
 				ShowAlert: true,
 			})
 		}
