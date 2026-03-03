@@ -21,6 +21,8 @@ type userBucket struct {
 type RateLimiter struct {
 	maxRequests int           // max requests allowed within the window
 	window      time.Duration // sliding window duration
+	burstMax    int           // max requests in burst window (anti-spam)
+	burstWindow time.Duration // short burst window duration
 	adminIDs    []int64       // admin user IDs exempt from limiting
 	log         logger.LoggerI
 
@@ -44,6 +46,8 @@ func NewRateLimiter(cfg *config.Config, log logger.LoggerI) *RateLimiter {
 	rl := &RateLimiter{
 		maxRequests: maxReq,
 		window:      window,
+		burstMax:    3,               // max 3 requests per burst window
+		burstWindow: 3 * time.Second, // 3-second burst window
 		adminIDs:    cfg.Bot.AdminIDs,
 		log:         log,
 		buckets:     make(map[int64]*userBucket),
@@ -108,7 +112,22 @@ func (rl *RateLimiter) allow(userID int64) bool {
 	}
 	bucket.timestamps = bucket.timestamps[:valid]
 
+	// Check overall rate limit
 	if len(bucket.timestamps) >= rl.maxRequests {
+		return false
+	}
+
+	// Check burst limit (short window anti-spam)
+	burstCutoff := now.Add(-rl.burstWindow)
+	burstCount := 0
+	for i := len(bucket.timestamps) - 1; i >= 0; i-- {
+		if bucket.timestamps[i].After(burstCutoff) {
+			burstCount++
+		} else {
+			break // timestamps are in order, no need to check older ones
+		}
+	}
+	if burstCount >= rl.burstMax {
 		return false
 	}
 

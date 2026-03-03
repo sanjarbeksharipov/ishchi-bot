@@ -1,0 +1,81 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ishchi-bot-postgres
+    restart: unless-stopped
+    labels:
+      logging: "promtail"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - bot-network
+
+  # Telegram Bot Application
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ishchi-bot
+    restart: unless-stopped
+    labels:
+      logging: "promtail"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8483:8483"  # Expose webhook port for Telegram
+    environment:
+      # Bot Configuration
+      BOT_TOKEN: ${BOT_TOKEN}
+      BOT_VERBOSE: ${BOT_VERBOSE:-false}
+      BOT_POLLER: ${BOT_POLLER:-10s}
+      BOT_CHANNEL_ID: ${BOT_CHANNEL_ID}
+      BOT_ADMIN_IDS: ${BOT_ADMIN_IDS}
+      BOT_ADMIN_GROUP_ID: ${BOT_ADMIN_GROUP_ID}
+      BOT_USERNAME: ${BOT_USERNAME}
+      
+      # Bot Mode Configuration
+      BOT_MODE: ${BOT_MODE}
+      BOT_WEBHOOK_URL: ${BOT_WEBHOOK_URL}
+      BOT_WEBHOOK_PORT: ${BOT_WEBHOOK_PORT}
+      
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_MAX_CONNECTIONS: ${DB_MAX_CONNECTIONS:-25}
+      
+      # App Configuration
+      APP_ENV: ${APP_ENV:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      
+      # Payment Configuration
+      CARD_NUMBER: ${CARD_NUMBER}
+      CARD_HOLDER_NAME: ${CARD_HOLDER_NAME}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - bot-network
+
+volumes:
+  postgres_data:
+    name: ishchi-bot-postgres-data
+
+networks:
+  bot-network:
+    name: ishchi-bot-network
+    driver: bridge

@@ -110,7 +110,11 @@ func (h *Handler) HandleStartRegistrationForJob(c tele.Context, jobIDStr string)
 	userID := c.Sender().ID
 
 	if err := c.Respond(); err != nil {
-		h.log.Error("Failed to respond to callback", logger.Error(err))
+		if strings.Contains(err.Error(), "query is too old") {
+			h.log.Warn("Stale callback query (user clicked during downtime)", logger.Any("user_id", userID))
+		} else {
+			h.log.Error("Failed to respond to callback", logger.Error(err))
+		}
 	}
 
 	// Get or create draft
@@ -147,7 +151,11 @@ func (h *Handler) HandleBookingConfirm(c tele.Context, jobIDStr string) error {
 	userID := c.Sender().ID
 
 	if err := c.Respond(); err != nil {
-		h.log.Error("Failed to respond to callback", logger.Error(err))
+		if strings.Contains(err.Error(), "query is too old") {
+			h.log.Warn("Stale callback query (user clicked during downtime)", logger.Any("user_id", userID))
+		} else {
+			h.log.Error("Failed to respond to callback", logger.Error(err))
+		}
 	}
 
 	// Check idempotency through service

@@ -10,6 +10,7 @@ import (
 	"telegram-bot-starter/storage"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -45,8 +46,9 @@ func (r *userRepo) Create(ctx context.Context, user *models.User) error {
 	)
 
 	if err != nil {
-		// Check for unique constraint violation (user already exists)
-		if err.Error() == "duplicate key value violates unique constraint \"users_pkey\"" {
+		// Check for unique constraint violation using pgconn error code
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return storage.ErrAlreadyExists
 		}
 		r.log.Error("Failed to create user: " + err.Error())
