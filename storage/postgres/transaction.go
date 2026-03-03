@@ -25,9 +25,11 @@ func NewTransactionManager(db *pgxpool.Pool, log logger.LoggerI) storage.Transac
 }
 
 // Begin starts a new transaction
+// Uses READ COMMITTED isolation — row-level safety comes from explicit FOR UPDATE locks.
+// SERIALIZABLE caused SSI predicate-lock conflicts and potential indefinite waits.
 func (tm *transactionManager) Begin(ctx context.Context) (any, error) {
 	tx, err := tm.db.BeginTx(ctx, pgx.TxOptions{
-		IsoLevel: pgx.Serializable,
+		IsoLevel: pgx.ReadCommitted,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)

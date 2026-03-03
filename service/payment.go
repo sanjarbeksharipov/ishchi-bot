@@ -63,11 +63,8 @@ func (s *paymentService) SubmitPayment(ctx context.Context, userID int64, photoF
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			s.storage.Transaction().Rollback(ctx, tx)
-		}
-	}()
+	// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+	defer s.storage.Transaction().Rollback(ctx, tx)
 
 	// Update booking with payment info
 	now := time.Now()
@@ -104,11 +101,8 @@ func (s *paymentService) ApprovePayment(ctx context.Context, bookingID, adminID 
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			s.storage.Transaction().Rollback(ctx, tx)
-		}
-	}()
+	// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+	defer s.storage.Transaction().Rollback(ctx, tx)
 
 	// Get booking with lock
 	booking, err := s.storage.Booking().GetByIDForUpdate(ctx, tx, bookingID)
@@ -187,11 +181,8 @@ func (s *paymentService) RejectPayment(ctx context.Context, bookingID, adminID i
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			s.storage.Transaction().Rollback(ctx, tx)
-		}
-	}()
+	// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+	defer s.storage.Transaction().Rollback(ctx, tx)
 
 	// Get booking with lock
 	booking, err := s.storage.Booking().GetByIDForUpdate(ctx, tx, bookingID)
@@ -246,11 +237,8 @@ func (s *paymentService) BlockUserAndRejectPayment(ctx context.Context, bookingI
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			s.storage.Transaction().Rollback(ctx, tx)
-		}
-	}()
+	// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+	defer s.storage.Transaction().Rollback(ctx, tx)
 
 	// Get booking
 	booking, err := s.storage.Booking().GetByIDForUpdate(ctx, tx, bookingID)

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -11,6 +12,13 @@ import (
 	"telegram-bot-starter/storage"
 
 	tele "gopkg.in/telebot.v4"
+)
+
+const (
+	// expiryDBTimeout is the max time for any single DB operation in the expiry worker.
+	expiryDBTimeout = 10 * time.Second
+	// expiryNotifyTimeout is the max time for sending a Telegram notification.
+	expiryNotifyTimeout = 15 * time.Second
 )
 
 // ExpiryWorker handles automatic expiration of reserved bookings
@@ -41,12 +49,12 @@ func (w *ExpiryWorker) Start() {
 	defer ticker.Stop()
 
 	// Run immediately on start
-	w.processExpiredBookings()
+	w.safeProcessExpiredBookings()
 
 	for {
 		select {
 		case <-ticker.C:
-			w.processExpiredBookings()
+			w.safeProcessExpiredBookings()
 		case <-w.stopChan:
 			w.log.Info("Expiry worker stopped")
 			return
@@ -59,11 +67,26 @@ func (w *ExpiryWorker) Stop() {
 	close(w.stopChan)
 }
 
+// safeProcessExpiredBookings wraps processExpiredBookings with panic recovery.
+// Without this, an unrecovered panic would crash the entire bot process
+// (container stays up, bot stops responding).
+func (w *ExpiryWorker) safeProcessExpiredBookings() {
+	defer func() {
+		if r := recover(); r != nil {
+			w.log.Error("PANIC in expiry worker recovered",
+				logger.Any("panic", fmt.Sprintf("%v", r)),
+				logger.Any("stack", string(debug.Stack())),
+			)
+		}
+	}()
+	w.processExpiredBookings()
+}
+
 // processExpiredBookings finds and processes all expired bookings
 func (w *ExpiryWorker) processExpiredBookings() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), expiryDBTimeout)
+	defer cancel()
 
-	// Get expired bookings (with FOR UPDATE SKIP LOCKED to prevent conflicts)
 	expiredBookings, err := w.storage.Booking().GetExpiredBookings(ctx, 100)
 	if err != nil {
 		w.log.Error("Failed to get expired bookings", logger.Error(err))
@@ -76,9 +99,9 @@ func (w *ExpiryWorker) processExpiredBookings() {
 
 	w.log.Info("Processing expired bookings", logger.Any("count", len(expiredBookings)))
 
-	// Process each expired booking
+	// Process each expired booking with its own timeout
 	for _, booking := range expiredBookings {
-		if err := w.processExpiredBooking(ctx, booking); err != nil {
+		if err := w.processExpiredBooking(booking); err != nil {
 			w.log.Error("Failed to process expired booking",
 				logger.Error(err),
 				logger.Any("booking_id", booking.ID),
@@ -97,55 +120,88 @@ func (w *ExpiryWorker) processExpiredBookings() {
 }
 
 // processExpiredBooking releases a single expired booking
-func (w *ExpiryWorker) processExpiredBooking(ctx context.Context, booking *models.JobBooking) error {
+func (w *ExpiryWorker) processExpiredBooking(booking *models.JobBooking) error {
+	// Use a dedicated context with timeout for the DB transaction
+	ctx, cancel := context.WithTimeout(context.Background(), expiryDBTimeout)
+	defer cancel()
+
 	// Start transaction
 	tx, err := w.storage.Transaction().Begin(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("begin tx: %w", err)
 	}
 
-	// Rollback helper
-	rollback := func() error {
+	// Always rollback on failure — calling Rollback after Commit is a harmless no-op in pgx.
+	// The previous code had a bug: commit failure skipped rollback, leaking the connection.
+	defer func() {
 		if rbErr := w.storage.Transaction().Rollback(ctx, tx); rbErr != nil {
-			w.log.Error("Failed to rollback transaction", logger.Error(rbErr))
-			return rbErr
+			// Ignore "tx is closed" errors (expected after successful commit)
+			w.log.Debug("Rollback after processExpiredBooking (expected if committed)",
+				logger.Error(rbErr))
 		}
-		return nil
-	}
+	}()
 
 	// Mark booking as expired
 	if err := w.storage.Booking().MarkAsExpired(ctx, tx, booking.ID); err != nil {
-		rollback()
-		return err
+		return fmt.Errorf("mark expired: %w", err)
 	}
 
 	// Release the reserved slot (decrement reserved_slots)
 	if err := w.storage.Job().DecrementReservedSlots(ctx, tx, booking.JobID); err != nil {
-		rollback()
-		return err
+		return fmt.Errorf("decrement slots: %w", err)
 	}
 
 	// Commit transaction
 	if err := w.storage.Transaction().Commit(ctx, tx); err != nil {
-		return err
+		return fmt.Errorf("commit: %w", err)
 	}
 
-	// Get job details for notification
-	job, err := w.storage.Job().GetByID(ctx, booking.JobID)
-	if err != nil {
-		w.log.Error("Failed to get job for notification", logger.Error(err))
-		// Don't fail the expiry process if notification fails
-		return nil
-	}
-
-	// Send notification to user
-	w.notifyUserExpired(booking, job)
+	// Notification is best-effort — don't fail the expiry if it doesn't work
+	w.notifyUserExpiredSafe(booking)
 
 	return nil
 }
 
+// notifyUserExpiredSafe wraps notifyUserExpired with a timeout so a hung
+// Telegram API call can't block the worker goroutine forever.
+func (w *ExpiryWorker) notifyUserExpiredSafe(booking *models.JobBooking) {
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		defer func() {
+			if r := recover(); r != nil {
+				w.log.Error("PANIC in notifyUserExpired recovered",
+					logger.Any("panic", fmt.Sprintf("%v", r)),
+					logger.Any("booking_id", booking.ID),
+				)
+			}
+		}()
+		w.notifyUserExpired(booking)
+	}()
+
+	select {
+	case <-done:
+		// OK
+	case <-time.After(expiryNotifyTimeout):
+		w.log.Error("Timeout sending expiry notification",
+			logger.Any("booking_id", booking.ID),
+			logger.Any("user_id", booking.UserID),
+		)
+	}
+}
+
 // notifyUserExpired sends a notification to the user about expired booking
-func (w *ExpiryWorker) notifyUserExpired(booking *models.JobBooking, job *models.Job) {
+func (w *ExpiryWorker) notifyUserExpired(booking *models.JobBooking) {
+	// Get job details for notification
+	ctx, cancel := context.WithTimeout(context.Background(), expiryDBTimeout)
+	defer cancel()
+
+	job, err := w.storage.Job().GetByID(ctx, booking.JobID)
+	if err != nil {
+		w.log.Error("Failed to get job for notification", logger.Error(err))
+		return
+	}
+
 	// Try to delete or edit the original payment instruction message
 	if booking.PaymentInstructionMsgID != 0 {
 		expiredMsg := fmt.Sprintf(`

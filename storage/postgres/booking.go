@@ -373,7 +373,9 @@ func (r *bookingRepo) Delete(ctx context.Context, id int64) error {
 	return err
 }
 
-// GetExpiredBookings retrieves bookings that have expired (FOR UPDATE SKIP LOCKED)
+// GetExpiredBookings retrieves bookings that have expired.
+// No FOR UPDATE here — the single-threaded expiry worker processes each booking
+// in its own transaction with proper row locking via MarkAsExpired.
 func (r *bookingRepo) GetExpiredBookings(ctx context.Context, limit int) ([]*models.JobBooking, error) {
 	query := `
 		SELECT id, job_id, user_id, payment_instruction_message_id
@@ -381,7 +383,6 @@ func (r *bookingRepo) GetExpiredBookings(ctx context.Context, limit int) ([]*mod
 		WHERE status = 'SLOT_RESERVED'
 		  AND expires_at < $1
 		LIMIT $2
-		FOR UPDATE SKIP LOCKED
 	`
 
 	rows, err := r.db.Query(ctx, query, time.Now(), limit)

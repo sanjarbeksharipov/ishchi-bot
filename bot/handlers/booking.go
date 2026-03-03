@@ -233,10 +233,11 @@ func (h *Handler) HandleBookingConfirm(c tele.Context, jobIDStr string) error {
 			if err != nil {
 				return
 			}
+			// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+			defer h.storage.Transaction().Rollback(updateCtx, tx)
 
 			booking.PaymentInstructionMsgID = messageID
 			if err := h.storage.Booking().Update(updateCtx, tx, booking); err != nil {
-				h.storage.Transaction().Rollback(updateCtx, tx)
 				return
 			}
 			h.storage.Transaction().Commit(updateCtx, tx)

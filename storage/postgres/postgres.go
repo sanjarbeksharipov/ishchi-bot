@@ -12,6 +12,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -49,6 +50,14 @@ func NewPostgres(ctx context.Context, cfg *config.Config, log logger.LoggerI) (s
 
 	// Connection-level timeouts for reliability
 	parseConfig.ConnConfig.ConnectTimeout = 10 * time.Second
+
+	// Set statement_timeout and lock_timeout at the connection level.
+	// Without these, a stuck query or lock wait can block a connection forever,
+	// eventually exhausting the pool and hanging the entire bot.
+	parseConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		_, err := conn.Exec(ctx, "SET statement_timeout = '30s'; SET lock_timeout = '10s';")
+		return err
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, parseConfig)
 	if err != nil {

@@ -115,20 +115,15 @@ func (s *bookingService) ConfirmBooking(ctx context.Context, userID, jobID int64
 		return nil, fmt.Errorf("you have a payment under review for another job (Job #%d)", submittedBookings[0].JobID)
 	}
 
-	// Start SERIALIZABLE transaction
+	// Start transaction
 	tx, err := s.storage.Transaction().Begin(ctx)
 	if err != nil {
 		s.log.Error("Failed to begin transaction", logger.Error(err))
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			if rbErr := s.storage.Transaction().Rollback(ctx, tx); rbErr != nil {
-				s.log.Error("Failed to rollback transaction", logger.Error(rbErr))
-			}
-		}
-	}()
+	// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+	defer s.storage.Transaction().Rollback(ctx, tx)
 
 	// Lock job row and get current state
 	job, err := s.storage.Job().GetByIDForUpdate(ctx, tx, jobID)
@@ -215,11 +210,8 @@ func (s *bookingService) ExpireBooking(ctx context.Context, booking *models.JobB
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			s.storage.Transaction().Rollback(ctx, tx)
-		}
-	}()
+	// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+	defer s.storage.Transaction().Rollback(ctx, tx)
 
 	booking.Status = models.BookingStatusExpired
 	if err := s.storage.Booking().Update(ctx, tx, booking); err != nil {

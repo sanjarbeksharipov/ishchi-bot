@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"telegram-bot-starter/bot/models"
 	"telegram-bot-starter/config"
@@ -40,7 +39,6 @@ type SenderService struct {
 	bot     *tele.Bot
 	service ServiceManagerI
 	storage storage.StorageI
-	mu      sync.Mutex
 
 	// Queue settings (for future implementation)
 	useQueue bool
@@ -61,14 +59,6 @@ func NewSenderService(cfg config.Config, log logger.LoggerI, bot *tele.Bot, stor
 
 // Send sends a message to a user
 func (s *SenderService) Send(ctx context.Context, chatID int64, message string, opts ...any) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// TODO: When queue is implemented, add to queue instead
-	// if s.useQueue {
-	//     return s.enqueue(&MessageRequest{ChatID: chatID, Message: message, Options: opts})
-	// }
-
 	chat := &tele.Chat{ID: chatID}
 	_, err := s.bot.Send(chat, message, opts...)
 	if err != nil {
@@ -81,9 +71,6 @@ func (s *SenderService) Send(ctx context.Context, chatID int64, message string, 
 
 // SendPhoto sends a photo to a user
 func (s *SenderService) SendPhoto(ctx context.Context, chatID int64, photo *tele.Photo, opts ...any) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	chat := &tele.Chat{ID: chatID}
 	_, err := s.bot.Send(chat, photo, opts...)
 	if err != nil {
@@ -96,9 +83,6 @@ func (s *SenderService) SendPhoto(ctx context.Context, chatID int64, photo *tele
 
 // Edit edits an existing message
 func (s *SenderService) Edit(ctx context.Context, chatID int64, messageID int, message string, opts ...any) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	msg := &tele.Message{
 		ID:   messageID,
 		Chat: &tele.Chat{ID: chatID},
@@ -152,9 +136,6 @@ func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Jo
 		return fmt.Errorf("no channel message ID for job %d", job.ID)
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	msg := &tele.Message{
 		ID:   int(job.ChannelMessageID),
 		Chat: &tele.Chat{ID: s.cfg.Bot.ChannelID},
@@ -206,9 +187,6 @@ func (s *SenderService) UpdateAdminJobPost(ctx context.Context, job *models.Job)
 		s.log.Debug("No admin messages to update", logger.Any("job_id", job.ID))
 		return nil
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	adminMsg := messages.FormatJobDetailAdmin(job)
 	adminKeyboard := keyboards.JobDetailKeyboard(job)
