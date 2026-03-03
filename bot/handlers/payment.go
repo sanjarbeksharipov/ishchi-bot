@@ -3,36 +3,16 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"telegram-bot-starter/bot/models"
+	"telegram-bot-starter/config"
 	"telegram-bot-starter/pkg/helper"
 	"telegram-bot-starter/pkg/logger"
 
 	tele "gopkg.in/telebot.v4"
 )
-
-// HandlePaymentSubmission handles when user sends payment receipt photo
-func (h *Handler) HandlePaymentSubmission(c tele.Context) error {
-	// Get photo
-	photo := c.Message().Photo
-	if photo == nil {
-		return c.Send("❌ Iltimos, to'lov chekini rasm sifatida yuboring.")
-	}
-
-	// Check if user has a pending booking (SLOT_RESERVED status)
-	// We need to find their most recent reserved booking
-	// For now, we'll need user to specify which booking or store it in session
-	// Let's check if there's a caption with booking ID or find latest reserved booking
-
-	// TODO: Implement logic to find user's pending booking
-	// For now, let's assume we can find it by user_id and status
-
-	return c.Send("📸 To'lov cheki qabul qilindi. Iltimos, qaysi ish uchun to'lov qilganingizni belgilang.")
-}
 
 // ForwardPaymentToAdminGroup forwards payment receipt to admin group with approval buttons
 func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *models.JobBooking, receiptFileID string) error {
@@ -96,7 +76,7 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 		job.Food,
 		helper.FormatMoney(job.ServiceFee),
 		booking.ID,
-		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
+		config.NowLocal().Format("02.01.2006 15:04"),
 	)
 
 	// Create photo message
@@ -119,16 +99,9 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 		),
 	)
 
-	// Send to admin group
-	_, err = h.bot.Send(
-		&tele.Chat{ID: h.cfg.Bot.AdminGroupID},
-		photo,
-		keyboard,
-		tele.ModeHTML,
-	)
-
+	// Send to admin group via SenderService
+	err = h.services.Sender().SendPhoto(ctx, h.cfg.Bot.AdminGroupID, photo, keyboard, tele.ModeHTML)
 	if err != nil {
-		h.log.Error("Failed to send payment to admin group", logger.Error(err))
 		return fmt.Errorf("failed to send to admin group: %w", err)
 	}
 
@@ -145,7 +118,7 @@ func (h *Handler) HandleApprovePayment(c tele.Context, params string) error {
 	ctx := context.Background()
 
 	// Check if user is admin
-	if !h.isAdmin(c.Sender().ID) {
+	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{
 			Text:      "❌ Sizda bu amalga ruxsat yo'q.",
 			ShowAlert: true,
@@ -194,12 +167,11 @@ func (h *Handler) HandleApprovePayment(c tele.Context, params string) error {
 
 	updatedCaption := c.Message().Caption + fmt.Sprintf("\n\n✅ <b>TASDIQLANDI</b>\n👤 Admin: @%s\n⏰ Vaqt: %s",
 		adminUsername,
-		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
+		config.NowLocal().Format("02.01.2006 15:04"),
 	)
 
 	// Edit photo caption and remove keyboard
-	_, err = h.bot.EditCaption(c.Message(), updatedCaption, &tele.ReplyMarkup{}, tele.ModeHTML)
-	if err != nil {
+	if err := h.services.Sender().EditCaption(c.Message(), updatedCaption, &tele.ReplyMarkup{}, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to edit admin message caption", logger.Error(err))
 	}
 
@@ -213,7 +185,7 @@ func (h *Handler) HandleRejectPayment(c tele.Context, params string) error {
 	ctx := context.Background()
 
 	// Check if user is admin
-	if !h.isAdmin(c.Sender().ID) {
+	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{
 			Text:      "❌ Sizda bu amalga ruxsat yo'q.",
 			ShowAlert: true,
@@ -266,13 +238,12 @@ func (h *Handler) HandleRejectPayment(c tele.Context, params string) error {
 
 	updatedCaption := c.Message().Caption + fmt.Sprintf("\n\n❌ <b>RAD ETILDI</b>\n👤 Admin: @%s\n⏰ Vaqt: %s\n💬 Sabab: %s",
 		adminUsername,
-		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
+		config.NowLocal().Format("02.01.2006 15:04"),
 		booking.RejectionReason,
 	)
 
 	// Edit photo caption and remove keyboard
-	_, err = h.bot.EditCaption(c.Message(), updatedCaption, &tele.ReplyMarkup{}, tele.ModeHTML)
-	if err != nil {
+	if err := h.services.Sender().EditCaption(c.Message(), updatedCaption, &tele.ReplyMarkup{}, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to edit admin message caption", logger.Error(err), logger.Any("message", updatedCaption))
 	}
 
@@ -286,7 +257,7 @@ func (h *Handler) HandleBlockUser(c tele.Context, params string) error {
 	ctx := context.Background()
 
 	// Check if user is admin
-	if !h.isAdmin(c.Sender().ID) {
+	if !h.IsAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{
 			Text:      "❌ Sizda bu amalga ruxsat yo'q.",
 			ShowAlert: true,
@@ -347,12 +318,11 @@ func (h *Handler) HandleBlockUser(c tele.Context, params string) error {
 
 	updatedCaption := c.Message().Caption + fmt.Sprintf("\n\n🚫 <b>FOYDALANUVCHI BLOKLANDI</b>\n👤 Admin: @%s\n⏰ Vaqt: %s",
 		adminUsername,
-		time.Now().Add(time.Hour*5).Format("02.01.2006 15:04"),
+		config.NowLocal().Format("02.01.2006 15:04"),
 	)
 
 	// Edit photo caption and remove keyboard
-	_, err = h.bot.EditCaption(c.Message(), updatedCaption, &tele.ReplyMarkup{}, tele.ModeHTML)
-	if err != nil {
+	if err := h.services.Sender().EditCaption(c.Message(), updatedCaption, &tele.ReplyMarkup{}, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to edit admin message caption", logger.Error(err))
 	}
 
@@ -419,8 +389,7 @@ func (h *Handler) notifyUserPaymentApproved(booking *models.JobBooking) {
 
 	message := sb.String()
 
-	_, err = h.bot.Send(&tele.User{ID: booking.UserID}, message, tele.ModeHTML)
-	if err != nil {
+	if err := h.services.Sender().Send(ctx, booking.UserID, message, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to notify user", logger.Error(err))
 	}
 
@@ -438,13 +407,11 @@ func (h *Handler) notifyUserPaymentApproved(booking *models.JobBooking) {
 					Lng: float32(lng),
 				}
 
-				_, err = h.bot.Send(&tele.User{ID: booking.UserID}, location)
-				if err != nil {
+				if err := h.services.Sender().SendAny(ctx, booking.UserID, location); err != nil {
 					h.log.Error("Failed to send location", logger.Error(err))
 				} else {
 					// Send explanation message after location
-					_, err = h.bot.Send(&tele.User{ID: booking.UserID}, "📌 <b>Ishga borish uchun aniq manzil yuqorida ko'rsatilgan</b>", tele.ModeHTML)
-					if err != nil {
+					if err := h.services.Sender().Send(ctx, booking.UserID, "📌 <b>Ishga borish uchun aniq manzil yuqorida ko'rsatilgan</b>", tele.ModeHTML); err != nil {
 						h.log.Error("Failed to send location explanation", logger.Error(err))
 					}
 				}
@@ -486,8 +453,7 @@ Agar joylar to'lgan bo'lsa, keyingi ishlar e'lon qilinishini kuting.`,
 		booking.RejectionReason,
 	)
 
-	_, err = h.bot.Send(&tele.User{ID: booking.UserID}, message, tele.ModeHTML)
-	if err != nil {
+	if err := h.services.Sender().Send(ctx, booking.UserID, message, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to notify user", logger.Error(err))
 	}
 }
@@ -558,8 +524,8 @@ Ammo soxta to'lov aniq isbot bo'lsa, bloklash olib tashlanmaydi.`,
 		)
 	}
 
-	_, err := h.bot.Send(&tele.User{ID: userID}, message, tele.ModeHTML)
-	if err != nil {
+	ctx := context.Background()
+	if err := h.services.Sender().Send(ctx, userID, message, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to notify user about violation", logger.Error(err))
 	}
 }
@@ -574,13 +540,8 @@ Afsuski, qoidabuzarlik sababli sizning hisobingiz bloklandi.
 
 📞 Agar bu xato deb hisoblasangiz, admin bilan bog'laning.`
 
-	_, err := h.bot.Send(&tele.User{ID: userID}, message, tele.ModeHTML)
-	if err != nil {
+	ctx := context.Background()
+	if err := h.services.Sender().Send(ctx, userID, message, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to notify blocked user", logger.Error(err))
 	}
-}
-
-// isAdmin checks if user is admin
-func (h *Handler) isAdmin(userID int64) bool {
-	return slices.Contains(h.cfg.Bot.AdminIDs, userID)
 }

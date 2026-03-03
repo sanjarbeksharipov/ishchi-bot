@@ -28,6 +28,14 @@ func (h *Handler) HandleStart(c tele.Context) error {
 		return c.Send(messages.MsgError)
 	}
 
+	// Reset any editing state (profile edit, job edit) so /start always goes to clean menu
+	if strings.HasPrefix(string(dbUser.State), "editing_profile_") ||
+		strings.HasPrefix(string(dbUser.State), "editing_job_") ||
+		strings.HasPrefix(string(dbUser.State), "creating_job_") {
+		h.storage.User().UpdateState(ctx, user.ID, models.StateIdle)
+		dbUser.State = models.StateIdle
+	}
+
 	// Check for deep link parameter (e.g., /start job_123)
 	payload := c.Message().Payload
 	if payload != "" && strings.HasPrefix(payload, "job_") {

@@ -36,21 +36,19 @@ Profilingizni ko'rish va tahrirlash uchun "👤 Profil" tugmasini bosing.
 
 ❓ Savollar bo'lsa @ArzonBepul bilan bog'laning.`
 
-	MsgAbout = `ℹ️ About This Bot
+	MsgAbout = `ℹ️ Bot haqida
 
-This is a Telegram bot built with Go and Telebot.
-Clean architecture ensures maintainability and scalability.
+Bu bot orqali kunlik ishlarni topish va yozilish mumkin.
 
-Version: 1.0.0`
+Versiya: 1.0.0`
 
-	MsgSettings = `⚙️ Settings
+	MsgSettings = `⚙️ Sozlamalar
 
-Configure your preferences here.
-(Settings coming soon!)`
+Sozlamalar tez orada qo'shiladi.`
 
-	MsgUnknownCommand = "❓ Unknown command. Type /help to see available commands."
+	MsgUnknownCommand = "❓ Noma'lum buyruq. Mavjud buyruqlarni ko'rish uchun /help ni bosing."
 
-	MsgError = "⚠️ Something went wrong. Please try again later."
+	MsgError = "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."
 
 	// Admin messages
 	MsgAdminPanel = `👨‍💼 Admin Panel

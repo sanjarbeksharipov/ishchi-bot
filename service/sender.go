@@ -81,6 +81,28 @@ func (s *SenderService) SendPhoto(ctx context.Context, chatID int64, photo *tele
 	return nil
 }
 
+// SendAny sends any Sendable (location, venue, etc.) to a chat
+func (s *SenderService) SendAny(ctx context.Context, chatID int64, what any, opts ...any) error {
+	chat := &tele.Chat{ID: chatID}
+	_, err := s.bot.Send(chat, what, opts...)
+	if err != nil {
+		s.log.Error("Failed to send message", logger.Error(err), logger.Any("chat_id", chatID))
+		return err
+	}
+
+	return nil
+}
+
+// EditCaption edits the caption of a photo message
+func (s *SenderService) EditCaption(msg *tele.Message, caption string, opts ...any) error {
+	_, err := s.bot.EditCaption(msg, caption, opts...)
+	if err != nil {
+		s.log.Error("Failed to edit caption", logger.Error(err), logger.Any("message_id", msg.ID))
+		return err
+	}
+	return nil
+}
+
 // Edit edits an existing message
 func (s *SenderService) Edit(ctx context.Context, chatID int64, messageID int, message string, opts ...any) error {
 	msg := &tele.Message{

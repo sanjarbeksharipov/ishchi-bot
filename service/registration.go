@@ -418,7 +418,7 @@ func (s RegistrationService) ProcessPassportPhoto(ctx context.Context, userID in
 func (s RegistrationService) FormatRegistrationSummary(draft *models.RegistrationDraft) string {
 	var sb strings.Builder
 
-	fmt.Fprintf(&sb, "📋 *Ro'yxatdan o'tish ma'lumotlari*\n\n")
+	fmt.Fprintf(&sb, "📋 <b>Ro'yxatdan o'tish ma'lumotlari</b>\n\n")
 	fmt.Fprintf(&sb, "👤 Ism-familiya: %s\n", draft.FullName)
 	fmt.Fprintf(&sb, "📱 Telefon: %s\n", draft.Phone)
 	fmt.Fprintf(&sb, "🎂 Yosh: %d\n", draft.Age)

@@ -87,7 +87,7 @@ func (h *Handler) showPublicOffer(c tele.Context) error {
 		// Use fallback summary
 	}
 
-	return h.services.Sender().Reply(c, summary, keyboards.PublicOfferKeyboard(), tele.ModeMarkdown)
+	return h.services.Sender().Reply(c, summary, keyboards.PublicOfferKeyboard(), tele.ModeHTML)
 }
 
 // HandleAcceptOffer handles the accept offer callback
@@ -256,7 +256,7 @@ func (h *Handler) showRegistrationConfirmation(ctx context.Context, c tele.Conte
 	summary := h.services.Registration().FormatRegistrationSummary(draft)
 
 	// Send summary with buttons (no photo)
-	return h.services.Sender().Reply(c, summary, keyboards.RegistrationConfirmKeyboard(), tele.ModeMarkdown)
+	return h.services.Sender().Reply(c, summary, keyboards.RegistrationConfirmKeyboard(), tele.ModeHTML)
 }
 
 // HandleConfirmRegistration handles the confirmation callback

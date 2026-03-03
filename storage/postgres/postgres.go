@@ -33,13 +33,10 @@ func NewPostgres(ctx context.Context, cfg *config.Config, log logger.LoggerI) (s
 		return nil, err
 	}
 
-	// Configure connection pool for production use
+	// Configure connection pool from config
 	maxConns := cfg.Database.MaxConnections
-	if maxConns < 20 {
-		maxConns = 20 // Minimum for production
-	}
-	if maxConns > 200 {
-		maxConns = 200 // PostgreSQL connection limit consideration
+	if maxConns < 5 {
+		maxConns = 5 // Minimum for safe operation
 	}
 
 	parseConfig.MaxConns = int32(maxConns)
