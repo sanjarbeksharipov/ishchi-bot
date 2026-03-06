@@ -210,8 +210,8 @@ func isValidOperatorCode(code string) bool {
 		"93": true, "94": true, "55": true, // UCELL
 		"97": true, "88": true, // MobiUz
 		"90": true, "91": true, // BEELINE
-		"98": true,                         // PERFECTUM MOBILE
-		"95": true, "99": true, "77": true, // UZMOBILE
+		"98": true,                                     // PERFECTUM MOBILE
+		"95": true, "99": true, "77": true, "50": true, // UZMOBILE
 		"33": true, // Humans
 		"20": true, // OQ
 	}
