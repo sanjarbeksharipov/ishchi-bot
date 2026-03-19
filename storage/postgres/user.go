@@ -160,6 +160,16 @@ func (r *userRepo) GetOrCreateUser(ctx context.Context, id int64, username, firs
 	// First, try to get existing user
 	user, err := r.GetByID(ctx, id)
 	if err == nil {
+		// Update details if they have changed
+		if user.Username != username || user.FirstName != firstName || user.LastName != lastName {
+			user.Username = username
+			user.FirstName = firstName
+			user.LastName = lastName
+			if updateErr := r.Update(ctx, user); updateErr != nil {
+				r.log.Error("Failed to update changing user info: " + updateErr.Error())
+				// We still return the user even if update fails non-fatally
+			}
+		}
 		return user, nil
 	}
 

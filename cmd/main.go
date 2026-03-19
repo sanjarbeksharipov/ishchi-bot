@@ -88,7 +88,7 @@ func main() {
 	handler := handlers.NewHandler(params)
 
 	// Set up routes (includes rate limiter middleware)
-	rateLimiter := bot.RegisterRoutes(telegramBot, handler, log, cfg)
+	rateLimiter := bot.RegisterRoutes(telegramBot, handler, log, cfg, store)
 	// Initialize and start expiry worker
 	expiryWorker := service.NewExpiryWorker(store, log, telegramBot)
 	go expiryWorker.Start()

@@ -5,15 +5,19 @@ import (
 	"telegram-bot-starter/bot/middleware"
 	"telegram-bot-starter/config"
 	"telegram-bot-starter/pkg/logger"
+	"telegram-bot-starter/storage"
 
 	tele "gopkg.in/telebot.v4"
 )
 
-func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI, cfg *config.Config) *middleware.RateLimiter {
+func RegisterRoutes(bot *tele.Bot, handler *handlers.Handler, log logger.LoggerI, cfg *config.Config, store storage.StorageI) *middleware.RateLimiter {
 	// Apply middleware
 	// Recovery middleware MUST be first — it catches panics from all subsequent handlers/middleware.
 	// Without it, a panic kills the polling goroutine silently (container stays up, bot stops responding).
 	bot.Use(middleware.RecoveryMiddleware(log))
+
+	// Ensure user details are synchronized on every interaction
+	bot.Use(middleware.UserSyncMiddleware(store, log))
 
 	// Apply rate limiter middleware
 	rateLimiter := middleware.NewRateLimiter(cfg, log)
