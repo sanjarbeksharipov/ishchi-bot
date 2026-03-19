@@ -78,7 +78,7 @@ func (r *bookingRepo) Create(ctx context.Context, tx any, booking *models.JobBoo
 func (r *bookingRepo) GetByID(ctx context.Context, id int64) (*models.JobBooking, error) {
 	query := `
 		SELECT id, job_id, user_id, status, payment_receipt_file_id, payment_receipt_message_id,
-			   payment_instruction_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
+		       payment_instruction_message_id, admin_group_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
 			   reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
 			   created_at, updated_at
 		FROM job_bookings
@@ -87,7 +87,7 @@ func (r *bookingRepo) GetByID(ctx context.Context, id int64) (*models.JobBooking
 
 	booking := &models.JobBooking{}
 	var paymentReceiptFileID, rejectionReason sql.NullString
-	var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID sql.NullInt64
+	var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID, adminGroupMessageID sql.NullInt64
 	var paymentSubmittedAt, confirmedAt, reviewedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
@@ -98,6 +98,7 @@ func (r *bookingRepo) GetByID(ctx context.Context, id int64) (*models.JobBooking
 		&paymentReceiptFileID,
 		&paymentReceiptMsgID,
 		&paymentInstructionMsgID,
+		&adminGroupMessageID,
 		&booking.ReservedAt,
 		&booking.ExpiresAt,
 		&paymentSubmittedAt,
@@ -128,6 +129,9 @@ func (r *bookingRepo) GetByID(ctx context.Context, id int64) (*models.JobBooking
 	if paymentInstructionMsgID.Valid {
 		booking.PaymentInstructionMsgID = paymentInstructionMsgID.Int64
 	}
+	if adminGroupMessageID.Valid {
+		booking.AdminGroupMessageID = adminGroupMessageID.Int64
+	}
 	if paymentSubmittedAt.Valid {
 		booking.PaymentSubmittedAt = &paymentSubmittedAt.Time
 	}
@@ -151,9 +155,9 @@ func (r *bookingRepo) GetByID(ctx context.Context, id int64) (*models.JobBooking
 func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.JobBooking, error) {
 	query := `
 		SELECT id, job_id, user_id, status, payment_receipt_file_id, payment_receipt_message_id,
-			   payment_instruction_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
-			   reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
-			   created_at, updated_at
+		       payment_instruction_message_id, admin_group_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
+		       reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
+		       created_at, updated_at
 		FROM job_bookings
 		WHERE id = $1
 		FOR UPDATE
@@ -161,7 +165,7 @@ func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*
 
 	booking := &models.JobBooking{}
 	var paymentReceiptFileID, rejectionReason sql.NullString
-	var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID sql.NullInt64
+	var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID, adminGroupMessageID sql.NullInt64
 	var paymentSubmittedAt, confirmedAt, reviewedAt sql.NullTime
 
 	var err error
@@ -170,6 +174,7 @@ func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*
 		err = pgxTx.QueryRow(ctx, query, id).Scan(
 			&booking.ID, &booking.JobID, &booking.UserID, &booking.Status,
 			&paymentReceiptFileID, &paymentReceiptMsgID, &paymentInstructionMsgID,
+			&adminGroupMessageID,
 			&booking.ReservedAt, &booking.ExpiresAt, &paymentSubmittedAt, &confirmedAt,
 			&reviewedByAdminID, &reviewedAt, &rejectionReason, &booking.IdempotencyKey,
 			&booking.CreatedAt, &booking.UpdatedAt,
@@ -178,6 +183,7 @@ func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*
 		err = r.db.QueryRow(ctx, query, id).Scan(
 			&booking.ID, &booking.JobID, &booking.UserID, &booking.Status,
 			&paymentReceiptFileID, &paymentReceiptMsgID, &paymentInstructionMsgID,
+			&adminGroupMessageID,
 			&booking.ReservedAt, &booking.ExpiresAt, &paymentSubmittedAt, &confirmedAt,
 			&reviewedByAdminID, &reviewedAt, &rejectionReason, &booking.IdempotencyKey,
 			&booking.CreatedAt, &booking.UpdatedAt,
@@ -200,6 +206,9 @@ func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*
 	}
 	if paymentInstructionMsgID.Valid {
 		booking.PaymentInstructionMsgID = paymentInstructionMsgID.Int64
+	}
+	if adminGroupMessageID.Valid {
+		booking.AdminGroupMessageID = adminGroupMessageID.Int64
 	}
 	if paymentSubmittedAt.Valid {
 		booking.PaymentSubmittedAt = &paymentSubmittedAt.Time
@@ -224,9 +233,9 @@ func (r *bookingRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*
 func (r *bookingRepo) GetByUserAndJob(ctx context.Context, userID, jobID int64) (*models.JobBooking, error) {
 	query := `
 		SELECT id, job_id, user_id, status, payment_receipt_file_id, payment_receipt_message_id,
-			   payment_instruction_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
-			   reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
-			   created_at, updated_at
+		       payment_instruction_message_id, admin_group_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
+		       reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
+		       created_at, updated_at
 		FROM job_bookings
 		WHERE user_id = $1 AND job_id = $2
 		ORDER BY created_at DESC
@@ -235,12 +244,13 @@ func (r *bookingRepo) GetByUserAndJob(ctx context.Context, userID, jobID int64) 
 
 	booking := &models.JobBooking{}
 	var paymentReceiptFileID, rejectionReason sql.NullString
-	var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID sql.NullInt64
+	var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID, adminGroupMessageID sql.NullInt64
 	var paymentSubmittedAt, confirmedAt, reviewedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, userID, jobID).Scan(
 		&booking.ID, &booking.JobID, &booking.UserID, &booking.Status,
 		&paymentReceiptFileID, &paymentReceiptMsgID, &paymentInstructionMsgID,
+		&adminGroupMessageID,
 		&booking.ReservedAt, &booking.ExpiresAt, &paymentSubmittedAt, &confirmedAt,
 		&reviewedByAdminID, &reviewedAt, &rejectionReason, &booking.IdempotencyKey,
 		&booking.CreatedAt, &booking.UpdatedAt,
@@ -262,6 +272,9 @@ func (r *bookingRepo) GetByUserAndJob(ctx context.Context, userID, jobID int64) 
 	}
 	if paymentInstructionMsgID.Valid {
 		booking.PaymentInstructionMsgID = paymentInstructionMsgID.Int64
+	}
+	if adminGroupMessageID.Valid {
+		booking.AdminGroupMessageID = adminGroupMessageID.Int64
 	}
 	if paymentSubmittedAt.Valid {
 		booking.PaymentSubmittedAt = &paymentSubmittedAt.Time
@@ -322,8 +335,8 @@ func (r *bookingRepo) Update(ctx context.Context, tx any, booking *models.JobBoo
 	query := `
 		UPDATE job_bookings
 		SET status = $2, payment_receipt_file_id = $3, payment_receipt_message_id = $4,
-			payment_instruction_message_id = $5, payment_submitted_at = $6, confirmed_at = $7,
-			reviewed_by_admin_id = $8, reviewed_at = $9, rejection_reason = $10,
+			payment_instruction_message_id = $5, admin_group_message_id = $6, payment_submitted_at = $7, confirmed_at = $8,
+			reviewed_by_admin_id = $9, reviewed_at = $10, rejection_reason = $11,
 			updated_at = NOW()
 		WHERE id = $1
 	`
@@ -337,6 +350,7 @@ func (r *bookingRepo) Update(ctx context.Context, tx any, booking *models.JobBoo
 			toNullString(booking.PaymentReceiptFileID),
 			toNullInt64(booking.PaymentReceiptMsgID),
 			toNullInt64(booking.PaymentInstructionMsgID),
+			toNullInt64(booking.AdminGroupMessageID),
 			toNullTime(booking.PaymentSubmittedAt),
 			toNullTime(booking.ConfirmedAt),
 			toNullInt64Ptr(booking.ReviewedByAdminID),
@@ -350,6 +364,7 @@ func (r *bookingRepo) Update(ctx context.Context, tx any, booking *models.JobBoo
 			toNullString(booking.PaymentReceiptFileID),
 			toNullInt64(booking.PaymentReceiptMsgID),
 			toNullInt64(booking.PaymentInstructionMsgID),
+			toNullInt64(booking.AdminGroupMessageID),
 			toNullTime(booking.PaymentSubmittedAt),
 			toNullTime(booking.ConfirmedAt),
 			toNullInt64Ptr(booking.ReviewedByAdminID),
@@ -488,9 +503,9 @@ func (r *bookingRepo) GetUserBookings(ctx context.Context, userID int64) ([]*mod
 func (r *bookingRepo) GetUserBookingsByStatus(ctx context.Context, userID int64, status models.BookingStatus) ([]*models.JobBooking, error) {
 	query := `
 		SELECT id, job_id, user_id, status, payment_receipt_file_id, payment_receipt_message_id,
-			   payment_instruction_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
-			   reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
-			   created_at, updated_at
+		       payment_instruction_message_id, admin_group_message_id, reserved_at, expires_at, payment_submitted_at, confirmed_at,
+		       reviewed_by_admin_id, reviewed_at, rejection_reason, idempotency_key,
+		       created_at, updated_at
 		FROM job_bookings
 		WHERE user_id = $1 AND status = $2
 		ORDER BY created_at DESC
@@ -506,12 +521,13 @@ func (r *bookingRepo) GetUserBookingsByStatus(ctx context.Context, userID int64,
 	for rows.Next() {
 		booking := &models.JobBooking{}
 		var paymentReceiptFileID, rejectionReason sql.NullString
-		var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID sql.NullInt64
+		var paymentReceiptMsgID, paymentInstructionMsgID, reviewedByAdminID, adminGroupMessageID sql.NullInt64
 		var paymentSubmittedAt, confirmedAt, reviewedAt sql.NullTime
 
 		if err := rows.Scan(
 			&booking.ID, &booking.JobID, &booking.UserID, &booking.Status,
 			&paymentReceiptFileID, &paymentReceiptMsgID, &paymentInstructionMsgID,
+			&adminGroupMessageID,
 			&booking.ReservedAt, &booking.ExpiresAt, &paymentSubmittedAt, &confirmedAt,
 			&reviewedByAdminID, &reviewedAt, &rejectionReason, &booking.IdempotencyKey,
 			&booking.CreatedAt, &booking.UpdatedAt,
@@ -529,6 +545,9 @@ func (r *bookingRepo) GetUserBookingsByStatus(ctx context.Context, userID int64,
 		}
 		if paymentInstructionMsgID.Valid {
 			booking.PaymentInstructionMsgID = paymentInstructionMsgID.Int64
+		}
+		if adminGroupMessageID.Valid {
+			booking.AdminGroupMessageID = adminGroupMessageID.Int64
 		}
 		if paymentSubmittedAt.Valid {
 			booking.PaymentSubmittedAt = &paymentSubmittedAt.Time
@@ -650,6 +669,34 @@ func (r *bookingRepo) MarkAsRejected(ctx context.Context, tx any, bookingID int6
 	return err
 }
 
+// MarkAsCancelledByAdmin marks a confirmed booking as cancelled by admin (payment returned)
+func (r *bookingRepo) MarkAsCancelledByAdmin(ctx context.Context, tx any, bookingID int64, adminID int64, reason string) error {
+	query := `
+		UPDATE job_bookings
+		SET status = 'CANCELLED_BY_ADMIN',
+			rejection_reason = $2,
+			reviewed_by_admin_id = $3,
+			reviewed_at = NOW(),
+			updated_at = NOW()
+		WHERE id = $1
+	`
+
+	var err error
+	if tx != nil {
+		pgxTx := tx.(pgx.Tx)
+		_, err = pgxTx.Exec(ctx, query, bookingID, reason, adminID)
+	} else {
+		_, err = r.db.Exec(ctx, query, bookingID, reason, adminID)
+	}
+
+	if err != nil {
+		r.log.Error("Failed to cancel booking by admin", logger.Error(err))
+		return fmt.Errorf("failed to cancel booking by admin: %w", err)
+	}
+
+	return err
+}
+
 // Helper functions for null handling
 func toNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: s != ""}
@@ -693,4 +740,15 @@ func (r *bookingRepo) GetCountByStatus(ctx context.Context, status models.Bookin
 		return 0, fmt.Errorf("failed to get booking count by status: %w", err)
 	}
 	return count, nil
+}
+
+// UpdateAdminGroupMessageID updates the admin group message ID for a booking
+func (r *bookingRepo) UpdateAdminGroupMessageID(ctx context.Context, bookingID, messageID int64) error {
+	query := `UPDATE job_bookings SET admin_group_message_id = $1 WHERE id = $2`
+	_, err := r.db.Exec(ctx, query, messageID, bookingID)
+	if err != nil {
+		r.log.Error("Failed to update admin group message ID", logger.Error(err), logger.Any("booking_id", bookingID), logger.Any("message_id", messageID))
+		return fmt.Errorf("failed to update admin group message ID: %w", err)
+	}
+	return nil
 }

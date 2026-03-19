@@ -17,6 +17,8 @@ type BookingService interface {
 	GetBookingWithStatus(ctx context.Context, userID int64, status models.BookingStatus) (*models.JobBooking, error)
 	CheckIdempotency(ctx context.Context, userID, jobID int64) (*models.JobBooking, error)
 	ExpireBooking(ctx context.Context, booking *models.JobBooking) error
+	// CancelBookingByAdmin cancels a confirmed booking, releases the slot, and reopens the job if it was FULL.
+	CancelBookingByAdmin(ctx context.Context, bookingID, adminID int64) (*models.JobBooking, *models.Job, error)
 }
 
 type bookingService struct {
@@ -223,4 +225,79 @@ func (s *bookingService) ExpireBooking(ctx context.Context, booking *models.JobB
 	}
 
 	return nil
+}
+
+// CancelBookingByAdmin cancels a confirmed booking, releases the slot, and reopens the job if it was FULL.
+// Returns the updated booking and job so callers can update channel/admin messages.
+func (s *bookingService) CancelBookingByAdmin(ctx context.Context, bookingID, adminID int64) (*models.JobBooking, *models.Job, error) {
+	tx, err := s.storage.Transaction().Begin(ctx)
+	if err != nil {
+		s.log.Error("Failed to begin transaction", logger.Error(err))
+		return nil, nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	// Always rollback on exit — Rollback after Commit is a harmless no-op in pgx.
+	defer s.storage.Transaction().Rollback(ctx, tx)
+
+	// Get booking with row lock
+	booking, err := s.storage.Booking().GetByIDForUpdate(ctx, tx, bookingID)
+	if err != nil {
+		s.log.Error("Failed to get booking", logger.Error(err))
+		return nil, nil, fmt.Errorf("booking not found: %w", err)
+	}
+
+	// Only confirmed bookings (payment received) can be cancelled by admin with refund
+	if booking.Status != models.BookingStatusConfirmed {
+		return nil, nil, fmt.Errorf("only confirmed bookings can be cancelled by admin (current status: %s)", booking.Status)
+	}
+
+	// Mark booking as cancelled by admin
+	reason := "Admin tomonidan bekor qilindi. To'lov qaytariladi."
+	if err := s.storage.Booking().MarkAsCancelledByAdmin(ctx, tx, bookingID, adminID, reason); err != nil {
+		s.log.Error("Failed to mark booking as cancelled by admin", logger.Error(err))
+		return nil, nil, fmt.Errorf("failed to cancel booking: %w", err)
+	}
+
+	// Decrement confirmed_slots to free the slot
+	if err := s.storage.Job().DecrementConfirmedSlots(ctx, tx, booking.JobID); err != nil {
+		s.log.Error("Failed to decrement confirmed slots", logger.Error(err))
+		return nil, nil, fmt.Errorf("failed to release slot: %w", err)
+	}
+
+	// Get the updated job within the transaction
+	job, err := s.storage.Job().GetByIDForUpdate(ctx, tx, booking.JobID)
+	if err != nil {
+		s.log.Error("Failed to get job", logger.Error(err))
+		return nil, nil, fmt.Errorf("failed to get job: %w", err)
+	}
+
+	// If job was FULL and now has an available slot, reopen it to ACTIVE
+	if job.Status == models.JobStatusFull && !job.IsCompletelyFull() {
+		if err := s.storage.Job().UpdateStatusInTx(ctx, tx, job.ID, models.JobStatusActive); err != nil {
+			s.log.Error("Failed to reopen job to ACTIVE", logger.Error(err))
+			// Don't fail the whole operation, just log it
+		} else {
+			job.Status = models.JobStatusActive
+			s.log.Info("Job reopened to ACTIVE after booking cancellation", logger.Any("job_id", job.ID))
+		}
+	}
+
+	// Commit transaction
+	if err := s.storage.Transaction().Commit(ctx, tx); err != nil {
+		s.log.Error("Failed to commit transaction", logger.Error(err))
+		return nil, nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	// Update booking status in memory
+	booking.Status = models.BookingStatusCancelledByAdmin
+	booking.RejectionReason = reason
+
+	s.log.Info("Booking cancelled by admin",
+		logger.Any("booking_id", bookingID),
+		logger.Any("admin_id", adminID),
+		logger.Any("user_id", booking.UserID),
+		logger.Any("job_id", booking.JobID),
+	)
+
+	return booking, job, nil
 }

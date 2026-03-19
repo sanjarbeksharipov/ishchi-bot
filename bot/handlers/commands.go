@@ -297,6 +297,11 @@ Afsuski, sizning booking vaqti tugagan. Iltimos, qaytadan joy band qiling.`)
 		return c.Send("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
 	}
 
+	// Forward to admin group
+	err = h.ForwardPaymentToAdminGroup(ctx, booking, photoFileID)
+	if err != nil {
+		return h.services.Sender().Send(ctx, c.Chat().ID, "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
+	}
 	// Send confirmation to user
 	msg := `✅ <b>TO'LOV CHEKI QABUL QILINDI!</b>
 
@@ -311,9 +316,6 @@ Sabr qilganingiz uchun rahmat! 🙏`
 	if err := c.Send(msg, tele.ModeHTML); err != nil {
 		h.log.Error("Failed to send confirmation", logger.Error(err))
 	}
-
-	// Forward to admin group
-	go h.ForwardPaymentToAdminGroup(ctx, booking, photoFileID)
 
 	return nil
 }

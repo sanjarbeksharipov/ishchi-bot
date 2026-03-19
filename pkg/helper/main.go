@@ -26,3 +26,10 @@ func FormatMoney(n int) string {
 	}
 	return string(result)
 }
+func TruncateString(str string, maxLength int) string {
+	runes := []rune(str)
+	if len(runes) <= maxLength {
+		return str
+	}
+	return string(runes[:maxLength-3]) + "..."
+}

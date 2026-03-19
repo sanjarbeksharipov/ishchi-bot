@@ -254,3 +254,144 @@ func (h *Handler) HandleBookingConfirm(c tele.Context, jobIDStr string) error {
 
 	return nil
 }
+
+// HandleCancelBooking handles admin cancellation of a confirmed booking (payment return)
+func (h *Handler) HandleCancelBooking(c tele.Context, params string) error {
+	ctx := context.Background()
+
+	// Check if user is admin
+	if !h.IsAdmin(c.Sender().ID) {
+		return c.Respond(&tele.CallbackResponse{
+			Text:      "❌ Sizda bu amalga ruxsat yo'q.",
+			ShowAlert: true,
+		})
+	}
+
+	// Callback data format: cancel_booking_<bookingID>
+	bookingID, err := strconv.ParseInt(params, 10, 64)
+	if err != nil {
+		h.log.Error("Failed to parse booking ID", logger.Error(err), logger.Any("params", params))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Noto'g'ri booking ID.", ShowAlert: true})
+	}
+
+	// Cancel booking through service
+	booking, job, err := h.services.Booking().CancelBookingByAdmin(ctx, bookingID, c.Sender().ID)
+	if err != nil {
+		h.log.Error("Failed to cancel booking", logger.Error(err))
+
+		errMsg := "❌ Xatolik yuz berdi."
+		if strings.HasPrefix(err.Error(), "only confirmed bookings") {
+			errMsg = "⚠️ Faqat tasdiqlangan bronlar bekor qilinishi mumkin."
+		} else if strings.HasPrefix(err.Error(), "booking not found") {
+			errMsg = "❌ Bron topilmadi."
+		}
+
+		return c.Respond(&tele.CallbackResponse{
+			Text:      errMsg,
+			ShowAlert: true,
+		})
+	}
+
+	// Notify user about cancellation with payment return instructions
+	go h.notifyUserBookingCancelledByAdmin(booking, job)
+
+	if booking.AdminGroupMessageID != 0 {
+
+		adminUsername := c.Sender().Username
+		if adminUsername == "" {
+			adminUsername = c.Sender().FirstName
+		}
+		// Get user info to rebuild full message if needed
+		telegramUser, err := h.storage.User().GetByID(ctx, booking.UserID)
+		if err != nil {
+			h.log.Error("Failed to get telegram user", logger.Error(err))
+			return c.Respond(&tele.CallbackResponse{
+				Text:      "❌ Xatolik yuz berdi.",
+				ShowAlert: true,
+			})
+		}
+
+		registeredUser, err := h.storage.Registration().GetRegisteredUserByUserID(ctx, booking.UserID)
+		if err != nil {
+			h.log.Error("Failed to get registered user", logger.Error(err))
+			return c.Respond(&tele.CallbackResponse{
+				Text:      "❌ Xatolik yuz berdi.",
+				ShowAlert: true,
+			})
+		}
+
+		updatedCaption := messages.FormatBookingCancelledAdminMessage(registeredUser, telegramUser, job, booking, adminUsername)
+
+		// Admin cancelled from admin job detail panel - update the saved admin group message
+		adminGroupMsg := &tele.Message{
+			ID:   int(booking.AdminGroupMessageID),
+			Chat: &tele.Chat{ID: h.cfg.Bot.AdminGroupID},
+		}
+
+		err = h.services.Sender().EditCaption(adminGroupMsg, updatedCaption, &tele.ReplyMarkup{}, tele.ModeHTML)
+		if err != nil {
+			// Silently handle "message not found" - user may have deleted it
+			if !strings.Contains(err.Error(), "message not found") {
+				h.log.Error("Failed to update admin group message", logger.Error(err), logger.Any("message_id", booking.AdminGroupMessageID))
+			}
+		}
+	}
+
+	// Update ALL admin job-detail messages to reflect new slot count
+	if job != nil {
+		if job.ConfirmedSlots == 0 {
+			h.updateAllAdminMessages(job)
+		} else {
+			h.updateOtherAdminMessages(job.ID, c.Sender().ID)
+		}
+
+		if job.ChannelMessageID != 0 {
+			h.updateChannelMessage(job)
+		}
+	}
+
+	h.log.Info("Booking cancelled by admin via handler",
+		logger.Any("booking_id", bookingID),
+		logger.Any("admin_id", c.Sender().ID),
+	)
+
+	err = c.Respond(&tele.CallbackResponse{
+		Text: "↩️ Bron bekor qilindi, foydalanuvchiga xabar yuborildi.",
+	})
+
+	// If the admin cancelled from "Yozilganlarni ko'rish" text menu, refresh it
+	if c.Message() != nil && c.Message().Photo == nil && job != nil {
+		return h.HandleViewJobBookings(c, strconv.FormatInt(job.ID, 10))
+	}
+
+	return err
+}
+
+// notifyUserBookingCancelledByAdmin sends a notification to the user that their confirmed booking
+// has been cancelled by the admin and their payment will be returned.
+func (h *Handler) notifyUserBookingCancelledByAdmin(booking *models.JobBooking, job *models.Job) {
+	ctx := context.Background()
+
+	var jobInfo string
+	if job != nil {
+		jobInfo = fmt.Sprintf("\n\n💼 <b>Ish ma'lumotlari:</b>\n📋 Tartib raqami: #%d\n📅 Ish kuni: %s\n💰 Ish haqqi: %s\n📍 Manzil: %s",
+			job.OrderNumber,
+			job.WorkDate,
+			job.Salary,
+			job.Address,
+		)
+	}
+
+	message := fmt.Sprintf(`↩️ <b>BRONINGIZ BEKOR QILINDI</b>
+
+Hurmatli foydalanuvchi, sizning broningiz admin tomonidan bekor qilindi.%s
+
+💰 <b>TO'LOV HAQIDA:</b>
+Siz to'lagan xizmat haqqi qaytariladi. Iltimos, to'lovni qaytarish uchun admin bilan bog'laning.
+
+❓ Savollaringiz bo'lsa, admin bilan bog'laning.`, jobInfo)
+
+	if err := h.services.Sender().Send(ctx, booking.UserID, message, tele.ModeHTML); err != nil {
+		h.log.Error("Failed to notify user about booking cancellation", logger.Error(err))
+	}
+}

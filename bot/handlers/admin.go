@@ -414,12 +414,18 @@ func (h *Handler) HandleChangeJobStatus(c tele.Context, params string) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Update ALL admin messages (broadcasts to all admins)
-	h.updateAllAdminMessages(job)
+	// Update OTHER admin messages (exclude current admin to avoid double-edit)
+	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
 
-	// Show updated job detail to current admin
+	// Update current admin's message view (context-aware with c.Edit)
 	msg := messages.FormatJobDetailAdmin(job)
-	return c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	if err := c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML); err != nil {
+		// Silently ignore "message is not modified" errors - happens if another admin already updated
+		if !strings.Contains(err.Error(), "message is not modified") {
+			h.log.Error("Failed to edit job detail", logger.Error(err))
+		}
+	}
+	return nil
 }
 
 // HandlePublishJob publishes the job to the channel (only if not yet published)
@@ -463,6 +469,7 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobIDStr string) error {
 	// Save channel message ID
 	if err := h.storage.Job().UpdateChannelMessageID(ctx, job.ID, int64(sentMsg.ID)); err != nil {
 		h.log.Error("Failed to save channel message ID", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Xabar ID saqlanishida xatolik", ShowAlert: true})
 	}
 
 	job.ChannelMessageID = int64(sentMsg.ID)
@@ -495,12 +502,18 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobIDStr string) error {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Update ALL admin messages (broadcast to all admins)
-	h.updateAllAdminMessages(job)
+	// Update OTHER admin messages (exclude current admin to avoid double-edit)
+	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
 
 	// Update current admin's message view
 	detailMsg := messages.FormatJobDetailAdmin(job)
-	return c.Edit(detailMsg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	if err := c.Edit(detailMsg, keyboards.JobDetailKeyboard(job), tele.ModeHTML); err != nil {
+		// Silently ignore "message is not modified" errors - happens if another admin already updated
+		if !strings.Contains(err.Error(), "message is not modified") {
+			h.log.Error("Failed to edit job detail", logger.Error(err))
+		}
+	}
+	return nil
 }
 
 // HandleDeleteChannelMessage deletes the channel message only (keeps job in DB)
@@ -537,6 +550,7 @@ func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobIDStr string) er
 	// Clear channel message ID from job
 	if err := h.storage.Job().UpdateChannelMessageID(ctx, job.ID, 0); err != nil {
 		h.log.Error("Failed to clear channel message ID", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Xabar ID o'chirishda xatolik", ShowAlert: true})
 	}
 
 	job.ChannelMessageID = 0
@@ -545,12 +559,18 @@ func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobIDStr string) er
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Update ALL admin messages (broadcast channel message deletion to all admins)
-	h.updateAllAdminMessages(job)
+	// Update OTHER admin messages (exclude current admin to avoid double-edit)
+	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
 
 	// Show updated job detail to current admin
 	msg := messages.FormatJobDetailAdmin(job)
-	return c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML)
+	if err := c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML); err != nil {
+		// Silently ignore "message is not modified" errors - happens if another admin already updated
+		if !strings.Contains(err.Error(), "message is not modified") {
+			h.log.Error("Failed to edit job detail", logger.Error(err))
+		}
+	}
+	return nil
 }
 
 // HandleDeleteJob deletes the entire job from database (and channel message if exists)
@@ -1042,6 +1062,10 @@ func (h *Handler) HandleViewJobBookings(c tele.Context, jobIDStr string) error {
 	fmt.Fprintf(&sb, "📊 Jami: %d ta ishchi\n\n", len(activeBookings))
 	sb.WriteString("━━━━━━━━━━━━━━━━━━━\n\n")
 
+	// Build inline keyboard rows: one "Cancel" button per confirmed booking
+	menu := &tele.ReplyMarkup{}
+	var rows []tele.Row
+
 	for i, booking := range activeBookings {
 		// Get user's Telegram info
 		user, err := h.storage.User().GetByID(ctx, booking.UserID)
@@ -1079,12 +1103,22 @@ func (h *Handler) HandleViewJobBookings(c tele.Context, jobIDStr string) error {
 		fmt.Fprintf(&sb, "⚖️ Vazn/Bo'y: %d kg / %d cm\n", registeredUser.Weight, registeredUser.Height)
 		fmt.Fprintf(&sb, "📊 Holat: %s %s\n", statusIcon, statusText)
 		sb.WriteString("\n")
+
+		// Add a cancel button only for confirmed bookings
+		if booking.Status == models.BookingStatusConfirmed {
+			safeName := helper.TruncateString(registeredUser.FullName, 30)
+			btnCancel := menu.Data(
+				fmt.Sprintf("↩️ #%d %s ni bekor qilish", i+1, safeName),
+				fmt.Sprintf("cancel_booking_%d", booking.ID),
+			)
+			rows = append(rows, menu.Row(btnCancel))
+		}
 	}
 
 	// Add back button
-	menu := &tele.ReplyMarkup{}
 	btnBack := menu.Data("⬅️ Orqaga", fmt.Sprintf("job_detail_%d", jobID))
-	menu.Inline(menu.Row(btnBack))
+	rows = append(rows, menu.Row(btnBack))
+	menu.Inline(rows...)
 
 	if err := c.Respond(); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))

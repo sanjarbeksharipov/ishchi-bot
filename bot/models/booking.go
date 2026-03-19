@@ -9,12 +9,13 @@ import (
 type BookingStatus string
 
 const (
-	BookingStatusSlotReserved     BookingStatus = "SLOT_RESERVED"     // Slot temporarily held (3-min timer)
-	BookingStatusPaymentSubmitted BookingStatus = "PAYMENT_SUBMITTED" // Receipt uploaded, waiting admin
-	BookingStatusConfirmed        BookingStatus = "CONFIRMED"         // Admin approved, slot locked
-	BookingStatusRejected         BookingStatus = "REJECTED"          // Admin rejected payment
-	BookingStatusExpired          BookingStatus = "EXPIRED"           // 3-minute timer ran out
-	BookingStatusCancelledByUser  BookingStatus = "CANCELLED_BY_USER" // User cancelled before payment
+	BookingStatusSlotReserved     BookingStatus = "SLOT_RESERVED"      // Slot temporarily held (3-min timer)
+	BookingStatusPaymentSubmitted BookingStatus = "PAYMENT_SUBMITTED"  // Receipt uploaded, waiting admin
+	BookingStatusConfirmed        BookingStatus = "CONFIRMED"          // Admin approved, slot locked
+	BookingStatusRejected         BookingStatus = "REJECTED"           // Admin rejected payment
+	BookingStatusExpired          BookingStatus = "EXPIRED"            // 3-minute timer ran out
+	BookingStatusCancelledByUser  BookingStatus = "CANCELLED_BY_USER"  // User cancelled before payment
+	BookingStatusCancelledByAdmin BookingStatus = "CANCELLED_BY_ADMIN" // Admin cancelled confirmed booking (payment returned)
 )
 
 // JobBooking represents a user's booking for a job
@@ -30,6 +31,7 @@ type JobBooking struct {
 	PaymentReceiptFileID    string `json:"payment_receipt_file_id"`        // User's payment receipt file ID
 	PaymentReceiptMsgID     int64  `json:"payment_receipt_message_id"`     // User's payment receipt message ID
 	PaymentInstructionMsgID int64  `json:"payment_instruction_message_id"` // Bot's payment instruction message ID
+	AdminGroupMessageID     int64  `json:"admin_group_message_id"`         // Admin group payment receipt message ID
 
 	// Timing (CRITICAL for expiry)
 	ReservedAt         time.Time  `json:"reserved_at"`
@@ -65,6 +67,8 @@ func (s BookingStatus) Display() string {
 		return "⏰ Vaqt tugadi"
 	case BookingStatusCancelledByUser:
 		return "🚫 Bekor qilindi"
+	case BookingStatusCancelledByAdmin:
+		return "↩️ Admin tomonidan bekor qilindi"
 	default:
 		return string(s)
 	}
@@ -75,7 +79,8 @@ func (s BookingStatus) IsValid() bool {
 	switch s {
 	case BookingStatusSlotReserved, BookingStatusPaymentSubmitted,
 		BookingStatusConfirmed, BookingStatusRejected,
-		BookingStatusExpired, BookingStatusCancelledByUser:
+		BookingStatusExpired, BookingStatusCancelledByUser,
+		BookingStatusCancelledByAdmin:
 		return true
 	default:
 		return false

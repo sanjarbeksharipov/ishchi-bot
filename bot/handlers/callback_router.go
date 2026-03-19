@@ -111,6 +111,7 @@ func (h *Handler) dynamicCallbacks() []callbackRoute {
 		{"approve_payment_", h.HandleApprovePayment},
 		{"reject_payment_", h.HandleRejectPayment},
 		{"block_user_", h.HandleBlockUser},
+		{"cancel_booking_", h.HandleCancelBooking},
 
 		// Pagination
 		{"users_page_", h.HandleUsersListPage},

@@ -95,6 +95,9 @@ type JobRepoI interface {
 	// DecrementReservedSlots atomically decrements reserved_slots
 	DecrementReservedSlots(ctx context.Context, tx any, jobID int64) error
 
+	// DecrementConfirmedSlots atomically decrements confirmed_slots (used when admin cancels a booking)
+	DecrementConfirmedSlots(ctx context.Context, tx any, jobID int64) error
+
 	// MoveReservedToConfirmed atomically moves slot from reserved to confirmed
 	MoveReservedToConfirmed(ctx context.Context, tx any, jobID int64) error
 
@@ -131,6 +134,10 @@ type BookingRepoI interface {
 	MarkAsExpired(ctx context.Context, tx any, bookingID int64) error
 	MarkAsConfirmed(ctx context.Context, tx any, bookingID int64, adminID int64) error
 	MarkAsRejected(ctx context.Context, tx any, bookingID int64, adminID int64, reason string) error
+	MarkAsCancelledByAdmin(ctx context.Context, tx any, bookingID int64, adminID int64, reason string) error
+
+	// Message tracking
+	UpdateAdminGroupMessageID(ctx context.Context, bookingID, messageID int64) error
 
 	// GetTotalCount returns the total number of bookings
 	GetTotalCount(ctx context.Context) (int, error)

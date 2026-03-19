@@ -438,6 +438,30 @@ func (r *jobRepo) DecrementReservedSlots(ctx context.Context, tx any, jobID int6
 	return nil
 }
 
+// DecrementConfirmedSlots atomically decrements confirmed_slots (used when admin cancels a booking)
+func (r *jobRepo) DecrementConfirmedSlots(ctx context.Context, tx any, jobID int64) error {
+	query := `
+		UPDATE jobs
+		SET confirmed_slots = GREATEST(confirmed_slots - 1, 0),
+			updated_at = NOW()
+		WHERE id = $1
+	`
+
+	var err error
+	if tx != nil {
+		pgxTx := tx.(pgx.Tx)
+		_, err = pgxTx.Exec(ctx, query, jobID)
+	} else {
+		_, err = r.db.Exec(ctx, query, jobID)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to decrement confirmed slots: %w", err)
+	}
+
+	return nil
+}
+
 // MoveReservedToConfirmed atomically moves slot from reserved to confirmed
 func (r *jobRepo) MoveReservedToConfirmed(ctx context.Context, tx any, jobID int64) error {
 	query := `

@@ -10,6 +10,7 @@ import (
 	"telegram-bot-starter/config"
 	"telegram-bot-starter/pkg/helper"
 	"telegram-bot-starter/pkg/logger"
+	"telegram-bot-starter/pkg/messages"
 
 	tele "gopkg.in/telebot.v4"
 )
@@ -37,47 +38,7 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 		return err
 	}
 
-	// Format message for admin group
-	message := fmt.Sprintf(`🆕 <b>YANGI TO'LOV CHEKI</b>
-
-👤 <b>Foydalanuvchi:</b>
-• Ism: %s
-• Telefon: %s
-• Telegram: @%s (ID: <code>%d</code>)
-• Yosh: %d
-• Vazn: %d kg
-• Bo'y: %d sm
-
-💼 <b>Ish ma'lumotlari:</b>
-• Tartib raqami: #%d
-• Ish haqqi: %s
-• Ish kuni: %s
-• Vaqt: %s
-• Manzil: %s
-• Ovqat: %s
-• Xizmat haqqi: %s so'm
-
-📋 <b>Booking ID:</b> #%d
-⏰ <b>Yuborilgan vaqt:</b> %s
-
-👇 <b>To'lov cheki:</b>`,
-		registeredUser.FullName,
-		registeredUser.Phone,
-		telegramUser.Username,
-		booking.UserID,
-		registeredUser.Age,
-		registeredUser.Weight,
-		registeredUser.Height,
-		job.OrderNumber,
-		job.Salary,
-		job.WorkDate,
-		job.WorkTime,
-		job.Address,
-		job.Food,
-		helper.FormatMoney(job.ServiceFee),
-		booking.ID,
-		config.NowLocal().Format("02.01.2006 15:04"),
-	)
+	message := messages.FormatNewPaymentAdminMessage(registeredUser, telegramUser, job, booking)
 
 	// Create photo message
 	photo := &tele.Photo{
@@ -99,15 +60,24 @@ func (h *Handler) ForwardPaymentToAdminGroup(ctx context.Context, booking *model
 		),
 	)
 
-	// Send to admin group via SenderService
-	err = h.services.Sender().SendPhoto(ctx, h.cfg.Bot.AdminGroupID, photo, keyboard, tele.ModeHTML)
+	// Send to admin group and capture message ID
+	chat := &tele.Chat{ID: h.cfg.Bot.AdminGroupID}
+	sentMsg, err := h.bot.Send(chat, photo, keyboard, tele.ModeHTML)
 	if err != nil {
+		h.log.Error("Failed to send photo to admin group", logger.Error(err))
 		return fmt.Errorf("failed to send to admin group: %w", err)
+	}
+
+	// Save admin group message ID to booking
+	if err := h.storage.Booking().UpdateAdminGroupMessageID(ctx, booking.ID, int64(sentMsg.ID)); err != nil {
+		h.log.Error("Failed to save admin group message ID", logger.Error(err), logger.Any("booking_id", booking.ID))
+		// Log error but don't fail - message was still sent
 	}
 
 	h.log.Info("Payment receipt forwarded to admin group",
 		logger.Any("booking_id", booking.ID),
 		logger.Any("user_id", booking.UserID),
+		logger.Any("admin_group_message_id", sentMsg.ID),
 	)
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"telegram-bot-starter/bot/models"
+	"telegram-bot-starter/config"
 	"telegram-bot-starter/pkg/helper"
 )
 
@@ -296,4 +297,102 @@ Sizga 3 daqiqa vaqt berildi. Iltimos, quyidagi ma'lumotlarga to'lovni amalga osh
 To'lov chekini yuboring (screenshot):
 `, cardNumber, cardHolderName, helper.FormatMoney(job.ServiceFee))
 	return msg
+}
+func FormatNewPaymentAdminMessage(user *models.RegisteredUser, telegramUser *models.User, job *models.Job, booking *models.JobBooking) string {
+	// Format message for admin group
+	message := fmt.Sprintf(`🆕 <b>YANGI TO'LOV CHEKI</b>
+
+👤 <b>Foydalanuvchi:</b>
+• Ism: %s
+• Telefon: %s
+• Telegram: @%s (ID: <code>%d</code>)
+• Yosh: %d
+• Vazn: %d kg
+• Bo'y: %d sm
+
+💼 <b>Ish ma'lumotlari:</b>
+• Tartib raqami: #%d
+• Ish haqqi: %s
+• Ish kuni: %s
+• Vaqt: %s
+• Manzil: %s
+• Ovqat: %s
+• Xizmat haqqi: %s so'm
+
+📋 <b>Booking ID:</b> #%d
+⏰ <b>Yuborilgan vaqt:</b> %s
+
+👇 <b>To'lov cheki:</b>`,
+		user.FullName,
+		user.Phone,
+		telegramUser.Username,
+		booking.UserID,
+		user.Age,
+		user.Weight,
+		user.Height,
+		job.OrderNumber,
+		job.Salary,
+		job.WorkDate,
+		job.WorkTime,
+		job.Address,
+		job.Food,
+		helper.FormatMoney(job.ServiceFee),
+		booking.ID,
+		config.NowLocal().Format("02.01.2006 15:04"),
+	)
+
+	return message
+
+}
+func FormatBookingCancelledAdminMessage(user *models.RegisteredUser, telegramUser *models.User, job *models.Job, booking *models.JobBooking, adminUsername string) string {
+	// Format message for admin group
+	message := fmt.Sprintf(`❌ <b>BEKOR QILINDI</b>
+
+👤 <b>Foydalanuvchi:</b>
+• Ism: %s
+• Telefon: %s
+• Telegram: @%s (ID: <code>%d</code>)
+• Yosh: %d
+• Vazn: %d kg
+• Bo'y: %d sm
+
+💼 <b>Ish ma'lumotlari:</b>
+• Tartib raqami: #%d
+• Ish haqqi: %s
+• Ish kuni: %s
+• Vaqt: %s
+• Manzil: %s
+• Ovqat: %s
+• Xizmat haqqi: %s so'm
+
+📋 <b>Booking ID:</b> #%d
+⏰ <b>Yuborilgan vaqt:</b> %s
+
+👤 Admin: @%s
+⏰ Bekor qilingan vaqt: %s
+
+💰 To'lov qaytarildi.
+`,
+		user.FullName,
+		user.Phone,
+		telegramUser.Username,
+		booking.UserID,
+		user.Age,
+		user.Weight,
+		user.Height,
+		job.OrderNumber,
+		job.Salary,
+		job.WorkDate,
+		job.WorkTime,
+		job.Address,
+		job.Food,
+		helper.FormatMoney(job.ServiceFee),
+		booking.ID,
+		booking.CreatedAt.Add(config.MessageTimeZoneOffset).Format(config.MessageTimeFormat),
+		adminUsername,
+		config.NowLocal().Format(config.MessageTimeFormat),
+	)
+
+	return message
+
 }
