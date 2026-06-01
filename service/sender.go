@@ -151,19 +151,26 @@ func (s *SenderService) DeleteMessage(c tele.Context) error {
 	return c.Delete()
 }
 
-// UpdateChannelJobPost updates a job post in the channel with latest info
+// UpdateChannelJobPost updates the job post in ALL channels that have published it.
+// It fetches the list of (channelID, messageID) pairs from the DB, so this works
+// regardless of how many channels are configured.
 func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Job) error {
-	if job.ChannelMessageID == 0 {
-		s.log.Warn("Cannot update channel message: no channel message ID", logger.Any("job_id", job.ID))
-		return fmt.Errorf("no channel message ID for job %d", job.ID)
+	channelMsgs, err := s.storage.JobChannelMessage().GetAllByJobID(ctx, job.ID)
+	if err != nil {
+		s.log.Error("Failed to get channel messages for job",
+			logger.Error(err),
+			logger.Any("job_id", job.ID),
+		)
+		return fmt.Errorf("failed to get channel messages: %w", err)
 	}
 
-	msg := &tele.Message{
-		ID:   int(job.ChannelMessageID),
-		Chat: &tele.Chat{ID: s.cfg.Bot.ChannelID},
+	if len(channelMsgs) == 0 {
+		s.log.Warn("Cannot update channel messages: job not published to any channel",
+			logger.Any("job_id", job.ID))
+		return nil
 	}
 
-	channelMsg := messages.FormatJobForChannel(job)
+	channelText := messages.FormatJobForChannel(job)
 
 	// Only show signup button if job is ACTIVE
 	var keyboard *tele.ReplyMarkup
@@ -174,18 +181,43 @@ func (s *SenderService) UpdateChannelJobPost(ctx context.Context, job *models.Jo
 		keyboard = &tele.ReplyMarkup{}
 	}
 
-	_, err := s.bot.Edit(msg, channelMsg, keyboard, tele.ModeHTML)
-	if err != nil {
-		s.log.Error("Failed to update channel message",
-			logger.Error(err),
+	var lastErr error
+	for _, cm := range channelMsgs {
+		msg := &tele.Message{
+			ID:   int(cm.MessageID),
+			Chat: &tele.Chat{ID: cm.ChannelID},
+		}
+
+		_, err := s.bot.Edit(msg, channelText, keyboard, tele.ModeHTML)
+		if err != nil {
+			s.log.Error("Failed to update channel message",
+				logger.Error(err),
+				logger.Any("job_id", job.ID),
+				logger.Any("channel_id", cm.ChannelID),
+				logger.Any("message_id", cm.MessageID),
+			)
+			if err.Error() == "telegram: message not found (400)" ||
+				err.Error() == "telegram: message to edit not found (400)" {
+				s.storage.JobChannelMessage().Delete(ctx, job.ID, cm.ChannelID)
+			}
+			lastErr = fmt.Errorf("failed to update channel %d: %w", cm.ChannelID, err)
+			continue
+		}
+
+		s.log.Info("Channel message updated successfully",
 			logger.Any("job_id", job.ID),
-			logger.Any("channel_message_id", job.ChannelMessageID),
+			logger.Any("channel_id", cm.ChannelID),
+			logger.Any("status", job.Status),
 		)
-		return fmt.Errorf("failed to update channel message: %w", err)
 	}
 
-	s.log.Info("Channel message updated successfully",
+	if lastErr != nil {
+		return lastErr
+	}
+
+	s.log.Info("All channel messages updated",
 		logger.Any("job_id", job.ID),
+		logger.Any("channels_count", len(channelMsgs)),
 		logger.Any("confirmed_slots", job.ConfirmedSlots),
 		logger.Any("required_workers", job.RequiredWorkers),
 		logger.Any("status", job.Status),
@@ -209,6 +241,15 @@ func (s *SenderService) UpdateAdminJobPost(ctx context.Context, job *models.Job)
 		s.log.Debug("No admin messages to update", logger.Any("job_id", job.ID))
 		return nil
 	}
+
+	channelMsgs, err := s.storage.JobChannelMessage().GetAllByJobID(ctx, job.ID)
+	if err != nil {
+		s.log.Error("Failed to get channel messages for published status",
+			logger.Error(err),
+			logger.Any("job_id", job.ID))
+		return fmt.Errorf("failed to get channel messages: %w", err)
+	}
+	job.IsPublished = len(channelMsgs) > 0
 
 	adminMsg := messages.FormatJobDetailAdmin(job)
 	adminKeyboard := keyboards.JobDetailKeyboard(job)

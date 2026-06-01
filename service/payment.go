@@ -163,10 +163,13 @@ func (s *paymentService) ApprovePayment(ctx context.Context, bookingID, adminID 
 		logger.Any("admin_id", adminID),
 	)
 
-	// Update channel and admin messages after successful commit
+	// Update channel and admin messages after successful commit.
+	// Each goroutine gets its own copy to avoid concurrent reads/writes on the same struct.
 	if s.manager != nil {
-		go s.manager.Sender().UpdateChannelJobPost(context.Background(), job)
-		go s.manager.Sender().UpdateAdminJobPost(context.Background(), job)
+		jobForChannel := *job
+		jobForAdmin := *job
+		go s.manager.Sender().UpdateChannelJobPost(context.Background(), &jobForChannel)
+		go s.manager.Sender().UpdateAdminJobPost(context.Background(), &jobForAdmin)
 	}
 
 	return booking, nil

@@ -23,7 +23,7 @@ type BotConfig struct {
 	Token        string
 	Verbose      bool
 	Poller       time.Duration
-	ChannelID    int64
+	ChannelIDs   []int64 // All channel IDs to publish jobs to (BOT_CHANNEL_IDS, comma-separated)
 	AdminIDs     []int64
 	AdminGroupID int64 // Admin group for payment approvals
 	Username     string
@@ -73,7 +73,7 @@ func Load() (*Config, error) {
 			Token:                getEnv("BOT_TOKEN", ""),
 			Verbose:              getEnvAsBool("BOT_VERBOSE", false),
 			Poller:               getEnvAsDuration("BOT_POLLER", 10*time.Second),
-			ChannelID:            getEnvAsInt64("BOT_CHANNEL_ID", 0),
+			ChannelIDs:           getEnvAsInt64Slice("BOT_CHANNEL_IDS", nil),
 			AdminIDs:             getEnvAsInt64Slice("BOT_ADMIN_IDS", nil),
 			AdminGroupID:         getEnvAsInt64("BOT_ADMIN_GROUP_ID", 0),
 			Username:             getEnv("BOT_USERNAME", ""),

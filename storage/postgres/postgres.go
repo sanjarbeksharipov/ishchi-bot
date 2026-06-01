@@ -139,6 +139,11 @@ func (s *Store) AdminMessage() storage.AdminMessageRepoI {
 	return NewAdminMessageRepo(s.db, s.logger)
 }
 
+// JobChannelMessage returns the job channel message repository
+func (s *Store) JobChannelMessage() storage.JobChannelMessageRepoI {
+	return NewJobChannelMessageRepo(s.db, s.logger)
+}
+
 // Transaction returns the transaction manager
 func (s *Store) Transaction() storage.TransactionI {
 	return NewTransactionManager(s.db, s.logger)

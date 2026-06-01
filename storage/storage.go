@@ -34,6 +34,9 @@ type StorageI interface {
 	// AdminMessage returns the admin message repository
 	AdminMessage() AdminMessageRepoI
 
+	// JobChannelMessage returns the job channel message repository
+	JobChannelMessage() JobChannelMessageRepoI
+
 	// Transaction support
 	Transaction() TransactionI
 }
@@ -212,5 +215,21 @@ type AdminMessageRepoI interface {
 	Delete(ctx context.Context, jobID, adminID int64) error
 
 	// DeleteAllByJobID deletes all admin messages for a job
+	DeleteAllByJobID(ctx context.Context, jobID int64) error
+}
+
+// JobChannelMessageRepoI defines the interface for tracking job messages per channel.
+// This enables N-channel support: adding a new channel only needs a config change.
+type JobChannelMessageRepoI interface {
+	// Upsert inserts or updates the message ID for a job in a specific channel.
+	Upsert(ctx context.Context, jobID, channelID, messageID int64) error
+
+	// GetAllByJobID returns all channel messages for a job (one row per channel).
+	GetAllByJobID(ctx context.Context, jobID int64) ([]*models.JobChannelMessage, error)
+
+	// Delete removes the record for a specific (job, channel) pair.
+	Delete(ctx context.Context, jobID, channelID int64) error
+
+	// DeleteAllByJobID removes all channel message records for a job.
 	DeleteAllByJobID(ctx context.Context, jobID int64) error
 }

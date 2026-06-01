@@ -405,10 +405,7 @@ func (h *Handler) HandleChangeJobStatus(c tele.Context, params string) error {
 		return c.Send(messages.MsgError)
 	}
 
-	// Update channel message if exists
-	if job.ChannelMessageID != 0 {
-		h.updateChannelMessage(job)
-	}
+	h.updateChannelMessage(job)
 
 	if err := c.Respond(&tele.CallbackResponse{Text: "✅ Status yangilandi"}); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
@@ -428,7 +425,7 @@ func (h *Handler) HandleChangeJobStatus(c tele.Context, params string) error {
 	return nil
 }
 
-// HandlePublishJob publishes the job to the channel (only if not yet published)
+// HandlePublishJob publishes the job to ALL configured channels (only if not yet published)
 func (h *Handler) HandlePublishJob(c tele.Context, jobIDStr string) error {
 	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
 	if err != nil {
@@ -447,68 +444,81 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobIDStr string) error {
 		return c.Send(messages.MsgError)
 	}
 
-	// Check if already published - should not happen with proper UI
-	if job.ChannelMessageID != 0 {
+	// Check if already published
+	existing, err := h.storage.JobChannelMessage().GetAllByJobID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to check existing channel messages", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Xatolik yuz berdi", ShowAlert: true})
+	}
+	if len(existing) > 0 {
 		return c.Respond(&tele.CallbackResponse{Text: "⚠️ Bu ish allaqachon kanalda"})
 	}
 
-	// Format job message for channel
-	msg := messages.FormatJobForChannel(job)
+	if len(h.cfg.Bot.ChannelIDs) == 0 {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Kanal IDlari sozlanmagan (BOT_CHANNEL_IDS)", ShowAlert: true})
+	}
 
-	// Create inline keyboard with signup button
+	msg := messages.FormatJobForChannel(job)
 	signupBtn := keyboards.JobSignupKeyboard(job.ID, h.cfg.Bot.Username)
 
-	// Send to channel
-	channelID := tele.ChatID(h.cfg.Bot.ChannelID)
-	sentMsg, err := h.bot.Send(channelID, msg, signupBtn, tele.ModeHTML)
-	if err != nil {
-		h.log.Error("Failed to send job to channel", logger.Error(err))
-		return c.Respond(&tele.CallbackResponse{Text: "❌ Kanalga yuborishda xatolik"})
-	}
+	publishedCount := 0
+	for _, chID := range h.cfg.Bot.ChannelIDs {
+		sentMsg, err := h.bot.Send(tele.ChatID(chID), msg, signupBtn, tele.ModeHTML)
+		if err != nil {
+			h.log.Error("Failed to send job to channel",
+				logger.Error(err),
+				logger.Any("channel_id", chID),
+				logger.Any("job_id", job.ID),
+			)
+			continue
+		}
 
-	// Save channel message ID
-	if err := h.storage.Job().UpdateChannelMessageID(ctx, job.ID, int64(sentMsg.ID)); err != nil {
-		h.log.Error("Failed to save channel message ID", logger.Error(err))
-		return c.Respond(&tele.CallbackResponse{Text: "❌ Xabar ID saqlanishida xatolik", ShowAlert: true})
-	}
+		// Save (channelID, messageID) to DB
+		if err := h.storage.JobChannelMessage().Upsert(ctx, job.ID, chID, int64(sentMsg.ID)); err != nil {
+			h.log.Error("Failed to save channel message ID", logger.Error(err))
+			if delErr := h.bot.Delete(sentMsg); delErr != nil {
+				h.log.Error("Failed to delete orphaned channel message", logger.Error(delErr))
+			}
+			continue
+		}
+		publishedCount++
 
-	job.ChannelMessageID = int64(sentMsg.ID)
-
-	// Send location as a reply to the channel message if it exists
-	if job.Location != "" {
-		parts := strings.SplitN(job.Location, ",", 2)
-		if len(parts) == 2 {
-			lat, errLat := strconv.ParseFloat(strings.TrimSpace(parts[0]), 32)
-			lng, errLng := strconv.ParseFloat(strings.TrimSpace(parts[1]), 32)
-			if errLat == nil && errLng == nil {
-				location := &tele.Location{
-					Lat: float32(lat),
-					Lng: float32(lng),
-				}
-				_, err := h.bot.Send(channelID, location, &tele.SendOptions{
-					ReplyTo: sentMsg,
-				})
-				if err != nil {
-					h.log.Error("Failed to send location to channel",
-						logger.Error(err),
-						logger.Any("job_id", job.ID),
-					)
+		// Send location as reply to the channel message if it exists
+		if job.Location != "" {
+			parts := strings.SplitN(job.Location, ",", 2)
+			if len(parts) == 2 {
+				lat, errLat := strconv.ParseFloat(strings.TrimSpace(parts[0]), 32)
+				lng, errLng := strconv.ParseFloat(strings.TrimSpace(parts[1]), 32)
+				if errLat == nil && errLng == nil {
+					location := &tele.Location{Lat: float32(lat), Lng: float32(lng)}
+					_, err := h.bot.Send(tele.ChatID(chID), location, &tele.SendOptions{ReplyTo: sentMsg})
+					if err != nil {
+						h.log.Error("Failed to send location to channel",
+							logger.Error(err),
+							logger.Any("channel_id", chID),
+						)
+					}
 				}
 			}
 		}
 	}
 
-	if err := c.Respond(&tele.CallbackResponse{Text: "✅ Kanalga yuborildi!"}); err != nil {
+	if publishedCount == 0 {
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Hech bir kanalga yuborilmadi", ShowAlert: true})
+	}
+
+	if err := c.Respond(&tele.CallbackResponse{Text: fmt.Sprintf("✅ %d ta kanalga yuborildi!", publishedCount)}); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Update OTHER admin messages (exclude current admin to avoid double-edit)
+	job.IsPublished = true
+
+	// Update OTHER admin messages
 	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
 
 	// Update current admin's message view
 	detailMsg := messages.FormatJobDetailAdmin(job)
 	if err := c.Edit(detailMsg, keyboards.JobDetailKeyboard(job), tele.ModeHTML); err != nil {
-		// Silently ignore "message is not modified" errors - happens if another admin already updated
 		if !strings.Contains(err.Error(), "message is not modified") {
 			h.log.Error("Failed to edit job detail", logger.Error(err))
 		}
@@ -516,7 +526,7 @@ func (h *Handler) HandlePublishJob(c tele.Context, jobIDStr string) error {
 	return nil
 }
 
-// HandleDeleteChannelMessage deletes the channel message only (keeps job in DB)
+// HandleDeleteChannelMessage deletes the channel message from ALL channels (keeps job in DB)
 func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobIDStr string) error {
 	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
 	if err != nil {
@@ -535,37 +545,44 @@ func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobIDStr string) er
 		return c.Send(messages.MsgError)
 	}
 
-	// Check if channel message exists
-	if job.ChannelMessageID == 0 {
-		return c.Respond(&tele.CallbackResponse{Text: "⚠️ Kanal xabari mavjud emas"})
+	// Get all channel messages
+	channelMsgs, err := h.storage.JobChannelMessage().GetAllByJobID(ctx, jobID)
+	if err != nil {
+		h.log.Error("Failed to get channel messages", logger.Error(err))
+		return c.Respond(&tele.CallbackResponse{Text: "❌ Xatolik yuz berdi"})
 	}
 
-	// Delete channel message
-	msgToDelete := &tele.Message{ID: int(job.ChannelMessageID), Chat: &tele.Chat{ID: h.cfg.Bot.ChannelID}}
-	if err := h.bot.Delete(msgToDelete); err != nil {
-		h.log.Error("Failed to delete channel message", logger.Error(err))
-		return c.Respond(&tele.CallbackResponse{Text: "❌ Xabarni o'chirishda xatolik"})
+	if len(channelMsgs) == 0 {
+		return c.Respond(&tele.CallbackResponse{Text: "⚠️ Kanal xabarlari mavjud emas"})
 	}
 
-	// Clear channel message ID from job
-	if err := h.storage.Job().UpdateChannelMessageID(ctx, job.ID, 0); err != nil {
-		h.log.Error("Failed to clear channel message ID", logger.Error(err))
-		return c.Respond(&tele.CallbackResponse{Text: "❌ Xabar ID o'chirishda xatolik", ShowAlert: true})
+	// Delete from each channel
+	for _, cm := range channelMsgs {
+		msgToDelete := &tele.Message{ID: int(cm.MessageID), Chat: &tele.Chat{ID: cm.ChannelID}}
+		if err := h.bot.Delete(msgToDelete); err != nil {
+			h.log.Error("Failed to delete channel message",
+				logger.Error(err),
+				logger.Any("channel_id", cm.ChannelID),
+			)
+		}
 	}
 
-	job.ChannelMessageID = 0
+	// Remove all records from DB
+	if err := h.storage.JobChannelMessage().DeleteAllByJobID(ctx, jobID); err != nil {
+		h.log.Error("Failed to clear channel message records", logger.Error(err))
+	}
+	job.IsPublished = false
 
-	if err := c.Respond(&tele.CallbackResponse{Text: "✅ Kanal xabari o'chirildi"}); err != nil {
+	if err := c.Respond(&tele.CallbackResponse{Text: "✅ Kanal xabarlari o'chirildi"}); err != nil {
 		h.log.Error("Failed to respond to callback", logger.Error(err))
 	}
 
-	// Update OTHER admin messages (exclude current admin to avoid double-edit)
+	// Update OTHER admin messages
 	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
 
 	// Show updated job detail to current admin
 	msg := messages.FormatJobDetailAdmin(job)
 	if err := c.Edit(msg, keyboards.JobDetailKeyboard(job), tele.ModeHTML); err != nil {
-		// Silently ignore "message is not modified" errors - happens if another admin already updated
 		if !strings.Contains(err.Error(), "message is not modified") {
 			h.log.Error("Failed to edit job detail", logger.Error(err))
 		}
@@ -573,7 +590,7 @@ func (h *Handler) HandleDeleteChannelMessage(c tele.Context, jobIDStr string) er
 	return nil
 }
 
-// HandleDeleteJob deletes the entire job from database (and channel message if exists)
+// HandleDeleteJob deletes the entire job from database (and channel messages from ALL channels)
 func (h *Handler) HandleDeleteJob(c tele.Context, jobIDStr string) error {
 	jobID, err := strconv.ParseInt(jobIDStr, 10, 64)
 	if err != nil {
@@ -587,25 +604,31 @@ func (h *Handler) HandleDeleteJob(c tele.Context, jobIDStr string) error {
 
 	ctx := context.Background()
 
-	// Get job first to delete channel message
-	job, err := h.storage.Job().GetByID(ctx, jobID)
+	// Get job first
+	_, err = h.storage.Job().GetByID(ctx, jobID)
 	if err != nil {
 		h.log.Error("Failed to get job", logger.Error(err))
 		return c.Send(messages.MsgError)
 	}
 
-	// Delete channel message if exists
-	if job.ChannelMessageID != 0 {
-		msgToDelete := &tele.Message{ID: int(job.ChannelMessageID), Chat: &tele.Chat{ID: h.cfg.Bot.ChannelID}}
-		if err := h.bot.Delete(msgToDelete); err != nil {
-			h.log.Error("Failed to delete channel message", logger.Error(err))
+	// Delete channel messages from ALL channels
+	if channelMsgs, err := h.storage.JobChannelMessage().GetAllByJobID(ctx, jobID); err == nil {
+		for _, cm := range channelMsgs {
+			msgToDelete := &tele.Message{ID: int(cm.MessageID), Chat: &tele.Chat{ID: cm.ChannelID}}
+			if err := h.bot.Delete(msgToDelete); err != nil {
+				h.log.Error("Failed to delete channel message during job deletion",
+					logger.Error(err),
+					logger.Any("channel_id", cm.ChannelID),
+					logger.Any("job_id", jobID),
+				)
+			}
 		}
 	}
 
 	// Delete ALL admin messages from Telegram chats
 	h.deleteAllAdminMessages(jobID)
 
-	// Delete from database (will cascade delete admin_job_messages)
+	// Delete from database (cascades to job_channel_messages and admin_job_messages)
 	if err := h.storage.Job().Delete(ctx, jobID); err != nil {
 		h.log.Error("Failed to delete job", logger.Error(err))
 		return c.Respond(&tele.CallbackResponse{Text: "❌ Xatolik yuz berdi"})
@@ -851,10 +874,7 @@ func (h *Handler) handleJobEditingInput(c tele.Context, user *models.User, text 
 		return c.Send(messages.MsgError)
 	}
 
-	// Update channel message if exists
-	if job.ChannelMessageID != 0 {
-		h.updateChannelMessage(job)
-	}
+	h.updateChannelMessage(job)
 
 	// Update ALL other admin messages (excluding current admin)
 	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)
@@ -957,26 +977,11 @@ func (h *Handler) HandleSkipField(c tele.Context) error {
 	return nil
 }
 
-// Helper to update channel message
+// Helper to update channel messages — delegates to sender service which reads from DB
 func (h *Handler) updateChannelMessage(job *models.Job) {
-	msg := &tele.Message{
-		ID:   int(job.ChannelMessageID),
-		Chat: &tele.Chat{ID: h.cfg.Bot.ChannelID},
-	}
-
-	channelMsg := messages.FormatJobForChannel(job)
-
-	// Only show signup button if job is ACTIVE
-	var keyboard *tele.ReplyMarkup
-	if job.Status == models.JobStatusActive {
-		keyboard = keyboards.JobSignupKeyboard(job.ID, h.cfg.Bot.Username)
-	} else {
-		// Remove buttons for non-active jobs (FULL, COMPLETED, CANCELLED, DRAFT)
-		keyboard = &tele.ReplyMarkup{}
-	}
-
-	if _, err := h.bot.Edit(msg, channelMsg, keyboard, tele.ModeHTML); err != nil {
-		h.log.Error("Failed to update channel message", logger.Error(err))
+	ctx := context.Background()
+	if err := h.services.Sender().UpdateChannelJobPost(ctx, job); err != nil {
+		h.log.Error("Failed to update channel messages", logger.Error(err), logger.Any("job_id", job.ID))
 	}
 }
 
@@ -1343,10 +1348,7 @@ func (h *Handler) handleJobEditingLocationInput(c tele.Context, user *models.Use
 		return c.Send(messages.MsgError)
 	}
 
-	// Update channel message if exists
-	if job.ChannelMessageID != 0 {
-		h.updateChannelMessage(job)
-	}
+	h.updateChannelMessage(job)
 
 	// Update ALL other admin messages (excluding current admin)
 	go h.updateOtherAdminMessages(job.ID, c.Sender().ID)

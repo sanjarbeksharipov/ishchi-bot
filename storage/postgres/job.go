@@ -70,12 +70,13 @@ func (r *jobRepo) Create(ctx context.Context, job *models.Job) (*models.Job, err
 // GetByID retrieves a job by ID
 func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 	query := `
-		SELECT id, order_number, salary, food, work_time, address, location, service_fee,
-			buses, additional_info, work_date, status, required_workers,
-			reserved_slots, confirmed_slots, channel_message_id, admin_message_id,
-			created_by_admin_id, employer_phone, created_at, updated_at
-		FROM jobs
-		WHERE id = $1
+		SELECT j.id, j.order_number, j.salary, j.food, j.work_time, j.address, j.location, j.service_fee,
+			j.buses, j.additional_info, j.work_date, j.status, j.required_workers,
+			j.reserved_slots, j.confirmed_slots, j.channel_message_id, j.admin_message_id,
+			j.created_by_admin_id, j.employer_phone, j.created_at, j.updated_at,
+			EXISTS(SELECT 1 FROM job_channel_messages WHERE job_id = j.id) AS is_published
+		FROM jobs j
+		WHERE j.id = $1
 	`
 
 	job := &models.Job{}
@@ -104,6 +105,7 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 		&employerPhone,
 		&job.CreatedAt,
 		&job.UpdatedAt,
+		&job.IsPublished,
 	)
 
 	if err != nil {
@@ -143,12 +145,13 @@ func (r *jobRepo) GetByID(ctx context.Context, id int64) (*models.Job, error) {
 // GetByIDForUpdate retrieves a job with row lock (FOR UPDATE)
 func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*models.Job, error) {
 	query := `
-		SELECT id, order_number, salary, food, work_time, address, location, service_fee,
-			buses, additional_info, work_date, status, required_workers,
-			reserved_slots, confirmed_slots, channel_message_id, admin_message_id,
-			created_by_admin_id, employer_phone, created_at, updated_at
-		FROM jobs
-		WHERE id = $1
+		SELECT j.id, j.order_number, j.salary, j.food, j.work_time, j.address, j.location, j.service_fee,
+			j.buses, j.additional_info, j.work_date, j.status, j.required_workers,
+			j.reserved_slots, j.confirmed_slots, j.channel_message_id, j.admin_message_id,
+			j.created_by_admin_id, j.employer_phone, j.created_at, j.updated_at,
+			EXISTS(SELECT 1 FROM job_channel_messages WHERE job_id = j.id) AS is_published
+		FROM jobs j
+		WHERE j.id = $1
 		FOR UPDATE
 	`
 
@@ -165,6 +168,7 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
 			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID, &adminMessageID,
 			&job.CreatedByAdminID, &employerPhone, &job.CreatedAt, &job.UpdatedAt,
+			&job.IsPublished,
 		)
 	} else {
 		err = r.db.QueryRow(ctx, query, id).Scan(
@@ -173,6 +177,7 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
 			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID, &adminMessageID,
 			&job.CreatedByAdminID, &employerPhone, &job.CreatedAt, &job.UpdatedAt,
+			&job.IsPublished,
 		)
 	}
 
@@ -212,20 +217,21 @@ func (r *jobRepo) GetByIDForUpdate(ctx context.Context, tx any, id int64) (*mode
 // GetAll retrieves all jobs with optional status filter
 func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*models.Job, error) {
 	query := `
-		SELECT id, order_number, salary, food, work_time, address, location, service_fee,
-			buses, additional_info, work_date, status, required_workers,
-			reserved_slots, confirmed_slots, channel_message_id, admin_message_id,
-			created_by_admin_id, employer_phone, created_at, updated_at
-		FROM jobs
+		SELECT j.id, j.order_number, j.salary, j.food, j.work_time, j.address, j.location, j.service_fee,
+			j.buses, j.additional_info, j.work_date, j.status, j.required_workers,
+			j.reserved_slots, j.confirmed_slots, j.channel_message_id, j.admin_message_id,
+			j.created_by_admin_id, j.employer_phone, j.created_at, j.updated_at,
+			EXISTS(SELECT 1 FROM job_channel_messages WHERE job_id = j.id) AS is_published
+		FROM jobs j
 	`
 	args := []any{}
 
 	if status != nil {
-		query += " WHERE status = $1"
+		query += " WHERE j.status = $1"
 		args = append(args, *status)
 	}
 
-	query += " ORDER BY created_at DESC"
+	query += " ORDER BY j.created_at DESC"
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
@@ -246,6 +252,7 @@ func (r *jobRepo) GetAll(ctx context.Context, status *models.JobStatus) ([]*mode
 			&additionalInfo, &job.WorkDate, &job.Status, &job.RequiredWorkers,
 			&job.ReservedSlots, &job.ConfirmedSlots, &channelMessageID, &adminMessageID,
 			&job.CreatedByAdminID, &employerPhone, &job.CreatedAt, &job.UpdatedAt,
+			&job.IsPublished,
 		)
 		if err != nil {
 			r.log.Error("Failed to scan job", logger.Error(err))

@@ -222,7 +222,7 @@ func FormatJobDetailAdmin(job *models.Job) string {
 	sb.WriteString(fmt.Sprintf("📞 <b>Ish beruvchi telefon:</b> %s\n", valueOrEmpty(job.EmployerPhone)))
 	sb.WriteString(fmt.Sprintf("\n<b>Status:</b> %s\n", job.Status.Display()))
 
-	if job.ChannelMessageID != 0 {
+	if job.IsPublished {
 		sb.WriteString("\n✅ <i>Kanalga yuborilgan</i>")
 	} else {
 		sb.WriteString("\n⚠️ <i>Kanalga yuborilmagan</i>")

@@ -167,7 +167,7 @@ func JobDetailKeyboard(job *models.Job) *tele.ReplyMarkup {
 	rows = append(rows, menu.Row(btnStatusOpen, btnStatusToldi, btnStatusClosed))
 
 	// Publish or delete message buttons
-	if job.ChannelMessageID == 0 {
+	if !job.IsPublished {
 		btnPublish := menu.Data("📢 Kanalga yuborish", fmt.Sprintf("publish_job_%d", job.ID))
 		rows = append(rows, menu.Row(btnPublish))
 	} else {

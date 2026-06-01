@@ -42,6 +42,10 @@ type Job struct {
 	CreatedByAdminID int64     `json:"created_by_admin_id"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+
+	// Transient computed field — populated at runtime by querying job_channel_messages table.
+	// Not stored in DB. True if job has been published to at least one channel.
+	IsPublished bool `json:"-"`
 }
 
 // Backwards compatibility aliases

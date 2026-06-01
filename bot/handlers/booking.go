@@ -345,9 +345,7 @@ func (h *Handler) HandleCancelBooking(c tele.Context, params string) error {
 			h.updateOtherAdminMessages(job.ID, c.Sender().ID)
 		}
 
-		if job.ChannelMessageID != 0 {
-			h.updateChannelMessage(job)
-		}
+		h.updateChannelMessage(job)
 	}
 
 	h.log.Info("Booking cancelled by admin via handler",
